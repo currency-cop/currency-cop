@@ -1,0 +1,34 @@
+body, html {
+  background: hsl(200, 19%, 18%);
+  color: white;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+}
+
+h1 {
+  font-family: 'Roboto';
+  font-weight: 500;
+}
+
+a {
+  color: #B0BEC5;
+  text-decoration: none
+}
+
+a:hover {
+  color: #ECEFF1
+}
+
+.navbar {
+  -webkit-app-region: drag
+}
+
+.account-actions {
+  -webkit-app-region: no-drag
+}

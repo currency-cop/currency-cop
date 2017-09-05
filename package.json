@@ -1,0 +1,69 @@
+{
+  "name": "currency-cop",
+  "version": "1.0.4b",
+  "description": "Calculate Net Worth in Path of Exile",
+  "author": "Nijiko Yonskai",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "pack": "electron-builder --publish=never --dir",
+    "dist": "electron-builder --publish=never --x64 --ia32",
+    "prod": "webpack --config webpack.build.config.js && electron --noDevServer .",
+    "dev": "webpack-dev-server --hot --host 0.0.0.0 --config=./webpack.dev.config.js",
+    "build": "webpack --config webpack.build.config.js",
+    "package": "webpack --config webpack.build.config.js",
+    "postpackage": "electron-packager ./ --ignore=src --overwrite=true --icon=favicon.ico --out=./builds"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^6.4.1",
+    "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
+    "babel-plugin-transform-es3-property-literals": "^6.22.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "babili-webpack-plugin": "^0.0.11",
+    "css-loader": "^0.28.1",
+    "electron": "^1.6.7",
+    "electron-builder": "^19.27.3",
+    "electron-packager": "^8.7.0",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "file-loader": "^0.11.1",
+    "html-webpack-plugin": "^2.28.0",
+    "material-ui": "^1.0.0-beta.8",
+    "material-ui-icons": "^1.0.0-beta.5",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2",
+    "style-loader": "^0.17.0",
+    "typeface-roboto": "0.0.35",
+    "webpack": "^2.5.1",
+    "webpack-dev-server": "^2.4.5"
+  },
+  "dependencies": {
+    "axios": "^0.16.2"
+  },
+  "build": {
+    "productName": "CurrencyCop",
+    "appId": "org.nijiko.made.CurrencyCop",
+    "files": [
+      "dist/",
+      "node_modules/",
+      "main.js",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "menuCategory": true,
+      "license": "LICENSE"
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    }
+  }
+}
