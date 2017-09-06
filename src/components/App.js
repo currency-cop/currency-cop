@@ -3,19 +3,24 @@ import '../assets/css/App.css'
 import Constants from '../constants'
 
 // Third Party
-import { ipcRenderer, shell } from 'electron'
+import { ipcRenderer, shell, remote } from 'electron'
 import React, { Component } from 'react'
+import Logger from '../logger'
 import Axios from 'axios'
 import Queue from '../queue'
 import Ago from '../ago'
+import path from 'path'
+import fs from 'fs'
 
 // Material UI
 import { MuiThemeProvider, createMuiTheme, withTheme, withStyles } from 'material-ui/styles'
-import { FormControlLabel } from 'material-ui/Form'
+import { FormGroup, FormControlLabel } from 'material-ui/Form'
+import Checkbox from 'material-ui/Checkbox'
 import Dialog, { DialogActions, DialogContent, DialogContentText, DialogTitle } from 'material-ui/Dialog'
 import List, { ListItem, ListItemText } from 'material-ui/List'
 import Menu, { MenuItem } from 'material-ui/Menu'
 import Radio, { RadioGroup } from 'material-ui/Radio'
+import Input from 'material-ui/Input/Input'
 import Grid from 'material-ui/Grid'
 import Paper from 'material-ui/Paper'
 import AppBar from 'material-ui/AppBar'
@@ -31,6 +36,27 @@ import Divider from 'material-ui/Divider'
 // Material UI Colors
 import blueGrey from 'material-ui/colors/blueGrey'
 import orange from 'material-ui/colors/orange'
+
+// Application folder location
+const userDataPath = remote.app.getPath('userData')
+const logsDataPath = path.join(userDataPath, 'Logs')
+const userConfigFilename = path.join(userDataPath, 'User.db')
+
+// Configure Logger
+const logger = new Logger({
+  logdir: logsDataPath,
+  level: 1
+})
+
+// Create Core Loggers
+const Log = logger.topic('Core')
+const ConfigLog = logger.topic('Config')
+const ApiLog = logger.topic('API')
+
+// Capture uncaught errors
+process.on('uncaughtException', function (error) {
+  Log.critical(`Uncaught error: ${error.message} - ${error.stack}`)
+})
 
 // Configuration
 let ConfigKeys = {
@@ -67,8 +93,7 @@ let Config = DefaultConfig()
 
 // Helpers
 function UUID () {
-  return Math.random().toString(36).substring(2) 
-    + (new Date()).getTime().toString(36)
+  return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36)
 }
 
 function padNumber (i) {
@@ -92,33 +117,51 @@ function getNinjaDate () {
 
 // Configuration Helpers
 function loadConfig () {
-  let keys = Object.keys(DefaultConfig())
-  keys.forEach(key => {
-    if (localStorage[key] != null) {
-      Config[key] = JSON.parse(localStorage[key])
-    }
-  })
+  try {
+    ConfigLog.info(`Loading configuration file from: ${userConfigFilename}`)
+    Config = JSON.parse(fs.readFileSync(userConfigFilename))
+  } catch(error) {
+    Config = DefaultConfig()
+    ConfigLog.warn(`Could not load configuration file: ${error.message}`)
+  }
 }
 
 function saveConfig () {
-  let keys = Object.keys(Config)
-  keys.forEach(key => {
-    localStorage[key] = JSON.stringify(Config[key])
-  })
+  try {
+    ConfigLog.info(`Saving configuration file to: ${userConfigFilename}`)
+    fs.writeFileSync(userConfigFilename, JSON.stringify(Config))
+  } catch (error) {
+    ConfigLog.critical(`Could not save configuration file: ${error.message}`)
+  }
 }
 
 function clearConfig () {
-  Config = JSON.parse(JSON.stringify(DefaultConfig))
-  saveConfig()
+  try {
+    ConfigLog.info(`Clearing configuration file at: ${userConfigFilename}`)
+    Config = JSON.parse(JSON.stringify(DefaultConfig))
+    saveConfig()
+  } catch (error) {
+    ConfigLog.critical(`Could not clear configuration file: ${error.message}`)
+  }
 }
 
 function setConfig (key, value) {
-  Config[key] = value
-  saveConfig()
+  try {
+    ConfigLog.info(`Updating configuration key [${key}] in: ${userConfigFilename}`)
+    Config[key] = value
+    saveConfig()
+  } catch (error) {
+    ConfigLog.critical(`Could not update configuration key [${key}]: ${error.message}`)
+  }
 }
 
 function getConfig (key) {
-  return Config[key]
+  try {
+    return Config[key]
+  } catch (error) {
+    ConfigLog.warn(`Could not get configuration key [${key}] from config: ${error.message}`)
+    return null
+  }
 }
 
 // App Theme
@@ -130,7 +173,7 @@ const theme = createMuiTheme({
     background: {
       paper: blueGrey[700]
     }
-  },
+  }
 })
 
 // Api
@@ -152,17 +195,36 @@ function DoServerRequest (options) {
   options.onError += `_${uuid}`
 
   // Make request
+  ApiLog.debug(`Making HTTP request to: ${options.url}`)
   ipcRenderer.send('HTTP_REQUEST', options)
 
   return new Promise((resolve, reject) => {
-    ipcRenderer.once(options.onSuccess, (event, arg) => {
-      console.debug(options.onSuccess, 'response', arg)
-      return resolve(arg)
+    ipcRenderer.once(options.onSuccess, (event, response) => {
+      if (response.status > 200) {
+        // The request was made and the server responded with a status code
+        // that is not 200
+        ApiLog.warn(`Non 2xx request for [${options.url}]: ${JSON.stringify(response.data)}`)
+      }
+
+      return resolve(response)
     })
 
-    ipcRenderer.once(options.onError, (event, arg) => {
-      console.debug(options.onError, 'error', arg)
-      return reject(arg)
+    ipcRenderer.once(options.onError, (event, error) => {
+      if (error.response) {
+        // The request was made and the server responded with a status code 
+        // that falls out of the range of 2xx
+        ApiLog.warn(`Non 2xx request for [${options.url}]: ${JSON.stringify(response.data)}`)
+      } else if (error.request) {
+        // The request was made but no response was received 
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of 
+        // http.ClientRequest in node.js
+        ApiLog.error(`Request sent to [${options.url}], no response received: ${error.message}`)
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        ApiLog.error(`Unable to make HTTP request to [${options.url}]: ${error.message}`)
+      }
+
+      return reject(error)
     })
   })
 }
@@ -364,7 +426,8 @@ class LeagueDropdown extends React.Component {
   button = undefined
 
   componentWillMount () {
-    console.debug('[LeagueDropdown]', 'Passed Index', this.props.selectedIndex)
+    Log.debug(`[League Dropdown] Passed League Index ${this.props.selectedIndex}`)
+
     this.setState({
       selectedIndex: this.props.selectedIndex || 4
     })
@@ -457,6 +520,12 @@ class LoginDialog extends React.Component {
       })
     }
 
+    if (!Constants.POE_COOKIE_REGEXP.test(this.state.value)) {
+      return this.setState({
+        error: `POESESSIONID must be a 32 character hexadecimal string!`
+      })
+    }
+
     this.props.onRequestClose(this.state)
   }
 
@@ -477,12 +546,9 @@ class LoginDialog extends React.Component {
         <DialogTitle>Login to Path of Exile</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            You can obtain your PoE Session Identifier by visiting <a href="https://www.pathofexile.com" onClick={GoToUrl.bind(this)}>Path Of Exile</a> and doing the following actions:
+            👮 Need help finding your session id? <a href="https://www.pathofexile.com/forum/view-thread/1989935/page/9#p14857124" onClick={GoToUrl.bind(this)}>Click here!</a>
           </DialogContentText>
-          <br />
-          <DialogContentText>
-            <code>Right-Click: Inspect > Application tab > Storage > Cookies > {Constants.POE_MAIN_PAGE_URL}</code>
-          </DialogContentText>
+
           <TextField
             error={!!this.state.error}
             label={this.state.error}
@@ -490,9 +556,7 @@ class LoginDialog extends React.Component {
             label={Constants.POE_COOKIE_NAME}
             value={this.state.value}
             style={{
-              marginLeft: 16,
-              marginTop: 16,
-              width: 'calc(100% - 48px)'
+              marginTop: 24
             }}
             onChange={event => this.setState({ 
               value: event.target.value 
@@ -500,6 +564,13 @@ class LoginDialog extends React.Component {
             fullWidth
             margin="normal"
           />
+
+          {this.state.error ? (
+            <DialogContentText style={{ fontSize: 14 }}>
+              ⚠️ {this.state.error}
+            </DialogContentText>
+          ) : null}
+
         </DialogContent>
         <DialogActions>
           <Button onClick={this.handleCancel} color="accent">
@@ -553,7 +624,7 @@ class LoginButton extends React.Component {
     let {value} = state
 
     // Update component state
-    this.setState({ 
+    this.setState({
       value 
     })
 
@@ -578,19 +649,23 @@ class LoginButton extends React.Component {
             return this.handleSnack('Failed to find account name...')
           }
 
-          this.handleSnack(`Logged in as: ${matches[1]}`)
-
-          this.props.updateConfig(ConfigKeys.ACCOUNT_USERNAME, matches[1])
+          let accountName = decodeURIComponent(matches[1])
+          this.handleSnack(`Logged in as: ${accountName}`)
+          this.props.updateConfig(ConfigKeys.ACCOUNT_USERNAME, accountName)
           this.props.updateConfig(ConfigKeys.ACCOUNT_LEAGUE_INDEX, 4)
           this.props.updateConfig(ConfigKeys.ACCOUNT_COOKIE, value)
 
           return GetCharacters(
             value,
-            matches[1]
+            accountName
           )
         })
         .then(response => {
           this.props.updateConfig(ConfigKeys.ACCOUNT_CHARACTERS, response.data)
+        })
+        .catch(error => {
+          Log.critical(`[Login] Error occurred: ${error.message} - ${error.stack}`)
+          return this.handleSnack(`Login failed... Please try again!`)
         })
     }
 
@@ -665,7 +740,7 @@ class AccountActions extends React.Component {
           onSelect={this.handleLeagueSelect.bind(this)}
         />
         <LogoutButton onClick={this.handleLogoutClick.bind(this)}>
-          {config[ConfigKeys.ACCOUNT_USERNAME]} (logout)
+          {decodeURIComponent(config[ConfigKeys.ACCOUNT_USERNAME])} (logout)
         </LogoutButton>
       </div>
     )
@@ -703,6 +778,8 @@ class Dashboard extends React.Component {
   state = {
     loading: `Figuring out what to do...`,
     error: null,
+    sortByType: true,
+    sortByWorth: false,
     prices: {},
     stashes: {},
     tabs: {},
@@ -711,6 +788,8 @@ class Dashboard extends React.Component {
   }
 
   componentWillMount () {
+    Log.info('[Dashboard]', 'Mounting')
+
     let {
       ACCOUNT_NET_WORTH, ACCOUNT_STASHES, ACCOUNT_TABS, 
       ACCOUNT_LAST_UPDATE, NINJA_PRICES
@@ -721,17 +800,17 @@ class Dashboard extends React.Component {
       league
     } = this.props
 
+    if (!league) {
+      Log.info('[Dashboard] League index property is empty, rendering login message')
+      return
+    }
+
     this.state.interval = setInterval(() => {
-      console.debug('[Dashboard]', 'Refreshing Dashboard for Updated Timer')
+      Log.info('[Dashboard] Refreshing dashboard for tab last updated')
       this.setState({
         _refresh: Math.random()
       })
     }, 60 * 1000)
-
-    if (!league) {
-      console.debug('[Dashboard]', 'Missing league')
-      return
-    }
 
     let yesterday = Date.now() - (1000*60*60*24*2)
 
@@ -744,7 +823,7 @@ class Dashboard extends React.Component {
     &&  config[ACCOUNT_LAST_UPDATE][league]
     &&  config[ACCOUNT_LAST_UPDATE][league].prices > yesterday
     ) {
-      console.debug('[Dashboard]', 'Loading state with Configuration data')
+      Log.info('[Dashboard] Loading state with Configuration data')
       return this.setState({
         netWorth: config[ACCOUNT_NET_WORTH],
         stashes: config[ACCOUNT_STASHES],
@@ -753,7 +832,7 @@ class Dashboard extends React.Component {
         updated: config[ACCOUNT_LAST_UPDATE],
         loading: false
       }, () => {
-        console.debug('[Dashboard]', 'Running league fetch mechanisms')
+        Log.info('[Dashboard] Running league fetch mechanisms')
         return this.handleFetchingLeagueData(
           league,
           config
@@ -761,6 +840,7 @@ class Dashboard extends React.Component {
       })
     }
 
+    Log.info('[Dashboard] Running league fetch mechanisms')
     return this.handleFetchingLeagueData(
       league,
       config
@@ -768,8 +848,8 @@ class Dashboard extends React.Component {
   }
 
   componentWillUpdate (nextProps) {
-    if (!nextProps.league && Object.keys(this.state.prices).length !== 0) {
-      console.debug('[Dashboard]', 'Resetting state due to missing league')
+    if (!nextProps.league && this.state.prices && Object.keys(this.state.prices).length !== 0) {
+      Log.warn('[Dashboard] Resetting state due to missing league')
       return this.setState({
         loading: `Figuring out what to do...`,
         error: null,
@@ -782,7 +862,7 @@ class Dashboard extends React.Component {
     }
 
     if (nextProps.league != this.props.league) {
-      console.debug('[Dashboard]', 'Fetching league data due to league change')
+      Log.warn('[Dashboard] Fetching league data due to league change')
       return this.handleFetchingLeagueData(
         nextProps.league,
         nextProps.config
@@ -926,7 +1006,7 @@ class Dashboard extends React.Component {
     && this.state.prices
     && this.state.prices[league]
     ) {
-      console.debug('[Dashboard]', 'Skipping API calls and processing existing tabs')
+      Log.info('[Dashboard] Skipping API calls and processing existing tabs')
       return this.setState({
         netWorth: this.processTabs(league),
         loading: false
@@ -1027,9 +1107,11 @@ class Dashboard extends React.Component {
           })
         }
 
+        Log.critical(`[Dashboard] An error occurred during fetching of league data: ${error.message} - ${error.stack}`)
+
         this.setState({
-          loading: 'Errors happen, this one was kind of expected.',
-          error: error
+          loading: `Error Occurred... find the log file at ${logsDataPath} and send it to "ComfyGangsta" on the forums!`,
+          error: error.message
         })
       })
   }
@@ -1138,6 +1220,10 @@ class Dashboard extends React.Component {
       .then(() => {
         return this.saveData()
       })
+      .catch(error => {
+        Log.error(`Error occurred during tab refresh: ${error.message} - ${error.stack}`)
+        // TODO: Add toast for errors
+      })
   }
 
   handleRefreshPricesButtonClick () {
@@ -1176,6 +1262,10 @@ class Dashboard extends React.Component {
       .then(() => {
         return this.saveData()
       })
+      .catch(error => {
+        Log.error(`Error occurred during prices refresh: ${error.message} - ${error.stack}`)
+        // TODO: Add toast for errors
+      })
   }
 
   fetchLeagueStashTabs (league) {
@@ -1183,7 +1273,7 @@ class Dashboard extends React.Component {
     let cookie = this.props.config[ConfigKeys.ACCOUNT_COOKIE]
 
     return GetLeagueStashTab(cookie, {
-      accountName: account,
+      accountName: encodeURIComponent(account),
       tabIndex: 0,
       league: league,
       tabs: 1
@@ -1195,7 +1285,7 @@ class Dashboard extends React.Component {
     let cookie = this.props.config[ConfigKeys.ACCOUNT_COOKIE]
 
     return GetLeagueStashTab(cookie, {
-      accountName: account,
+      accountName: encodeURIComponent(account),
       tabIndex: index,
       league: league,
       tabs: 0
@@ -1222,6 +1312,7 @@ class Dashboard extends React.Component {
   processTabs (league) {
     let tabs = this.state.tabs[league]
     let items = JSON.parse(JSON.stringify(this.state.prices[league]))
+    let output = []
     let total = 0
 
     let getPriceDetails = (itemName) => {
@@ -1287,14 +1378,6 @@ class Dashboard extends React.Component {
           total += item.stackSize * item.chaosValue
         }
       })
-
-      items = items.sort((a, b) => {
-        return a.type === b.type 
-          ? a.orderId - b.orderId
-          : a.type < b.type
-            ? -1
-            : 1
-      })
     }
 
     return {
@@ -1311,6 +1394,63 @@ class Dashboard extends React.Component {
     updateConfig(ConfigKeys.ACCOUNT_TABS, this.state.tabs)
     updateConfig(ConfigKeys.NINJA_PRICES, this.state.prices)
     updateConfig(ConfigKeys.ACCOUNT_LAST_UPDATE, this.state.updated)
+  }
+
+  handleCheckbox = name => (event, checked) => {
+    this.setState({ 
+      [name]: checked 
+    })
+  }
+
+  calculateChaosValue (item) {
+    return (item.stackSize || 0) * item.chaosValue
+  }
+
+  compareValueDescending (a, b) {
+    return this.calculateChaosValue(b) - this.calculateChaosValue(a)
+  }
+
+  compareTypeAscending (a, b) {
+    return a.type < b.type ? -1 : 1
+  }
+
+  compareOrderAscending(a, b) {
+    return a.orderId - b.orderId
+  }
+
+  sortItems () {
+    let { netWorth, sortByType, sortByWorth } = this.state
+    let items = netWorth.items
+
+    if (items && items.length) {
+      if (sortByType && sortByWorth) {
+        return items = items.sort((a, b) => {
+          return a.type === b.type 
+            ? this.compareValueDescending(a, b)
+            : this.compareTypeAscending(a, b)
+        })
+      }
+
+      if (sortByWorth) {
+        return items = items.sort((a, b) => {
+          return this.compareValueDescending(a, b)
+        })
+      }
+
+      if (sortByType) {
+        return items = items.sort((a, b) => {
+          return a.type === b.type 
+            ? this.compareOrderAscending(a, b)
+            : this.compareTypeAscending(a, b)
+        })
+      }
+
+      return items.sort((a, b) => {
+        return this.compareOrderAscending(a, b)
+      })
+    }
+
+    return items
   }
 
   render () {
@@ -1377,9 +1517,17 @@ class Dashboard extends React.Component {
       )
     }
 
-    let updatedTime = this.state.updated[league]
-      ? this.state.updated[league].tabs
+    let items = this.sortItems()
+    let updatedTime = updated[league]
+      ? updated[league].tabs
       : '...'
+
+    if (items.length && this.state.filter) {
+      let filter = this.state.filter.toLowerCase()
+      items = items.filter(item => {
+        return item.lname.indexOf(filter) > -1
+      })
+    }
 
     return (
       <Grid 
@@ -1392,9 +1540,22 @@ class Dashboard extends React.Component {
           padding: 24,
           height: 'calc(100% - 74px)',
           margin: '74px 0 0 0',
-          overflow: 'auto'
+          overflow: 'auto',
+          alignContent: 'flex-start'
         }}
       >
+
+        <Grid item md={12} sm={12} xs={12} style={{ padding: '0 8px', textAlign: 'right' }}>
+          <Typography type="body1" component="p" style={{ 
+            fontSize: 11, 
+            fontWeight: 500, 
+            opacity: 0.5, 
+            color: blueGrey[400] 
+          }}>
+            Last Tab Update: {Ago(updatedTime)}
+          </Typography>
+        </Grid>
+
         <Grid
           item
           md={12}
@@ -1402,35 +1563,77 @@ class Dashboard extends React.Component {
           xs={12}
         >
           <Paper style={{ backgroundColor: blueGrey[600], padding: 16 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
+            <Grid
+              container
+              align="center"
+              justify="space-between"
+              direction="row"
             >
-              <Typography type="body1" component="p" style={{ fontSize: 24 }}>
-                <img 
-                  src="http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1"
-                  style={{ verticalAlign: 'middle' }}
-                />
+              <Grid item sm={6} xs={12}>
+                <Typography type="body1" component="p" style={{ fontSize: 24 }}>
+                  <img 
+                    src="http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1"
+                    style={{ verticalAlign: 'middle' }}
+                  />
 
-                ⨯ {this.state.netWorth.chaosTotal.toFixed(2)} (Total Net Worth)
-              </Typography>
+                  ⨯ {this.state.netWorth.chaosTotal.toFixed(2)} (Total Net Worth)
+                </Typography>
+              </Grid>
 
-              <Typography type="body1" component="p" style={{ fontSize: 12, color: blueGrey[400] }}>
-                Last Tab Update: {Ago(updatedTime)}
-              </Typography>
-
-              <div>
-                <Button onClick={this.handleRefreshTabsButtonClick.bind(this)}>Refresh Tabs</Button>
-                <Button onClick={this.handleRefreshPricesButtonClick.bind(this)}>Refresh Prices</Button>
-              </div>
-            </div>
+              <Grid item sm={6} xs={12} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button color="accent" onClick={this.handleRefreshTabsButtonClick.bind(this)}>Refresh Tabs</Button>
+                <Button color="accent" onClick={this.handleRefreshPricesButtonClick.bind(this)}>Refresh Prices</Button>
+              </Grid>
+            </Grid>
           </Paper>
         </Grid>
+        <Grid 
+          item
+          md={6}
+          sm={6}
+          xs={12}
+          style={{ justifyContent: 'flex-start' }}>
+          <Input
+            placeholder="Filter..."
+            style={{ width: '100%' }}
+            onKeyUp={(event) => {
+              this.setState({
+                filter: event.target.value
+              })
+            }}
+          />
+        </Grid>
+        <Grid 
+          item
+          md={6}
+          sm={6}
+          xs={12}
+          style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={this.state.sortByType}
+                  onChange={this.handleCheckbox('sortByType')}
+                  value="type"
+                />
+              }
+              label="Type"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={this.state.sortByWorth}
+                  onChange={this.handleCheckbox('sortByWorth')}
+                  value="worth"
+                />
+              }
+              label="Worth"
+            />
+          </FormGroup>
+        </Grid>
 
-        {this.state.netWorth.items.map(item => (
+        {items.map(item => (
           <Grid
             item
             key={item.name}
@@ -1455,6 +1658,7 @@ class Dashboard extends React.Component {
                     src={item.icon}
                     width={32}
                     style={{ verticalAlign: 'middle' }}
+                    title={item.name}
                   />
                   ⨯ {item.stackSize || 0}
                 </Typography>
@@ -1583,28 +1787,25 @@ class App extends React.Component {
         }
 
         // Pre-1.0.4b
+        // Clear configuration for localstorage
         if (localStorage.userData) {
-          let userData = JSON.parse(localStorage.userData)
-          let keys = Object.keys(userData)
-          if (keys && keys.forEach) {
-            keys.forEach(key => {
-              Config[key] = userData[key]
-            })
-            localStorage.removeItem('userData')
-            saveConfig()
-          }
+          localStorage.removeItem('userData')
         }
 
         // Pre-1.0.4b
+        // Clear configuration for localstorage
         if (localStorage.userConfig) {
-          let userConfig = JSON.parse(localStorage.userConfig)
-          let keys = Object.keys(userConfig)
+          localStorage.removeItem('userConfig')
+        }
+
+        // Pre-1.0.5b
+        // Clear configuration for localstorage
+        if (localStorage[ConfigKeys.ACCOUNT_COOKIE]) {
+          let keys = Object.keys(DefaultConfig())
           if (keys && keys.forEach) {
             keys.forEach(key => {
-              Config[key] = userConfig[key]
+              try { localStorage.removeItem(key) } catch (e) { }
             })
-            localStorage.removeItem('userConfig')
-            saveConfig()
           }
         }
 
@@ -1643,7 +1844,7 @@ class App extends React.Component {
       })
       .catch(error => {
         this.setLoadingMessage('Houston, we have a problem.')
-        console.error(error.message)
+        Log.error(`[App] Error occurred during load: ${error.message} - ${error.stack}`)
       })
   }
 

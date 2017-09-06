@@ -41,7 +41,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Currency Cop',
-      favicon: path.resolve(__dirname, 'src', 'assets', 'favicon.ico')
+      favicon: path.resolve(__dirname, 'build', 'icon.ico')
     }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('development')

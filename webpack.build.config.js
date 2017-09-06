@@ -39,11 +39,12 @@ module.exports = {
       }
     ]
   },
+  devtool: 'inline-source-map',
   target: 'electron-renderer',
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Currency Cop',
-      favicon: path.resolve(__dirname, 'src', 'assets', 'favicon.ico')
+      favicon: path.resolve(__dirname, 'build', 'icon.ico')
     }),
     new ExtractTextPlugin('bundle.css'),
     new webpack.DefinePlugin({

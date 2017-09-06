@@ -8,6 +8,8 @@ module.exports = {
   POE_STASH_ITEMS_URL: `https://www.pathofexile.com/character-window/get-stash-items`,
 
   POE_COOKIE_NAME: 'POESESSID',
+  POE_COOKIE_REGEXP: /^[0-9A-Fa-f]{32}$/,
+
   POE_ACCOUNT_NAME_REGEXP: /\/account\/view-profile\/(.*?)\"/,
 
   NINJA_CURRENCY_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetCurrencyOverview',

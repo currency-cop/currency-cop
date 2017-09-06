@@ -17,8 +17,8 @@ h1 {
 }
 
 a {
-  color: #B0BEC5;
-  text-decoration: none
+  color: rgb(244, 224, 179);
+  text-decoration: none;
 }
 
 a:hover {
