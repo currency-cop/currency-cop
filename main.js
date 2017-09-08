@@ -1,7 +1,8 @@
 'use strict';
 
 // Import parts of electron to use
-const {app, BrowserWindow, ipcMain} = require('electron');
+const {app, BrowserWindow, ipcMain, dialog} = require('electron')
+const {autoUpdater} = require("electron-updater")
 const path = require('path')
 const url = require('url')
 const axios = require('axios')
@@ -16,7 +17,9 @@ if ( process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) 
   dev = true;
 }
 
-function createWindow() {
+function createWindow () {
+  autoUpdater.checkForUpdates()
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
     title: 'Currency Cop',
@@ -78,6 +81,58 @@ function createWindow() {
       })
   })
 }
+
+// Configure autoupdater
+autoUpdater.autoDownload = false
+
+// Listen
+autoUpdater.on('checking-for-update', () => {
+})
+
+autoUpdater.on('update-available', (info) => {
+  console.log(info)
+
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Found Updates',
+    message: 'Found updates, do you want update now?',
+    buttons: ['Sure', 'No']
+  }, (buttonIndex) => {
+    if (buttonIndex === 0) {
+      autoUpdater.downloadUpdate()
+    } else {
+      // updater.enabled = true
+      // updater = null
+    }
+  })
+})
+
+autoUpdater.on('update-not-available', (info) => {
+  dialog.showMessageBox({
+    title: 'No Updates',
+    message: 'Current version is up-to-date.'
+  })
+})
+
+autoUpdater.on('error', (err) => {
+  dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString())
+})
+
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  console.log(log_message)
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+  dialog.showMessageBox({
+    title: 'Install Updates',
+    message: 'Updates downloaded, application will be quit for update...'
+  }, () => {
+    setImmediate(() => autoUpdater.quitAndInstall())
+  })
+})
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

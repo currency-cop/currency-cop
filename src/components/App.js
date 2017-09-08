@@ -203,7 +203,7 @@ function DoServerRequest (options) {
       if (response.status > 200) {
         // The request was made and the server responded with a status code
         // that is not 200
-        ApiLog.warn(`Non 2xx request for [${options.url}]: ${JSON.stringify(response.data)}`)
+        ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
       }
 
       return resolve(response)
@@ -213,7 +213,7 @@ function DoServerRequest (options) {
       if (error.response) {
         // The request was made and the server responded with a status code 
         // that falls out of the range of 2xx
-        ApiLog.warn(`Non 2xx request for [${options.url}]: ${JSON.stringify(response.data)}`)
+        ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
       } else if (error.request) {
         // The request was made but no response was received 
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of 
@@ -1038,13 +1038,23 @@ class Dashboard extends React.Component {
         return this.fetchLeagueStashTabs(league)
       })
       .then(response => {
-        if (response.status != 404) {
+        if (response.status === 200) {
           return response
         }
 
-        throw ({
-          loading: `No tabs found in ${league} league. Try another one? 🤷`
-        })
+        if (response.status === 404) {
+          throw ({
+            loading: `No tabs found in ${league} league. Try another one? 🤷`
+          })
+        }
+
+        if (response.status === 403) {
+          document.dispatchEvent(new Event('ClearConfig'))
+
+          throw ({
+            notification: `Session has expired. Logging you out.`
+          })
+        }
       })
       .then(response => {
         return this.setState({
@@ -1102,6 +1112,12 @@ class Dashboard extends React.Component {
         return this.saveData()
       })
       .catch(error => {
+        if (error.notification) {
+          return document.dispatchEvent(new CustomEvent('AppNotification', {
+            detail: error.notification
+          }))
+        }
+
         if (error.loading) {
           return this.setState({
             loading: error.loading
@@ -1139,6 +1155,14 @@ class Dashboard extends React.Component {
             return this.handleStashTabFetching(league, queue, tab, tabs, delay + 60000)
           }
 
+          if (response.status === 403) {
+            document.dispatchEvent(new Event('ClearConfig'))
+
+            throw ({
+              notification: 'Session expired. You have been logged out.'
+            })
+          }
+
           return response.data
         })
         .then(response => {
@@ -1165,6 +1189,27 @@ class Dashboard extends React.Component {
       })
       .then(() => {
         return this.fetchLeagueStashTabs(league)
+      })
+      .then(response => {
+        if (response.status === 200) {
+          return response
+        }
+
+        if (response.status === 404) {
+          throw ({
+            loading: `No tabs found in ${league} league. Try another one? 🤷`
+          })
+        }
+
+        if (response.status === 403) {
+          throw ({
+            notification: `Session expired 🤷`
+          })
+        }
+
+        throw ({
+
+        })
       })
       .then(response => {
         return this.setState({
@@ -1222,8 +1267,23 @@ class Dashboard extends React.Component {
         return this.saveData()
       })
       .catch(error => {
-        Log.error(`Error occurred during tab refresh: ${error.message} - ${error.stack}`)
-        // TODO: Add toast for errors
+        if (error.notification) {
+          return document.dispatchEvent(new CustomEvent('AppNotification', {
+            detail: error.notification
+          }))
+        }
+
+        if (error.loading) {
+          return this.setState({
+            loading: error.loading
+          })
+        }
+
+        Log.critical(`[Dashboard] An error occurred during tab refetching: ${error.message} - ${error.stack}`)
+        this.setState({
+          loading: `Error Occurred... find the log file at ${logsDataPath} and send it to "ComfyGangsta" on the forums!`,
+          error: error.message
+        })
       })
   }
 
@@ -1759,13 +1819,37 @@ class App extends React.Component {
     }
   }
 
+  componentWillMount () {
+    document.addEventListener('ClearConfig', event => {
+      this.clearConfig()
+    })
+
+    document.addEventListener('AppNotification', event => {
+      this.setState({
+        globalSnackMessage: event.detail
+      })
+
+      setTimeout(() => {
+        this.setState({
+          globalSnackMessage: null
+        })
+      }, 5000)
+    })
+
+    return this.load()
+  }
+
+  componentWillUnmount () {
+    document.removeEventListener('AppNotification')
+  }
+
   setLoadingMessage (message) {
     this.setState({
       loading: message
     })
   }
 
-  componentWillMount () {
+  load () {
     return Promise.resolve()
       .then(() => {
         this.setLoadingMessage('Welcome back!')
@@ -1839,6 +1923,10 @@ class App extends React.Component {
         if (response) {
           this.updateConfig(ConfigKeys.ACCOUNT_CHARACTERS, response.data)
         }
+
+        document.dispatchEvent(new CustomEvent('AppNotification', {
+          message: 'Testing!'
+        }))
 
         this.setLoadingMessage('[ Currency Cop ]')
 
@@ -1927,6 +2015,15 @@ class App extends React.Component {
             leagues={this.state.leagues}
             league={league}
             updateConfig={this.updateConfig.bind(this)}
+          />
+
+          <Snackbar
+            open={!!this.state.globalSnackMessage}
+            onRequestClose={this.handleSnackRequestClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            message={(
+              <span id="global-message-id">{this.state.globalSnackMessage}</span>
+            )}
           />
         </withTheme>
       </MuiThemeProvider>
