@@ -454,6 +454,7 @@ class LeagueDropdown extends React.Component {
     return (
       <div>
         <Button
+          dense
           aria-owns={this.state.open ? 'simple-menu' : null}
           aria-haspopup="true"
           onClick={this.handleButtonClick}
@@ -682,7 +683,7 @@ class LoginButton extends React.Component {
 
     return (
       <div className="account-actions">
-        <Button onClick={this.handleLoginButtonClick}>Login</Button>
+        <Button dense onClick={this.handleLoginButtonClick}>Login</Button>
 
         <Snackbar
           open={this.state.snackOpen}
@@ -706,7 +707,7 @@ class LoginButton extends React.Component {
 class LogoutButton extends React.Component {
   render () {
     return (
-      <Button onClick={this.props.onClick}>
+      <Button dense onClick={this.props.onClick}>
         {this.props.children}
       </Button>
     )
@@ -1273,7 +1274,7 @@ class Dashboard extends React.Component {
     let cookie = this.props.config[ConfigKeys.ACCOUNT_COOKIE]
 
     return GetLeagueStashTab(cookie, {
-      accountName: encodeURIComponent(account),
+      accountName: account,
       tabIndex: 0,
       league: league,
       tabs: 1
@@ -1285,7 +1286,7 @@ class Dashboard extends React.Component {
     let cookie = this.props.config[ConfigKeys.ACCOUNT_COOKIE]
 
     return GetLeagueStashTab(cookie, {
-      accountName: encodeURIComponent(account),
+      accountName: account,
       tabIndex: index,
       league: league,
       tabs: 0
@@ -1467,7 +1468,11 @@ class Dashboard extends React.Component {
     }
 
     if (!this.props.config[ConfigKeys.ACCOUNT_COOKIE]) {
-      message = '<span style="font-size: 24px">👋 Welcome to Currency Cop for Path of Exile!</span><br /><br />First, login to calculate your 💸 net worth! '
+      message = `
+        <span style="font-size: 24px">👋 Welcome to Currency Cop for Path of Exile!</span>
+        <br /><br />
+        <span>First, login to calculate your 💸 net worth!</span>
+      `
     }
 
     if (message) {
@@ -1479,7 +1484,8 @@ class Dashboard extends React.Component {
           direction="column"
           spacing={0} 
           style={{
-            height: 'calc(100% - 74px)'
+            height: 'calc(100% - 74px)',
+            marginTop: 74
           }}
         >
         <Grid item>
