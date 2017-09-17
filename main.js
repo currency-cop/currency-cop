@@ -19,11 +19,15 @@ if ( process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) 
 
 function createWindow () {
   autoUpdater.checkForUpdates()
+    .catch(e => {
+      console.log('No updates found...')
+    })
 
   // Create the browser window.
   mainWindow = new BrowserWindow({
     title: 'Currency Cop',
     icon: __dirname + '/resources/icon.ico',
+    backgroundColor: 'rgb(25, 25, 25)',
     width: 1024,
     height: 768,
     show: false,
@@ -83,10 +87,16 @@ function createWindow () {
 }
 
 // Configure autoupdater
+let platform = process.platform === 'darwin'
+  ? 'osx'
+  : 'windows'
+
 autoUpdater.autoDownload = false
+autoUpdater.setFeedURL(`https://poe.technology/update/${platform}/${app.getVersion()}`)
 
 // Listen
-autoUpdater.on('checking-for-update', () => {
+autoUpdater.on('checking-for-update', (info) => {
+  console.log('checking...', info)
 })
 
 autoUpdater.on('update-available', (info) => {
@@ -143,15 +153,13 @@ app.on('ready', createWindow);
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+  app.quit()
+})
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
-    createWindow();
+    createWindow()
   }
-});
+})

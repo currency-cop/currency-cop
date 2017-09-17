@@ -42,6 +42,7 @@ function logger(options){
   var _logdir = options.logdir || 'logger';
   var _withtime = options.withtime != null ? options.withTime : true;
   var _destination = (options.destination || 'both').toLowerCase();
+  var _context = options.context || null
 
   // Setup state variables in terms of configuration
   var _debugMode = process.env.NODE_DEBUG && process.env.NODE_DEBUG.indexOf(_section)>=0;
@@ -92,6 +93,7 @@ function logger(options){
     _logdir = options.logdir || 'logger';
     _withtime = options.withtime != null ? options.withTime : true;
     _destination = (options.destination || 'both').toLowerCase();
+    _context = options.context || null
   }
 
   function createLogFn(type, name) {
@@ -100,7 +102,7 @@ function logger(options){
       var rst = _generateOutputString(type, name, arguments); 
       _tofile(_log_name_status(rst.length+1),rst+'\n',function(err){ if (err) console.error(err)} );
       type = _console[type] ? type : 'error'
-      _console[type].apply(null,[rst]);
+      _console[type].apply(_context,[rst]);
     }
   }
 
@@ -172,6 +174,13 @@ function logger(options){
       return true;
     }
     return false;
+  }
+
+  this.getCurrentLogsFile = function () {
+    var this_period = _dateStr();
+    return fs.readFileSync((_dateform) 
+      ? path.join(_logdir,'log-'+this_period+'.'+_cnt) 
+      : path.join(_logdir,_logname+'.'+_cnt))
   }
 
   function _log_name_status(new_size){ 

@@ -1,6 +1,6 @@
 {
   "name": "currency-cop",
-  "version": "1.1.0-beta2",
+  "version": "1.2.0-beta1",
   "description": "Calculate Net Worth in Path of Exile",
   "author": "Nijiko Yonskai",
   "license": "MIT",
@@ -29,11 +29,10 @@
     "electron": "^1.6.7",
     "electron-builder": "^19.27.3",
     "electron-packager": "^8.7.0",
-    "electron-updater": "^2.8.9",
     "extract-text-webpack-plugin": "^2.1.0",
     "file-loader": "^0.11.1",
     "html-webpack-plugin": "^2.28.0",
-    "material-ui": "^1.0.0-beta.8",
+    "material-ui": "^1.0.0-beta.10",
     "material-ui-icons": "^1.0.0-beta.5",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
@@ -43,7 +42,9 @@
     "webpack-dev-server": "^2.4.5"
   },
   "dependencies": {
-    "axios": "^0.16.2"
+    "axios": "^0.16.2",
+    "tiny-emitter": "^2.0.2",
+    "electron-updater": "^2.8.9"
   },
   "build": {
     "appId": "org.nijiko.made.CurrencyCop",
@@ -55,6 +56,10 @@
       "main.js",
       "package.json"
     ],
+    "publish": {
+      "provider": "generic",
+      "url": "https://poe.technology/update/${os}"
+    },
     "win": {
       "target": [
         "nsis",

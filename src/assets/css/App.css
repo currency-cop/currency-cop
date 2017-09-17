@@ -1,5 +1,5 @@
 body, html {
-  background: hsl(200, 19%, 18%);
+  background: hsl(0, 0%, 10%);
   color: white;
   margin: 0;
   height: 100%;
@@ -17,18 +17,281 @@ h1 {
 }
 
 a {
-  color: rgb(244, 224, 179);
+  color: rgba(83, 211, 154, 1.0);
   text-decoration: none;
 }
 
 a:hover {
-  color: #ECEFF1
+  color: #FFF
 }
 
-.navbar {
+/* Paper */
+.MuiDialog-paper-413,
+.MuiMenu-root-446 {
+  background: hsl(222, 2%, 17%) !important;
+}
+
+/* Buttons */
+.btn-border {
+  color: rgba(255,255,255,0.5) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+.btn-border:hover {
+  color: white !important;
+}
+
+/* Header */
+.navbar,
+.draggable {
   -webkit-app-region: drag
 }
 
-.account-actions {
+.account-actions,
+.not-draggable {
   -webkit-app-region: no-drag
+}
+
+.header-logo {
+  width: 32px;
+  position: relative;
+  top: 4px;
+  margin-right: 8px;
+}
+
+.header-title {
+  position: relative;
+  top: -14px;
+  font-size: 32px !important;
+}
+
+/* App control */
+.app-control {
+  position: fixed;
+  z-index: 99999;
+  top: 10px;
+  right: 15px;
+}
+
+.app-control div {
+  width: 10px;
+  height: 10px;
+  background: #646870;
+  display: inline-block;
+  border-radius: 50px;
+  margin-right: 8px;
+}
+
+.app-control div:hover {
+  cursor: pointer;
+}
+
+.app-control .close-control:hover {
+  background: #ef5350
+}
+
+.app-control .minimize-control:hover {
+  background: #fff59d;
+}
+
+.app-control .fullscreen-control:hover {
+  background: #81c784
+}
+
+/* Tabs */
+.tab-selector:hover {
+  cursor: pointer;
+}
+
+.tab-selector {
+  border: 2px solid rgba(255,255,255,0.2);
+  padding: 2px 24px 1px !important;
+  border-radius: 30px !important;
+}
+
+/* Report Listing */
+.report-list {
+  margin: 0 !important;
+}
+
+.report-item {
+  padding: 15px !important;
+  background: hsl(0, 0%, 17%);
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  display: flex;
+}
+
+.report-item:hover {
+  cursor: pointer;
+  background: hsl(0, 0%, 20%);
+}
+
+.report-item .report-name {
+  color: white;
+  line-height: 32px;
+  font-size: 24px;
+}
+
+.report-item .report-title {
+  flex: 1;
+}
+
+.report-item .report-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+}
+
+.report-item .report-item-meta {
+  text-align: right;
+}
+
+.report-item .amount {
+  font-size: 32px !important;
+  line-height: 32px;
+  text-transform: uppercase;
+  color: rgba(97, 98, 97, 1.0);
+}
+
+.report-item .amount.loading {
+  height: 20px;
+  border-radius: 3px;
+  animation-duration: 2s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-name: reportItemLargeShimmer;
+  animation-timing-function: linear;
+
+  background: hsla(0, 0%, 100%, 0.05);
+  background-image: linear-gradient(to left, 
+    hsla(0, 0%, 100%, 0.05) 0%,
+    hsla(0, 0%, 100%, 0.06) 20%,
+    hsla(0, 0%, 100%, 0.05) 40%, 
+    hsla(0, 0%, 100%, 0.05) 100%
+  );
+}
+
+.report-item .amount span {
+  color: rgba(97, 98, 97, 1.0)
+}
+
+.report-item .change {
+  color: hsla(223, 10%, 100%, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+}
+
+.report-item .change.loading {
+  width: 80%;
+  height: 20px;
+  border-radius: 3px;
+  animation-duration: 2s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-name: reportItemSmallShimmer;
+  animation-timing-function: linear;
+
+  background: hsla(0, 0%, 100%, 0.05);
+  background-image: linear-gradient(to left, 
+    hsla(0, 0%, 100%, 0.05) 0%,
+    hsla(0, 0%, 100%, 0.06) 20%,
+    hsla(0, 0%, 100%, 0.05) 40%, 
+    hsla(0, 0%, 100%, 0.05) 100%
+  );
+}
+
+.report-item .report-league {
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+}
+
+/* Report */
+.report-screen .report-title {
+  font-size: 16px;
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.report-screen .report-items {
+  margin: 8px 0 !important;
+  overflow: auto;
+  height: calc(100vh - 292px - 16px - 65px);
+  transform: translateZ(0);
+  width: 100% !important;
+  align-content: flex-start;
+}
+
+.paper-box,
+div[class*="MuiDialog-paper"],
+div[class*="MuiMenu-root"] {
+  background: hsl(0, 0%, 17%) !important;
+}
+
+.report-screen .report-total {
+  /* padding-bottom: 32px !important; */
+  /* border-bottom: 1px solid hsla(0, 0%, 100%, 0.05); */
+  padding: 32px !important;
+  background: hsla(0, 0%, 100%, 0.05) !important;
+  box-shadow: none !important;
+}
+
+.report-screen .report-total-difference {
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  background: hsla(0, 0%, 100%, 0.05);
+  border-radius: 3px;
+  margin-right: 8px !important;
+  margin-left: 54px !important;
+  color: hsl(0, 0%, 40%) !important;
+}
+
+.report-screen .report-total-difference.up,
+.change.up {
+  color: rgba(143, 211, 49, 1.0) !important;
+}
+
+.report-screen .report-total-difference.down,
+.change.down {
+  color: rgba(255, 72, 83, 1.0) !important;
+}
+
+.report-screen .report-screen-item {
+  background: hsl(0, 0%, 13%) !important;
+  box-shadow: none !important;
+}
+
+.report-form-control {
+  margin-top: 16px !important;
+}
+
+.report-form-tabs-list {
+  margin-bottom: 24px !important;
+}
+
+/* MUI */
+div[class*="MuiInput-underline"]:before {
+  background-color: hsla(0, 0%, 100%, 0.05) !important;
+}
+
+span[class*="MuiSwitch-checked"] + div[class*="MuiSwitch-bar"] {
+  background-color: hsl(222, 80%, 47%) !important;
+}
+
+span[class*="MuiSwitch-checked"] {
+  color: hsl(222, 80%, 47%) !important;
+}
+
+/* Animations */
+@keyframes reportItemLargeShimmer {
+  0% { background-position: -298px 0 }
+  100% {  background-position: 298px 0 }
+}
+
+@keyframes reportItemSmallShimmer {
+  0% { background-position: -238px 0 }
+  100% {  background-position: 238px 0 }
 }

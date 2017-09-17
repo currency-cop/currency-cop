@@ -3,8 +3,9 @@ import '../assets/css/App.css'
 import Constants from '../constants'
 
 // Third Party
-import { ipcRenderer, shell, remote } from 'electron'
+import { ipcRenderer, shell, remote, clipboard } from 'electron'
 import React, { Component } from 'react'
+import Emitter from 'tiny-emitter'
 import Logger from '../logger'
 import Axios from 'axios'
 import Queue from '../queue'
@@ -14,33 +15,81 @@ import fs from 'fs'
 
 // Material UI
 import { MuiThemeProvider, createMuiTheme, withTheme, withStyles } from 'material-ui/styles'
-import { FormGroup, FormControlLabel } from 'material-ui/Form'
-import Checkbox from 'material-ui/Checkbox'
-import Dialog, { DialogActions, DialogContent, DialogContentText, DialogTitle } from 'material-ui/Dialog'
-import List, { ListItem, ListItemText } from 'material-ui/List'
-import Menu, { MenuItem } from 'material-ui/Menu'
-import Radio, { RadioGroup } from 'material-ui/Radio'
-import Input from 'material-ui/Input/Input'
-import Grid from 'material-ui/Grid'
+import { DialogActions, DialogContent, DialogContentText, DialogTitle } from 'material-ui/Dialog'
+import { FormGroup, FormControl, FormControlLabel, FormHelperText } from 'material-ui/Form'
+import { ListItem, ListItemText } from 'material-ui/List'
+import { RadioGroup } from 'material-ui/Radio'
+import { InputLabel } from 'material-ui/Input'
+import { MenuItem } from 'material-ui/Menu'
 import Paper from 'material-ui/Paper'
-import AppBar from 'material-ui/AppBar'
-import Toolbar from 'material-ui/Toolbar'
-import Typography from 'material-ui/Typography'
-import IconButton from 'material-ui/IconButton'
-import MenuIcon from 'material-ui-icons/Menu'
-import Button from 'material-ui/Button'
-import TextField from 'material-ui/TextField'
-import Snackbar from 'material-ui/Snackbar'
-import Divider from 'material-ui/Divider'
 
-// Material UI Colors
-import blueGrey from 'material-ui/colors/blueGrey'
-import orange from 'material-ui/colors/orange'
+import {
+  AppBar, Toolbar, IconButton, MenuIcon,
+  Button, Typography, Input, Grid, Snackbar,
+  Menu, Checkbox, Radio, List, Dialog, TextField,
+  Select, Switch
+} from 'material-ui'
+
+// Icons
+import KeyboardArrowLeftIcon from 'material-ui-icons/KeyboardArrowLeft'
+import SettingsIcon from 'material-ui-icons/Settings'
+
+// App Environment
+const AppVersion = process.env.npm_package_version
+
+// App Theme
+const theme = createMuiTheme({
+  palette: {
+    type: 'dark',
+    primary: {
+      50: '#e4e5e7',
+      100: '#bdbec2',
+      200: '#919399',
+      300: '#646870',
+      400: '#434752',
+      500: '#222733',
+      600: '#1e232e',
+      700: '#191d27',
+      800: '#141720',
+      900: '#0c0e14',
+      A100: '#a7d2ff',
+      A200: '#74b7ff',
+      A400: '#419dff',
+      A700: '#288fff',
+      'contrastDefaultColor': 'light',
+    },
+    secondary: {
+      50: '#edeef0',
+      100: '#d1d6da',
+      200: '#b2bac1',
+      300: '#939ea8',
+      400: '#7c8a96',
+      500: '#657583',
+      600: '#5d6d7b',
+      700: '#536270',
+      800: '#495866',
+      900: '#374553',
+      A100: '#5874ff',
+      A200: '#254aff',
+      A400: '#0028f1',
+      A700: '#0024d8',
+      'contrastDefaultColor': 'light',
+    },
+    background: {
+      paper: '#222733',
+      default: '#191d27'
+    }
+  }
+})
+
+// Configure Event System
+const events = new Emitter()
 
 // Application folder location
 const userDataPath = remote.app.getPath('userData')
 const logsDataPath = path.join(userDataPath, 'Logs')
-const userConfigFilename = path.join(userDataPath, 'User.db')
+const reportsFilename = path.join(userDataPath, 'Reports.db')
+const configFilename = path.join(userDataPath, 'User.db')
 
 // Configure Logger
 const logger = new Logger({
@@ -48,50 +97,36 @@ const logger = new Logger({
   level: 1
 })
 
-// Create Core Loggers
+// Create Loggers
 const Log = logger.topic('Core')
 const ConfigLog = logger.topic('Config')
 const ApiLog = logger.topic('API')
+const EventLog = logger.topic('Events')
 
 // Capture uncaught errors
 process.on('uncaughtException', function (error) {
+  events.emit('notification', {
+    message: 'Unexpected error occurred.',
+    action: CopyLogsButton
+  })
+
   Log.critical(`Uncaught error: ${error.message} - ${error.stack}`)
 })
 
-// Configuration
+// Enums
 let ConfigKeys = {
   ACCOUNT_COOKIE:                       'ACCOUNT_COOKIE',
-  ACCOUNT_LEAGUE_INDEX:                 'ACCOUNT_LEAGUE_INDEX',
-  ACCOUNT_USERNAME:                     'ACCOUNT_USERNAME',
-  ACCOUNT_CHARACTERS:                   'ACCOUNT_CHARACTERS',
-  ACCOUNT_CHARACTER_INDEX:              'ACCOUNT_CHARACTER_INDEX',
-  ACCOUNT_NET_WORTH:                    'ACCOUNT_NET_WORTH',
-  ACCOUNT_STASHES:                      'ACCOUNT_STASHES',
-  ACCOUNT_TABS:                         'ACCOUNT_TABS',
-  ACCOUNT_LAST_UPDATE:                  'ACCOUNT_LAST_UPDATE',
-  NINJA_PRICES:                         'NINJA_PRICES'
+  ACCOUNT_USERNAME:                     'ACCOUNT_USERNAME'
 }
 
-let DefaultConfig = function () {
+// Helpers
+function DefaultConfig () {
   return {
     [ConfigKeys.ACCOUNT_COOKIE]:              null,
-    [ConfigKeys.ACCOUNT_LEAGUE]:              null,
-    [ConfigKeys.ACCOUNT_LEAGUE_INDEX]:        null,
     [ConfigKeys.ACCOUNT_USERNAME]:            null,
-    [ConfigKeys.ACCOUNT_CHARACTERS]:          null,
-    [ConfigKeys.ACCOUNT_CHARACTER_INDEX]:     null,
-    [ConfigKeys.ACCOUNT_NET_WORTH]:           null,
-    [ConfigKeys.ACCOUNT_STASHES]:             null,
-    [ConfigKeys.ACCOUNT_TABS]:                null,
-    [ConfigKeys.NINJA_PRICES]:                null,
-    [ConfigKeys.ACCOUNT_LAST_UPDATE]:         null
   }
 }
 
-// Config
-let Config = DefaultConfig()
-
-// Helpers
 function UUID () {
   return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36)
 }
@@ -115,66 +150,70 @@ function getNinjaDate () {
   ].join('-')
 }
 
+function clone (obj) {
+  return JSON.parse(JSON.stringify(obj))
+}
+
+function getPercentageChange (a, b) {
+  let change = parseFloat((((b - a) / a) * 100).toFixed(2))
+  let direction = change < 0
+    ? 'down'
+    : change > 0
+    ? 'up'
+    : null
+  let absChange = Math.abs(change)
+
+  return {
+    change,
+    absChange,
+    direction
+  }
+}
+
+// Class
+class DataFile {
+  constructor (type, filename) {
+    this.filename = filename
+    this.log = logger.topic(type)
+  }
+
+  load (defaults) {
+    try {
+      this.log.info(`Loading file from: ${this.filename}`)
+      return JSON.parse(fs.readFileSync(this.filename))
+    } catch(error) {
+      this.log.warn(`File could not be loaded: ${error.message}`)
+      return defaults
+    }
+  }
+
+  save (data) {
+    try {
+      this.log.info(`Saving file: ${this.filename}`)
+      fs.writeFileSync(this.filename, JSON.stringify(data))
+    } catch (error) {
+      this.log.critical(`Could not save file: ${error.message}`)
+    }
+  }
+}
+
+// Global Objects
+let Config = DefaultConfig()
+let Reports = {}
+
+// Files
+let ConfigFile = new DataFile('Config', configFilename)
+let ReportFile = new DataFile('Report', reportsFilename)
+
 // Configuration Helpers
-function loadConfig () {
-  try {
-    ConfigLog.info(`Loading configuration file from: ${userConfigFilename}`)
-    Config = JSON.parse(fs.readFileSync(userConfigFilename))
-  } catch(error) {
-    Config = DefaultConfig()
-    ConfigLog.warn(`Could not load configuration file: ${error.message}`)
-  }
-}
-
-function saveConfig () {
-  try {
-    ConfigLog.info(`Saving configuration file to: ${userConfigFilename}`)
-    fs.writeFileSync(userConfigFilename, JSON.stringify(Config))
-  } catch (error) {
-    ConfigLog.critical(`Could not save configuration file: ${error.message}`)
-  }
-}
-
-function clearConfig () {
-  try {
-    ConfigLog.info(`Clearing configuration file at: ${userConfigFilename}`)
-    Config = JSON.parse(JSON.stringify(DefaultConfig))
-    saveConfig()
-  } catch (error) {
-    ConfigLog.critical(`Could not clear configuration file: ${error.message}`)
-  }
-}
-
-function setConfig (key, value) {
-  try {
-    ConfigLog.info(`Updating configuration key [${key}] in: ${userConfigFilename}`)
-    Config[key] = value
-    saveConfig()
-  } catch (error) {
-    ConfigLog.critical(`Could not update configuration key [${key}]: ${error.message}`)
-  }
-}
-
 function getConfig (key) {
   try {
     return Config[key]
   } catch (error) {
-    ConfigLog.warn(`Could not get configuration key [${key}] from config: ${error.message}`)
+    Log.warn(`Could not get configuration key [${key}] from config: ${error.message}`)
     return null
   }
 }
-
-// App Theme
-const theme = createMuiTheme({
-  palette: {
-    type: 'dark',
-    primary: blueGrey,
-    secondary: blueGrey,
-    background: {
-      paper: blueGrey[700]
-    }
-  }
-})
 
 // Api
 function GoToUrl (url, event) {
@@ -195,7 +234,9 @@ function DoServerRequest (options) {
   options.onError += `_${uuid}`
 
   // Make request
-  ApiLog.debug(`Making HTTP request to: ${options.url}`)
+  console.debug(`Making HTTP request to: ${options.url}`)
+  console.debug(`Request options`, options)
+
   ipcRenderer.send('HTTP_REQUEST', options)
 
   return new Promise((resolve, reject) => {
@@ -342,6 +383,430 @@ function GetFragmentOverview (league, date) {
   })
 }
 
+// API Classes
+class ReportBuilder {
+  constructor (options) {
+    this.additionalDelay = 60000
+    this.cookie = options.cookie
+    this.account = options.account
+    this.settings = options.settings
+    this.data = options.data
+    this.history = options.history || []
+    this.interval = null
+    this.fetching = false
+    this.id = UUID()
+  }
+
+  notice (message) {
+    let reportName = this.settings.name
+
+    events.emit('notification', {
+      message: `[${reportName}] ${message}`
+    })
+  }
+
+  enableAutoRefresh () {
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
+
+    if (this.settings.autoRefresh) {
+      Log.info(`Enabling auto-refresh for [${this.settings.name}] interval of [${this.settings.autoRefreshInterval}]`)
+      this.interval = setInterval(() => {
+        Log.info(`Refreshing [${this.settings.name}]`)
+        return this.refresh()
+      }, this.settings.autoRefreshInterval)
+    }
+  }
+
+  updateSettings (settings, fetchImmediately) {
+    let previous = this.settings
+    this.settings = settings
+    this.enableAutoRefresh()
+
+    if (fetchImmediately) {
+      this.refresh()
+    }
+  }
+
+  refresh () {
+    return this.fetch()
+      .then(() => {
+        events.emit('update_report', {
+          report: this
+        })
+      })
+  }
+
+  buildItem (data) {
+    let item = {}
+
+    item.name = data.lineItem.currencyTypeName || data.lineItem.name
+    item.lname = item.name.toLowerCase()
+    item.icon = data.lineItem.icon || data.details.icon
+    item.chaosValue = data.lineItem.chaosEquivalent || data.lineItem.chaosValue
+    item.orderId = data.details.poeTradeId || data.lineItem.id
+    item.type = data.type
+
+    return item
+  }
+
+  fetchTabsList () {
+    return new Promise((resolve, reject) => {
+      return GetLeagueStashTab(this.cookie, {
+        accountName: this.account,
+        tabIndex: 0,
+        league: this.settings.league,
+        tabs: 1
+      }).then(response => {
+        if (response.status === 404) {
+          this.notice(`No tabs found in ${league} league. Try another one? 🤷`)
+        }
+
+        if (response.status === 403) {
+          events.emit('clear_config')
+          this.notice(`Session expired. You have been logged out.`)
+        }
+
+        if (!response.data || !response.data.tabs) {
+          this.notice(`No tabs found in ${league} league. Try another one? 🤷`)
+        } else if (response.status === 200) {
+          return response
+        }
+
+        throw (null)
+      }).then(response => {
+        this.data.stashTabs = response.data.tabs
+        return resolve()
+      })
+      .catch(err => {
+        throw err
+      })
+    })
+  }
+
+  fetchTabs () {
+    let queue = new Queue(1)
+    let stash = this.data.stashTabs
+
+    for (var i = 0; i < stash.length; i++) {
+      let tab = this.data.stashTabs[i]
+
+      // Ignore hideout tabs
+      if (tab.hidden) 
+        continue
+
+      // Ignore non-indexed tabs
+      if (this.settings.tabsToSearch.indexOf(i) < 0) 
+        continue
+
+      // Ignore tab without data
+      if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
+        continue
+
+      this.fetchTab(queue, tab)
+    }
+
+    return queue.push(() => {
+      return true
+    })
+  }
+
+  fetchTab (queue, tab, delay) {
+    delay = delay || 1350 // 60 / 45 (rate limited)
+    queue.unshift(() => new Promise((resolve, reject) => {
+      return promiseDelay(delay)
+        .then(() => {
+          this.notice(`Fetching tab ${tab.n}...`)
+        })
+        .then(() => {
+          return GetLeagueStashTab(this.cookie, {
+            accountName: this.account,
+            tabIndex: tab.i,
+            league: this.settings.league,
+            tabs: 0
+          })
+        })
+        .then(response => {
+          if (response.status === 429) {
+            this.notice(`Ooohwee, too many requests Jerry! Gonna have to wait a minute for tab ${tab.n}!`)
+            return this.fetchTab(queue, tab, delay + this.additionalDelay)
+          }
+
+          if (response.status === 403) {
+            events.emit('clear_config')
+            this.notice(`Session expired. You have been logged out.`)
+            throw (null)
+          }
+
+          if (!response) {
+            return resolve()
+          }
+
+          return response.data
+        })
+        .then(response => {
+          tab.items = response.items
+          return resolve()
+        })
+    }))
+  }
+
+  fetchRates () {
+    return Promise.resolve()
+      .then(() => this.notice('Fetching currency rates...'))
+      .then(() => (this.data.rates = []))
+      .then(() => this.fetchCurrencyRates())
+      .then(() => this.fetchEssenceRates())
+      .then(() => this.fetchFragmentRates())
+  }
+
+  fetchEssenceRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetEssenceOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+            ? this.fetchEssenceRates(queue)
+            : this.processFetchedRates('essence', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchFragmentRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetFragmentOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchFragmentRates(queue)
+              : this.processFetchedRates('fragment', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchCurrencyRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetCurrencyOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+            ? this.fetchCurrencyRates(queue)
+            : this.processFetchedRates('currency', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  processFetchedRates (type, data) {
+    return new Promise((resolve, reject) => {
+      let rates = this.data.rates || []
+
+      let rateExists = (itemName) => {
+        let litemName = itemName.toLowerCase()
+        return rates.find(value => value.lname === litemName)
+      }
+
+      let getCurrencyDetailsItem = (itemName) => {
+        return data.currencyDetails.find(value => value.name === itemName)
+      }
+
+      let getLineItemName = (lineItem) => {
+        return data.currencyDetails
+          ? lineItem.currencyTypeName
+          : lineItem.name
+      }
+
+      if (data.lines && data.lines.forEach) {
+        data.lines.forEach(lineItem => {
+          let exists = rateExists(getLineItemName(lineItem))
+
+          // Entry already exists
+          if (exists) {
+            return
+          }
+
+          let details = data.currencyDetails
+            ? getCurrencyDetailsItem(lineItem.currencyTypeName)
+            : {}
+
+          rates.push(this.buildItem({
+            lineItem,
+            details,
+            type
+          }))
+        })
+      }
+
+      this.data.rates = rates
+
+      return resolve()
+    })
+  }
+
+  build (type, data) {
+    let tabs = this.data.stashTabs
+    let items = clone(this.data.rates)
+
+    // Helpers
+    let getItemObject = (itemName) => {
+      let litemName = itemName.toLowerCase()
+      return items.find(value => {
+        return value.lname === litemName
+      })
+    }
+
+    // Iterate over each tab, then each tabs items
+    if (tabs && tabs.forEach) {
+      tabs.forEach((tab, i) => {
+        // Ignore hideout tabs
+        if (tab.hidden) 
+          return
+
+        // Ignore non-indexed tabs
+        if (this.settings.tabsToSearch.indexOf(i) < 0) 
+          return
+
+        // Ignore tab without data
+        if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
+          return
+
+        if (tab && tab.items && tab.items.forEach) {
+          tab.items.forEach(item => {
+            let reportItem = getItemObject(item.typeLine)
+
+            // Chaos orb doesn't exist by default so we must create them.
+            if (!reportItem && item.typeLine === 'Chaos Orb') {
+              items.unshift({
+                name: item.typeLine,
+                lname: item.typeLine.toLowerCase(),
+                icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1',
+                orderId: 1,
+                type: 'currency',
+                chaosValue: 1,
+                stackSize: item.stackSize,
+                stacks: [{
+                  tab: tab.n,
+                  stackSize: item.stackSize,
+                  x: item.x,
+                  y: item.y
+                }]
+              })
+            }
+
+            // Skip anything else
+            if (!reportItem) {
+              return
+            }
+
+            // Ensure stack details exist
+            if (!reportItem.stackSize) {
+              reportItem.stackSize = 0
+              reportItem.stacks = []
+            }
+
+            if (isNaN(reportItem.stackSize)) {
+              reportItem.stackSize = 0
+            }
+
+            reportItem.stackSize += item.stackSize || 1
+            reportItem.stacks.push({
+              tab: tab.n,
+              stackSize: item.stackSize,
+              x: item.x,
+              y: item.y
+            })
+          })
+        }
+      })
+    }
+
+    return items
+  }
+
+  fetch (tabs, rates) {
+    let {
+      autoRefreshTabs,
+      autoRefreshRates
+    } = this.settings
+
+    return Promise.resolve()
+      .then(() => (autoRefreshRates || rates) ? this.fetchRates() : null)
+      .then(() => (autoRefreshTabs || tabs) ? this.fetchTabs() : null)
+      .then(() => this.build())
+      .then(report => {
+        let reportTotal = 0
+
+        if (report && report.forEach) {
+          report.forEach(item => {
+            if (item.stackSize) {
+              reportTotal += item.stackSize * item.chaosValue
+            }
+          })
+        }
+
+        this.history.unshift({
+          refreshedAt: Date.now(),
+          refreshedTabs: tabs || autoRefreshTabs,
+          refreshedRates: rates || autoRefreshRates,
+          data: this.data,
+          settings: this.settings,
+          reportTotal,
+          report
+        })
+
+        return this
+      })
+      .catch(error => {
+        if (!error) return
+        throw error
+      })
+  }
+}
+
+ReportBuilder.defaultSettingsObject = function () {
+  return {
+    name: null,
+    league: null,
+    autoRefresh: false,
+    autoRefreshInterval: 1000 * 60 * 60, // 1 hour
+    autoRefreshRates: false,
+    autoRefreshTabs: true,
+    onlySearchTabsWithCurrency: false,
+    tabsToSearch: [],
+  }
+}
+
+ReportBuilder.defaultDataObject = function () {
+  return {
+    stashTabs: null,
+    rates: null
+  }
+}
+
+// Helper Components
+const CopyLogsButton = (
+  <Button color="accent" dense onClick={event => {
+    let originalValue = event.target.innerText
+    clipboard.writeText(logger.getCurrentLogsFile().toString())
+    event.target.innerText = 'Copied!'
+    setTimeout(() => event.target.innerText = originalValue, 2000)
+  }}>
+    Copy Logs
+  </Button>
+)
+
 // Character Dropdown
 class CharacterDropdown extends React.Component {
   state = {
@@ -426,10 +891,18 @@ class LeagueDropdown extends React.Component {
   button = undefined
 
   componentWillMount () {
-    Log.debug(`[League Dropdown] Passed League Index ${this.props.selectedIndex}`)
+    let selectedIndex = this.props.selectedIndex || 4
+
+    if (this.props.league) {
+      this.props.leagues.forEach((league, index) => {
+        if (league.id === this.props.league) {
+          selectedIndex = index
+        }
+      })
+    }
 
     this.setState({
-      selectedIndex: this.props.selectedIndex || 4
+      selectedIndex: selectedIndex
     })
   }
 
@@ -453,6 +926,10 @@ class LeagueDropdown extends React.Component {
   render() {
     return (
       <div>
+        <Typography
+          component="span"
+          style={{ display: 'inline-block', marginRight: 8, opacity: '0.5' }}
+        >{this.props.labelText}</Typography>
         <Button
           dense
           aria-owns={this.state.open ? 'simple-menu' : null}
@@ -482,227 +959,6 @@ class LeagueDropdown extends React.Component {
   }
 }
 
-// Login Dialog
-class LoginDialog extends React.Component {
-  state = {
-    value: '',
-    error: false
-  }
-
-  componentWillMount() {
-    this.setState({ 
-      value: this.props.value || ''
-    })
-  }
-
-  componentWillUpdate(nextProps) {
-    if (nextProps.value !== this.props.value) {
-      // eslint-disable-next-line react/no-will-update-set-state
-      this.setState({
-        value: nextProps.value 
-      })
-    }
-  }
-
-  handleExiting = () => {
-    this.setState({
-      error: null
-    })
-  }
-
-  handleCancel = () => {
-    this.props.onRequestClose(this.state, true)
-  }
-
-  handleOk = () => {
-    if (!this.state.value) {
-      return this.setState({
-        error: 'Identifier is required!'
-      })
-    }
-
-    if (!Constants.POE_COOKIE_REGEXP.test(this.state.value)) {
-      return this.setState({
-        error: `POESESSIONID must be a 32 character hexadecimal string!`
-      })
-    }
-
-    this.props.onRequestClose(this.state)
-  }
-
-  handleChange = (event, value) => {
-    this.setState({ value })
-  }
-
-  render() {
-    const { value, ...other } = this.props
-
-    return (
-      <Dialog
-        ignoreBackdropClick
-        ignoreEscapeKeyUp
-        onExiting={this.handleExiting}
-        {...other}
-      >
-        <DialogTitle>Login to Path of Exile</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            👮 Need help finding your session id? <a href="https://www.pathofexile.com/forum/view-thread/1989935/page/9#p14857124" onClick={GoToUrl.bind(this)}>Click here!</a>
-          </DialogContentText>
-
-          <TextField
-            error={!!this.state.error}
-            label={this.state.error}
-            id={Constants.POE_COOKIE_NAME}
-            label={Constants.POE_COOKIE_NAME}
-            value={this.state.value}
-            style={{
-              marginTop: 24
-            }}
-            onChange={event => this.setState({ 
-              value: event.target.value 
-            })}
-            fullWidth
-            margin="normal"
-          />
-
-          {this.state.error ? (
-            <DialogContentText style={{ fontSize: 14 }}>
-              ⚠️ {this.state.error}
-            </DialogContentText>
-          ) : null}
-
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={this.handleCancel} color="accent">
-            Cancel
-          </Button>
-          <Button onClick={this.handleOk}>
-            Login
-          </Button>
-        </DialogActions>
-      </Dialog>
-    )
-  }
-}
-
-// Login Button
-class LoginButton extends React.Component {
-  state = {
-    dialogOpen: false,
-    snackOpen: false,
-    snackMessage: ''
-  }
-
-  toggleDialog = () => {
-    this.setState({
-      dialogOpen: !this.state.dialogOpen
-    })
-  }
-  
-  toggleSnack = () => {
-    this.setState({
-      snackOpen: !this.state.snackOpen
-    })
-  }
-
-  handleSnack = snackMessage => {
-    this.setState({
-      snackMessage,
-      snackOpen: true
-    })
-  }
-
-  handleLoginButtonClick = event => {
-    this.toggleDialog()
-  }
-
-  handleSnackRequestClose = () => {
-    this.setState({ snackOpen: false })
-  }
-
-  handleDialogRequestClose = (state, cancelled) => {
-    let {value} = state
-
-    // Update component state
-    this.setState({
-      value 
-    })
-
-    // Attempt login
-    if (!cancelled && value) {
-      return LoginWithCookie(value)
-        .then(response => {
-          if (response.status != 302) {
-            return this.handleSnack('Failed to log in! Expired session id? Try refreshing your session id!')
-          }
-
-          this.handleSnack('Login Successful! Fetching account...')
-          setConfig(ConfigKeys.ACCOUNT_COOKIE, value)
-
-          return GetAccountName(value)
-        })
-        .then(response => {
-          this.toggleSnack()
-
-          let matches = response.data.match(Constants.POE_ACCOUNT_NAME_REGEXP)
-          if (!matches[1]) {
-            return this.handleSnack('Failed to find account name...')
-          }
-
-          let accountName = decodeURIComponent(matches[1])
-          this.handleSnack(`Logged in as: ${accountName}`)
-          this.props.updateConfig(ConfigKeys.ACCOUNT_USERNAME, accountName)
-          this.props.updateConfig(ConfigKeys.ACCOUNT_LEAGUE_INDEX, 4)
-          this.props.updateConfig(ConfigKeys.ACCOUNT_COOKIE, value)
-
-          return GetCharacters(
-            value,
-            accountName
-          )
-        })
-        .then(response => {
-          this.props.updateConfig(ConfigKeys.ACCOUNT_CHARACTERS, response.data)
-        })
-        .catch(error => {
-          Log.critical(`[Login] Error occurred: ${error.message} - ${error.stack}`)
-          return this.handleSnack(`Login failed... Please try again!`)
-        })
-    }
-
-    // Attempted to login but no value passed
-    if (!cancelled && !value) {
-      return this.handleSnack('Cookie Session is required to login!')
-    }
-
-    this.toggleDialog()
-  }
-
-  render () {
-    let props = this.props
-
-    return (
-      <div className="account-actions">
-        <Button dense onClick={this.handleLoginButtonClick}>Login</Button>
-
-        <Snackbar
-          open={this.state.snackOpen}
-          onRequestClose={this.handleSnackRequestClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          message={(
-            <span id="login-message-id">{this.state.snackMessage}</span>
-          )}
-        />
-
-        <LoginDialog
-          open={this.state.dialogOpen}
-          onRequestClose={this.handleDialogRequestClose}
-        />
-      </div>
-    )
-  }
-}
-
 // Logout Button
 class LogoutButton extends React.Component {
   render () {
@@ -717,749 +973,355 @@ class LogoutButton extends React.Component {
 // Account Details Button
 class AccountActions extends React.Component {
   handleLogoutClick () {
-    this.props.clearConfig()
-  }
-
-  handleLeagueSelect (event, index) {
-    let {updateConfig} = this.props
-    updateConfig(ConfigKeys.ACCOUNT_LEAGUE_INDEX, index)
-  }
-
-  handleCharacterSelect (event, index) {
-    let {updateConfig} = this.props
-    updateConfig(ConfigKeys.ACCOUNT_CHARACTER_INDEX, index)
+    events.emit('clear_config')
   }
 
   render () {
-    let {leagues, leagueIndex, characters, config} = this.props
-
     return (
       <div className="account-actions" style={{ display: 'flex' }}>
-        <LeagueDropdown
-          leagues={leagues}
-          selectedIndex={leagueIndex}
-          onSelect={this.handleLeagueSelect.bind(this)}
-        />
         <LogoutButton onClick={this.handleLogoutClick.bind(this)}>
-          {decodeURIComponent(config[ConfigKeys.ACCOUNT_USERNAME])} (logout)
+          {decodeURIComponent(getConfig(ConfigKeys.ACCOUNT_USERNAME))} (logout)
         </LogoutButton>
       </div>
     )
   }
 }
 
-// Account Component
-class Account extends React.Component {
-  render () {
-    if (Config.ACCOUNT_COOKIE) {
-      return (
-        <AccountActions 
-          config={this.props.config}
-          leagues={this.props.leagues}
-          leagueIndex={this.props.leagueIndex}
-          characters={this.props.characters}
-          clearConfig={this.props.clearConfig}
-          updateConfig={this.props.updateConfig}
-        />
-      )
+// Dashboard Screen
+class DashboardScreen extends React.Component {
+  state = {
+    isSelectingReportTabs: false,
+    isCreatingReport: false,
+    report: false
+  }
+
+  styles = {
+    loadingReports: true,
+    reportsList: {}
+  }
+
+  handleCreateReportButton () {
+    let report = new ReportBuilder({
+      account: getConfig(ConfigKeys.ACCOUNT_USERNAME),
+      cookie: getConfig(ConfigKeys.ACCOUNT_COOKIE),
+      data: ReportBuilder.defaultDataObject(),
+      settings: ReportBuilder.defaultSettingsObject()
+    })
+
+    report.settings.league = this.props.leagues[4].id
+
+    this.setState({
+      isCreatingReport: true,
+      report
+    })
+  }
+
+  handleCreateReportCancelled () {
+    this.setState({
+      isCreatingReport: false,
+      isSelectingReportTabs: false,
+      buttonLoadingText: null
+    }, () => {
+      this.setState({
+        report: null
+      })
+    })
+  }
+
+  handleCreateReportSubmit (event) {
+    if (!this.state.report.settings.name) {
+      return this.setState({
+        nameError: 'Name is required!'
+      })
     }
 
+    let report = this.state.report
+
+    this.setState({
+      buttonLoadingText: 'Fetching Tabs...'
+    })
+
+    report.fetchTabsList()
+      .then(() => {
+        this.setState({
+          buttonLoadingText: null,
+          isCreatingReport: false,
+          isSelectingReportTabs: true,
+          report
+        })
+      })
+      .catch(err => {
+        this.setState({
+          buttonLoadingText: null
+        })
+      })
+  }
+
+  handleSelectTabsSubmit () {
+    events.emit('create_report', {
+      report: this.state.report
+    })
+
+    this.handleCreateReportCancelled()
+  }
+
+  handleReportSelected (event, reportId) {
+    if (!this.props.reports[reportId].history.length) {
+      return
+    }
+
+    events.emit('view_report', {
+      reportId
+    })
+  }
+
+  handleLeagueSelected (event, index) {
+    let report = this.state.report
+    report.settings.league = this.props.leagues[index].id
+    this.setState({
+      report
+    })
+  }
+
+  handleReportNameChange (event) {
+    let report = this.state.report
+    report.settings.name = event.target.value
+    this.setState({
+      report
+    })
+  }
+
+  handleReportStashTabSelected (event, index) {
+    let {report} = this.state
+    let exists = report.settings.tabsToSearch.indexOf(index)
+
+    if (exists > -1) {
+      report.settings.tabsToSearch.splice(exists, 1)
+    } else {
+      report.settings.tabsToSearch.push(index)
+    }
+
+    this.setState({
+      report
+    })
+  }
+
+  render () {
+    let {report} = this.state
+
     return (
-      <LoginButton
-        config={this.props.config}
-        leagues={this.props.leagues}
-        updateConfig={this.props.updateConfig}
-      />
+      <Grid container>
+        <Grid item>
+          <Button className="btn-border" onClick={this.handleCreateReportButton.bind(this)}>Add Report</Button>
+        </Grid>
+
+        <Grid container
+          className="report-list"
+        >
+          {this.props.reports.map((report, index) => {
+            let {history} = report
+            let hasChange = {
+              change: 0,
+              absChange: 0,
+              direction: null
+            }
+
+            if (history && history.length > 1) {
+              hasChange = getPercentageChange(history[1].reportTotal || 0, history[0].reportTotal || 0)
+            }
+
+            return (
+              <Grid item
+                key={index}
+                xs
+              >
+                <div 
+                  className="report-item"
+                  onClick={event => this.handleReportSelected(event, index)}
+                >
+                  <div className="report-title">
+                    <Typography className="report-name">
+                      {report.settings.name}
+                    </Typography>
+                    <Typography className="report-league">
+                      {report.settings.league}
+                    </Typography>
+                    {report.history.length ? (
+                      <Typography className="report-meta">
+                        {Ago(report.history[0].refreshedAt)}
+                      </Typography>
+                    ) : null}
+                  </div>
+                  {report.history.length ? (
+                    <div className="report-item-meta">
+                      <Typography className="amount" type="body1" component="p" style={{ fontSize: 18 }}>
+                        {report.history[0].reportTotal.toFixed(2)} <span>C</span>
+                      </Typography>
+                      <Typography 
+                        type="body1"
+                        component="p"
+                        className={`change ${hasChange.direction==='up'?'up':hasChange.direction==='down'?'down':''}`}
+                      >
+                        {hasChange.absChange !== 0
+                          ? `${hasChange.direction==='up'?'+':'-'} ${hasChange.absChange}%`
+                          : 'No Change'
+                        }
+                      </Typography>
+                    </div>
+                  ) : (
+                    <div className="report-item-meta">
+                      <Typography className="amount loading"></Typography>
+                      <Typography className="change loading"></Typography>
+                    </div>
+                  )}
+                </div>
+              </Grid>
+            )
+          })}
+        </Grid>
+
+        <Dialog
+          open={this.state.isSelectingReportTabs}
+          onRequestClose={this.handleCreateReportCancelled.bind(this)}
+        >
+          <DialogTitle>Select Report Tabs</DialogTitle>
+          <DialogContent>
+            <DialogContentText
+              style={{marginBottom: 24}}
+            >
+              Select which tabs you'd like to run your report against.
+            </DialogContentText>
+
+            <Grid container>
+              {
+                report && report.data.stashTabs
+              ? report.data.stashTabs.map((tab, index) => (
+                <Grid item
+                  className='tab-selector'
+                  key={index}
+                  style={
+                    report.settings.tabsToSearch.indexOf(index) > -1
+                    ? {background: 'rgba(255,255,255,0.3)', margin: 5}
+                    : {background: 'rgba(255,255,255,0)', margin: 5}
+                  }
+                  onClick={event => this.handleReportStashTabSelected(event, index)}
+                >
+                  <Typography component="span">
+                    {tab.n}
+                  </Typography>
+                </Grid>
+              )) : null}
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={this.handleCreateReportCancelled.bind(this)} 
+              style={{ opacity: '0.6' }}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={this.handleSelectTabsSubmit.bind(this)}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              {this.state.buttonLoadingText || 'Create Report'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={this.state.isCreatingReport} onRequestClose={this.handleCreateReportCancelled.bind(this)}>
+          <DialogTitle>{"Create New Report"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText
+              style={{ marginBottom: 16 }}
+            >
+              Reports allow you to track and monitor your wealth across multiple leagues and tabs.
+            </DialogContentText>
+
+            <div
+              style={{ marginBottom: 16 }}
+            >
+              <Input
+                error={!!this.state.nameError}
+                id='name'
+                placeholder='Report Name'
+                onChange={this.handleReportNameChange.bind(this)}
+                fullWidth
+                autoFocus
+              />
+              {this.state.nameError ? (
+                <Typography style={{ fontSize: 14, marginTop: 8 }}>
+                  ⚠️ {this.state.nameError}
+                </Typography>
+              ) : null}
+            </div>
+
+            <LeagueDropdown 
+              labelText={'Report League'}
+              leagues={this.props.leagues}
+              onSelect={this.handleLeagueSelected.bind(this)}
+            />
+          </DialogContent>
+
+          <DialogActions>
+            <Button 
+              onClick={this.handleCreateReportCancelled.bind(this)} 
+              style={{ opacity: '0.6' }}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={this.handleCreateReportSubmit.bind(this)}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              {this.state.buttonLoadingText || 'Select Tabs'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Grid>
     )
   }
 }
 
-// Dashboard Component
-class Dashboard extends React.Component {
+// Report Screen
+class ReportScreen extends React.Component {
   state = {
-    loading: `Figuring out what to do...`,
-    error: null,
-    sortByType: true,
-    sortByWorth: false,
-    prices: {},
-    stashes: {},
-    tabs: {},
-    netWorth: {},
-    updated: {}
+    errorMessage: null
   }
+
+  log = logger.topic('Currency Report')
 
   componentWillMount () {
-    Log.info('[Dashboard]', 'Mounting')
-
-    let {
-      ACCOUNT_NET_WORTH, ACCOUNT_STASHES, ACCOUNT_TABS, 
-      ACCOUNT_LAST_UPDATE, NINJA_PRICES
-    } = ConfigKeys
-
-    let {
-      config,
-      league
-    } = this.props
-
-    if (!league) {
-      Log.info('[Dashboard] League index property is empty, rendering login message')
-      return
-    }
-
-    this.state.interval = setInterval(() => {
-      Log.info('[Dashboard] Refreshing dashboard for tab last updated')
-      this.setState({
-        _refresh: Math.random()
-      })
-    }, 60 * 1000)
-
-    let yesterday = Date.now() - (1000*60*60*24*2)
-
-    if (
-        config[ACCOUNT_NET_WORTH]
-    &&  config[ACCOUNT_STASHES]
-    &&  config[ACCOUNT_TABS]
-    &&  config[NINJA_PRICES]
-    &&  config[ACCOUNT_LAST_UPDATE]
-    &&  config[ACCOUNT_LAST_UPDATE][league]
-    &&  config[ACCOUNT_LAST_UPDATE][league].prices > yesterday
-    ) {
-      Log.info('[Dashboard] Loading state with Configuration data')
-      return this.setState({
-        netWorth: config[ACCOUNT_NET_WORTH],
-        stashes: config[ACCOUNT_STASHES],
-        tabs: config[ACCOUNT_TABS],
-        prices: config[NINJA_PRICES],
-        updated: config[ACCOUNT_LAST_UPDATE],
-        loading: false
-      }, () => {
-        Log.info('[Dashboard] Running league fetch mechanisms')
-        return this.handleFetchingLeagueData(
-          league,
-          config
-        )
-      })
-    }
-
-    Log.info('[Dashboard] Running league fetch mechanisms')
-    return this.handleFetchingLeagueData(
-      league,
-      config
-    )
-  }
-
-  componentWillUpdate (nextProps) {
-    if (!nextProps.league && this.state.prices && Object.keys(this.state.prices).length !== 0) {
-      Log.warn('[Dashboard] Resetting state due to missing league')
-      return this.setState({
-        loading: `Figuring out what to do...`,
-        error: null,
-        prices: {},
-        stashes: {},
-        tabs: {},
-        netWorth: {},
-        updated: {}
-      })
-    }
-
-    if (nextProps.league != this.props.league) {
-      Log.warn('[Dashboard] Fetching league data due to league change')
-      return this.handleFetchingLeagueData(
-        nextProps.league,
-        nextProps.config
-      )
-    }
-  }
-
-  processNinjaData (league, type, data) {
-    return new Promise((resolve, reject) => {
-      let prices = this.state.prices[league] || []
-      let priceExists = (itemName) => {
-        let litemName = itemName.toLowerCase()
-        return prices.find(value => value.lname === litemName)
-      }
-
-      // Item {
-      //   orderId: 0,
-      //   name: '',
-      //   lname: '',
-      //   chaosValue: 0,
-      //   icon: '',
-      // }
-
-      // Data is separated out, we need to combine
-      if (data.currencyDetails) {
-        let getCurrencyDetailsItem = (itemName) => {
-          return data.currencyDetails.find(value => value.name === itemName)
-        }
-
-        if (data.lines && data.lines.forEach) {
-          data.lines.forEach(lineItem => {
-            let exists = priceExists(lineItem.currencyTypeName)
-            if (exists) return
-
-            let details = getCurrencyDetailsItem(lineItem.currencyTypeName)
-            let item = {}
-
-            item.name = lineItem.currencyTypeName
-            item.lname = item.name.toLowerCase()
-            item.icon = details.icon
-            item.chaosValue = lineItem.chaosEquivalent
-            item.orderId = details.poeTradeId
-            item.type = type
-
-            prices.push(item)
-          })
-        }
-
-        return this.setState({
-          prices: {
-            ...this.state.prices,
-            [league]: prices
-          }
-        }, () => resolve())
-      }
-
-      if (data.lines && data.lines.forEach) {
-        data.lines.forEach(lineItem => {
-          let exists = priceExists(lineItem.name)
-          if (exists) return
-
-          let item = {}
-
-          item.name = lineItem.name
-          item.lname = item.name.toLowerCase()
-          item.icon = lineItem.icon
-          item.chaosValue = lineItem.chaosValue
-          item.orderId = lineItem.id
-          item.type = type
-
-          prices.push(item)
-        })
-      }
-
-      return this.setState({
-        prices: {
-          ...this.state.prices,
-          [league]: prices
-        }
-      }, () => resolve())
+    this.setState({
+      settings: this.props.report.settings
     })
   }
 
-  fetchEssencePrices (league,  queue) {
-    queue = queue || new Queue(1)
-
-    return queue.unshift(() => new Promise((resolve, reject) => {
-      return GetEssenceOverview(league, getNinjaDate())
-        .then(response => {
-          if (response.status !== 200) {
-            return this.fetchEssencePrices(league, queue)
-          }
-
-          return this.processNinjaData(league, 'essence', response.data)
-        })
-        .then(() => resolve())
-    }))
-  }
-
-  fetchFragmentPrices (league,  queue) {
-    queue = queue || new Queue(1)
-
-    return queue.unshift(() => new Promise((resolve, reject) => {
-      return GetFragmentOverview(league, getNinjaDate())
-        .then(response => {
-          if (response.status !== 200) {
-            return this.fetchFragmentPrices(league, queue)
-          }
-
-          return this.processNinjaData(league, 'fragment', response.data)
-        })
-        .then(() => resolve())
-    }))
-  }
-
-  fetchCurrencyPrices (league,  queue) {
-    queue = queue || new Queue(1)
-
-    return queue.unshift(() => new Promise((resolve, reject) => {
-      return GetCurrencyOverview(league, getNinjaDate())
-        .then(response => {
-          if (response.status !== 200) {
-            return this.fetchCurrencyPrices(league, queue)
-          }
-
-          return this.processNinjaData(league, 'currency', response.data)
-        })
-        .then(() => resolve())
-    }))
-  }
-
-  handleFetchingLeagueData (league, config) {
-    let queue = new Queue(1)
-    let tabs = []
-
-    if (
-       this.state.tabs
-    && this.state.tabs[league]
-    && this.state.stashes
-    && this.state.stashes[league]
-    && this.state.prices
-    && this.state.prices[league]
-    ) {
-      Log.info('[Dashboard] Skipping API calls and processing existing tabs')
-      return this.setState({
-        netWorth: this.processTabs(league),
-        loading: false
-      })
-    }
-
-    return Promise.resolve()
-      .then(() => {
-        return this.setState({
-          loading: 'Calculating insane economics...'
-        })
-      })
-      .then(() => {
-        return this.fetchCurrencyPrices(league)
-      })
-      .then(() => {
-        return this.fetchFragmentPrices(league)
-      })
-      .then(() => {
-        return this.fetchEssencePrices(league)
-      })
-      .then(() => {
-        return this.setState({
-          loading: 'Sending Chris telegrams via DNS pings...'
-        })
-      })
-      .then(() => {
-        return this.fetchLeagueStashTabs(league)
-      })
-      .then(response => {
-        if (response.status === 200) {
-          return response
-        }
-
-        if (response.status === 404) {
-          throw ({
-            loading: `No tabs found in ${league} league. Try another one? 🤷`
-          })
-        }
-
-        if (response.status === 403) {
-          document.dispatchEvent(new Event('ClearConfig'))
-
-          throw ({
-            notification: `Session has expired. Logging you out.`
-          })
-        }
-      })
-      .then(response => {
-        return this.setState({
-          stashes: {
-            ...this.state.stashes,
-            [league]: response.data.tabs
-          }
-        })
-      })
-      .then(() => {
-        return this.setState({
-          loading: 'Flipping through your tabs...'
-        })
-      })
-      .then(() => {
-        let stash = this.state.stashes[league]
-
-        for (var i = 0; i < stash.length; i++) {
-          let tab = stash[i]
-
-          if (tab.hidden) {
-            continue
-          }
-
-          this.handleStashTabFetching(league, queue, tab, tabs)
-        }
-
-        return queue.push(() => {
-          return true
-        })
-      })
-      .then(() => {
-        return this.setState({
-          tabs: {
-            ...this.state.tabs,
-            [league]: tabs
-          },
-          loading: 'Calculating Net Worth...'
-        })
-      })
-      .then(() => {
-        return this.setState({
-          netWorth: this.processTabs(league),
-          updated: {
-            ...this.state.updated,
-            [league]: {
-              tabs: Date.now(),
-              prices: Date.now()
-            }
-          },
-          loading: false
-        })
-      })
-      .then(() => {
-        return this.saveData()
-      })
-      .catch(error => {
-        if (error.notification) {
-          return document.dispatchEvent(new CustomEvent('AppNotification', {
-            detail: error.notification
-          }))
-        }
-
-        if (error.loading) {
-          return this.setState({
-            loading: error.loading
-          })
-        }
-
-        Log.critical(`[Dashboard] An error occurred during fetching of league data: ${error.message} - ${error.stack}`)
-
-        this.setState({
-          loading: `Error Occurred... find the log file at ${logsDataPath} and send it to "ComfyGangsta" on the forums!`,
-          error: error.message
-        })
-      })
-  }
-
-  handleStashTabFetching (league, queue, tab, tabs, delay) {
-    delay = delay || 1350 // 60 / 45 (rate limited)
-
-    queue.unshift(() => new Promise((resolve, reject) => {
-      return promiseDelay(delay)
-        .then(() => {
-          return this.setState({
-            loading: `Fetching tab ${tab.n}...${Math.random() < 0.1 ? ' Nice.' : ''}`
-          })
-        })
-        .then(() => {
-          return this.fetchLeagueStashTab(league, tab.i)
-        })
-        .then(response => {
-          if (response.status === 429) {
-            this.setState({
-              loading: `Ooohwee, too many requests Jerry! Gonna have to wait a minute for tab ${tab.n}!`
-            })
-
-            return this.handleStashTabFetching(league, queue, tab, tabs, delay + 60000)
-          }
-
-          if (response.status === 403) {
-            document.dispatchEvent(new Event('ClearConfig'))
-
-            throw ({
-              notification: 'Session expired. You have been logged out.'
-            })
-          }
-
-          return response.data
-        })
-        .then(response => {
-          if (!response) {
-            return resolve()
-          }
-
-          tabs[tab.i] = response.items
-          return resolve()
-        })
-    }))
-  }
-
-  handleRefreshTabsButtonClick () {
-    let league = this.props.league
-    let queue = new Queue(1)
-    let tabs = []
-
-    return Promise.resolve()
-      .then(() => {
-        return this.setState({
-          loading: 'Doing differential equations...'
-        })
-      })
-      .then(() => {
-        return this.fetchLeagueStashTabs(league)
-      })
-      .then(response => {
-        if (response.status === 200) {
-          return response
-        }
-
-        if (response.status === 404) {
-          throw ({
-            loading: `No tabs found in ${league} league. Try another one? 🤷`
-          })
-        }
-
-        if (response.status === 403) {
-          throw ({
-            notification: `Session expired 🤷`
-          })
-        }
-
-        throw ({
-
-        })
-      })
-      .then(response => {
-        return this.setState({
-          stashes: {
-            ...this.state.stashes,
-            [league]: response.data.tabs
-          }
-        })
-      })
-      .then(() => {
-        return this.setState({
-          loading: 'Reading your story from ending to beginning...'
-        })
-      })
-      .then(() => {
-        let stash = this.state.stashes[league]
-
-        for (var i = 0; i < stash.length; i++) {
-          let tab = stash[i]
-
-          if (tab.hidden) {
-            continue
-          }
-
-          this.handleStashTabFetching(league, queue, tab, tabs)
-        }
-
-        return queue.push(() => {
-          return true
-        })
-      })
-      .then(() => {
-        return this.setState({
-          tabs: {
-            ...this.state.tabs,
-            [league]: tabs
-          },
-          loading: 'Calculating Net Worth...'
-        })
-      })
-      .then(() => {
-        return this.setState({
-          netWorth: this.processTabs(league),
-          updated: {
-            ...this.state.updated,
-            [league]: {
-              ...this.state.updated[league],
-              tabs: Date.now()
-            }
-          },
-          loading: false
-        })
-      })
-      .then(() => {
-        return this.saveData()
-      })
-      .catch(error => {
-        if (error.notification) {
-          return document.dispatchEvent(new CustomEvent('AppNotification', {
-            detail: error.notification
-          }))
-        }
-
-        if (error.loading) {
-          return this.setState({
-            loading: error.loading
-          })
-        }
-
-        Log.critical(`[Dashboard] An error occurred during tab refetching: ${error.message} - ${error.stack}`)
-        this.setState({
-          loading: `Error Occurred... find the log file at ${logsDataPath} and send it to "ComfyGangsta" on the forums!`,
-          error: error.message
-        })
-      })
-  }
-
-  handleRefreshPricesButtonClick () {
-    let {league} = this.props
-
-    return Promise.resolve()
-      .then(() => {
-        return this.setState({
-          prices: {
-            ...this.state.prices,
-            [league]: []
-          }
-        })
-      })
-      .then(() => {
-        return this.fetchCurrencyPrices(league)
-      })
-      .then(() => {
-        return this.fetchFragmentPrices(league)
-      })
-      .then(() => {
-        return this.fetchEssencePrices(league)
-      })
-      .then(() => {
-        return this.setState({
-          netWorth: this.processTabs(league),
-          updated: {
-            ...this.state.updated,
-            [league]: {
-              ...this.state.updated[league],
-              prices: Date.now()
-            }
-          },
-        })
-      })
-      .then(() => {
-        return this.saveData()
-      })
-      .catch(error => {
-        Log.error(`Error occurred during prices refresh: ${error.message} - ${error.stack}`)
-        // TODO: Add toast for errors
-      })
-  }
-
-  fetchLeagueStashTabs (league) {
-    let account = this.props.config[ConfigKeys.ACCOUNT_USERNAME]
-    let cookie = this.props.config[ConfigKeys.ACCOUNT_COOKIE]
-
-    return GetLeagueStashTab(cookie, {
-      accountName: account,
-      tabIndex: 0,
-      league: league,
-      tabs: 1
+  sendNotification (message) {
+    this.log.info(message)
+    return events.emit('notification', {
+      message
     })
   }
 
-  fetchLeagueStashTab (league, index) {
-    let account = this.props.config[ConfigKeys.ACCOUNT_USERNAME]
-    let cookie = this.props.config[ConfigKeys.ACCOUNT_COOKIE]
-
-    return GetLeagueStashTab(cookie, {
-      accountName: account,
-      tabIndex: index,
-      league: league,
-      tabs: 0
+  setErrorMessage (errorMessage) {
+    return this.setState({
+      errorMessage
     })
   }
 
-  fetchLeagueCurrencyPrices (league) {
-    return GetCurrencyOverview(league, getNinjaDate())
-  }
+  updateSettings (key, value) {
+    if (!value && key) return this.setState({
+      settings: key
+    })
 
-  getCurrencyRateDetails (item) {
-    if (item === 'Chaos Orb') {
-      return {
-        name: 'Chaos Orb',
-        icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1'
+    this.setState({
+      settings: {
+        ...this.state.settings,
+        [key]: value
       }
-    }
-
-    return this.state.netWorth.currencyDetails.find(value => {
-      return value.name === item
-    })
-  }
-
-  processTabs (league) {
-    let tabs = this.state.tabs[league]
-    let items = JSON.parse(JSON.stringify(this.state.prices[league]))
-    let output = []
-    let total = 0
-
-    let getPriceDetails = (itemName) => {
-      let litemName = itemName.toLowerCase()
-      return items.find(value => value.lname === litemName)
-    }
-
-    // Iterate over each tab, then each tabs items
-    if (tabs && tabs.forEach) {
-      tabs.forEach(tab => {
-        if (tab && tab.forEach) {
-          tab.forEach(item => {
-            let itemPrice = getPriceDetails(item.typeLine)
-
-            // itemPrice not found, but we are looking at chaos
-            if (!itemPrice && item.typeLine === 'Chaos Orb') {
-              items.unshift({
-                name: item.typeLine,
-                lname: item.typeLine.toLowerCase(),
-                icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1',
-                orderId: 1,
-                type: 'currency',
-                chaosValue: 1,
-                stackSize: item.stackSize,
-                stacks: [{
-                  tab: item.inventoryId,
-                  stackSize: item.stackSize,
-                  x: item.x,
-                  y: item.y
-                }]
-              })
-            }
-
-            // itemPrice not found, non-chaos
-            if (!itemPrice) {
-              return
-            }
-
-            if (!itemPrice.stackSize) {
-              itemPrice.stackSize = 0
-              itemPrice.stacks = []
-            }
-
-            if (isNaN(itemPrice.stackSize)) {
-              itemPrice.stackSize = 0
-            }
-
-            itemPrice.stackSize += item.stackSize || 1
-            itemPrice.stacks.push({
-              tab: item.inventoryId,
-              stackSize: item.stackSize,
-              x: item.x,
-              y: item.y
-            })
-          })
-        }
-      })
-    }
-
-    if (items && items.forEach) {
-      items.forEach(item => {
-        if (item.stackSize) {
-          total += item.stackSize * item.chaosValue
-        }
-      })
-    }
-
-    return {
-      items: items,
-      chaosTotal: total
-    }
-  }
-
-  saveData () {
-    let {updateConfig} = this.props
-
-    updateConfig(ConfigKeys.ACCOUNT_NET_WORTH, this.state.netWorth)
-    updateConfig(ConfigKeys.ACCOUNT_STASHES, this.state.stashes)
-    updateConfig(ConfigKeys.ACCOUNT_TABS, this.state.tabs)
-    updateConfig(ConfigKeys.NINJA_PRICES, this.state.prices)
-    updateConfig(ConfigKeys.ACCOUNT_LAST_UPDATE, this.state.updated)
-  }
-
-  handleCheckbox = name => (event, checked) => {
-    this.setState({ 
-      [name]: checked 
     })
   }
 
@@ -1471,122 +1333,127 @@ class Dashboard extends React.Component {
     return this.calculateChaosValue(b) - this.calculateChaosValue(a)
   }
 
-  compareTypeAscending (a, b) {
-    return a.type < b.type ? -1 : 1
+  sortItemsByWorth (items) {
+    return items.sort((a, b) => {
+      return this.compareValueDescending(a, b)
+    })
   }
 
-  compareOrderAscending(a, b) {
-    return a.orderId - b.orderId
+  goToDashboard () {
+    events.emit('stop_viewing_report', null)
   }
 
-  sortItems () {
-    let { netWorth, sortByType, sortByWorth } = this.state
-    let items = netWorth.items
+  showSettingsDialog () {
+    this.setState({
+      isEditingReportSettings: true,
+      originalSettings: clone(this.props.report.settings),
+      settings: clone(this.props.report.settings)
+    })
+  }
 
-    if (items && items.length) {
-      if (sortByType && sortByWorth) {
-        return items = items.sort((a, b) => {
-          return a.type === b.type 
-            ? this.compareValueDescending(a, b)
-            : this.compareTypeAscending(a, b)
-        })
-      }
+  handleReportSettingsCancelled () {
+    this.setState({
+      isEditingReportSettings: false,
+      originalSettings: clone(this.props.report.settings),
+      settings: clone(this.props.report.settings),
+      errors: null
+    })
+  }
 
-      if (sortByWorth) {
-        return items = items.sort((a, b) => {
-          return this.compareValueDescending(a, b)
-        })
-      }
-
-      if (sortByType) {
-        return items = items.sort((a, b) => {
-          return a.type === b.type 
-            ? this.compareOrderAscending(a, b)
-            : this.compareTypeAscending(a, b)
-        })
-      }
-
-      return items.sort((a, b) => {
-        return this.compareOrderAscending(a, b)
-      })
+  validateField (field, value) {
+    if (typeof value === 'string' && !value) {
+      return 'Field cannot be empty!'
     }
 
-    return items
+    return false
+  }
+
+  handleChange (field) {
+    return (event, checked) => {
+      let {settings} = this.state
+      let value, error = null
+
+      if (typeof checked !== 'boolean') {
+        value = event.target.value
+        error = this.validateField(field, value)
+      } else {
+        value = checked
+      }
+
+      settings[field] = value
+
+      this.setState({
+        settings,
+        errors: {
+          ...this.state.errors,
+          [field]: error
+        }
+      })
+    }
+  }
+
+  handleReportStashTabSelected (event, index) {
+    let {settings} = this.state
+    let exists = settings.tabsToSearch.indexOf(index)
+
+    if (exists > -1) {
+      settings.tabsToSearch.splice(exists, 1)
+    } else {
+      settings.tabsToSearch.push(index)
+    }
+
+    this.setState({
+      settings
+    })
+  }
+
+  handleReportSettingsSave () {
+    let {originalSettings, settings} = this.state
+    let refreshOnSave = false
+
+    // Clear the report history
+    if (originalSettings.tabsToSearch.sort().toString() !== settings.tabsToSearch.sort().toString()) {
+      this.props.report.history = []
+      refreshOnSave = true
+    }
+
+    this.props.report.updateSettings(this.state.settings, refreshOnSave)
+
+    if (!refreshOnSave) {
+      events.emit('update_report', {
+        report: this.props.report
+      })
+
+      this.handleReportSettingsCancelled()
+    } else {
+      this.goToDashboard()
+    }
+  }
+
+  refreshTabsList () {
+    let {report} = this.props
+    report.fetchTabsList()
+      .then(() => {
+        events.emit('update_report', {
+          report: this.props.report
+        })
+      })
   }
 
   render () {
-    let message = null
-    let {config, league} = this.props
-    let {updated} = this.state
-
-    if (!this.props.league) {
-      message = 'Select a League!'
+    let { settings, data, history } = this.props.report
+    if (!history || !history.length) {
+      return null
     }
 
-    if (this.state.loading) {
-      message = this.state.loading
+    let currentReport = history[0]
+    let items = this.sortItemsByWorth(currentReport.report)
+    let updatedTime = currentReport.refreshedAt
+    let hasChange = {
+      change: 0,
+      absChange: 0,
+      direction: null
     }
-
-    if (!this.props.config[ConfigKeys.ACCOUNT_COOKIE]) {
-      message = `
-        <span style="font-size: 24px">👋 Welcome to Currency Cop for Path of Exile!</span>
-        <br /><br />
-        <span>First, login to calculate your 💸 net worth!</span>
-      `
-    }
-
-    if (message) {
-      return (
-        <Grid 
-          container
-          align="center"
-          justify="center"
-          direction="column"
-          spacing={0} 
-          style={{
-            height: 'calc(100% - 74px)',
-            marginTop: 74
-          }}
-        >
-        <Grid item>
-          {!this.props.config[ConfigKeys.ACCOUNT_COOKIE] ? (
-            <Typography 
-              style={{textAlign:'center'}}
-              type="body1" 
-              component="p" 
-              dangerouslySetInnerHTML={{__html: message}} 
-            />
-          ) : (
-            <Typography
-              type="body1" 
-              component="p"
-            >
-              {message}
-            </Typography>
-          )}
-          {this.state.error ? (
-            <pre>
-              {this.state.error.stack}
-            </pre>
-          ) : null}
-        </Grid>
-        {!this.props.config[ConfigKeys.ACCOUNT_COOKIE] ? (
-        <Grid item style={{ marginTop: 24 }}>
-          <LoginButton
-            config={this.props.config}
-            leagues={this.props.leagues}
-            updateConfig={this.props.updateConfig}
-          />
-        </Grid>
-        ) : null}
-      </Grid>
-      )
-    }
-
-    let items = this.sortItems()
-    let updatedTime = updated[league]
-      ? updated[league].tabs
-      : '...'
 
     if (items.length && this.state.filter) {
       let filter = this.state.filter.toLowerCase()
@@ -1595,111 +1462,112 @@ class Dashboard extends React.Component {
       })
     }
 
+    if (history.length > 1) {
+      hasChange = getPercentageChange(history[1].reportTotal || 0, history[0].reportTotal || 0)
+    }
+
     return (
-      <Grid 
-        container
-        align="center"
-        justify="flex-start"
-        direction="row"
-        style={{
-          width: '100%',
-          padding: 24,
-          height: 'calc(100% - 74px)',
-          margin: '74px 0 0 0',
-          overflow: 'auto',
-          alignContent: 'flex-start'
-        }}
-      >
-
-        <Grid item md={12} sm={12} xs={12} style={{ padding: '0 8px', textAlign: 'right' }}>
-          <Typography type="body1" component="p" style={{ 
-            fontSize: 11, 
-            fontWeight: 500, 
-            opacity: 0.5, 
-            color: blueGrey[400] 
-          }}>
-            Last Tab Update: {Ago(updatedTime)}
-          </Typography>
-        </Grid>
-
-        <Grid
-          item
-          md={12}
-          sm={12}
-          xs={12}
+      <div className="report-screen">
+        <Grid 
+          container
+          className="report-header"
+          align="center"
+          justify="flex-start"
+          direction="row"
+          style={{
+            width: '100%',
+            height: '100%',
+            margin: '0',
+            overflow: 'auto',
+            alignContent: 'flex-start'
+          }}
         >
-          <Paper style={{ backgroundColor: blueGrey[600], padding: 16 }}>
-            <Grid
-              container
-              align="center"
-              justify="space-between"
-              direction="row"
-            >
-              <Grid item sm={6} xs={12}>
-                <Typography type="body1" component="p" style={{ fontSize: 24 }}>
-                  <img 
-                    src="http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1"
-                    style={{ verticalAlign: 'middle' }}
-                  />
+          <Grid item md={4} sm={4} xs={4} className="report-actions" style={{ padding: '0 8px' }}>
+            <IconButton onClick={this.goToDashboard}><KeyboardArrowLeftIcon /></IconButton>
+          </Grid>
+          <Grid item md={4} sm={4} xs={4} className="report-title" style={{ padding: '0 8px', textAlign: 'center' }}>
+            <Typography>{settings.name}</Typography>
+          </Grid>
+          <Grid item md={4} sm={4} xs={4} className="report-meta" style={{ 
+            padding: '0 8px',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            display: 'flex'
+          }}>
+            <Button className="btn-border">History</Button>
+            <IconButton onClick={this.showSettingsDialog.bind(this)}><SettingsIcon /></IconButton>
+          </Grid>
 
-                  ⨯ {this.state.netWorth.chaosTotal.toFixed(2)} (Total Net Worth)
-                </Typography>
+          <Grid item xs={12}>
+            <Paper className="report-total paper-box" style={{ padding: 16 }}>
+              <Grid
+                container
+                align="center"
+                justify="space-between"
+                direction="row"
+              >
+                <Grid item sm={6} xs={12}>
+                  <Typography type="body1" component="p" style={{ fontSize: 48 }}>
+                    <img 
+                      src="http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1"
+                      style={{ 
+                        verticalAlign: 'middle',
+                        marginRight: '5px',
+                        top: '-1px',
+                        position: 'relative'
+                      }}
+                    />
+
+                    {currentReport.reportTotal.toFixed(2)}
+                  </Typography>
+                  <Typography 
+                    type="body1"
+                    component="p"
+                    className={`report-total-difference ${hasChange.direction==='up'?'up':hasChange.direction==='down'?'down':''}`}
+                  >
+                    {hasChange.absChange !== 0
+                      ? `${hasChange.direction==='up'?'+':'-'} ${hasChange.absChange}%`
+                      : 'No Change'
+                    }
+                  </Typography>
+                  <Typography type="body1" component="p" style={{ 
+                    fontSize: 11, 
+                    fontWeight: 400, 
+                    opacity: 0.2,
+                    display: 'inline-block'
+                  }}>
+                    Last Updated: {Ago(updatedTime)}
+                  </Typography>
+                </Grid>
               </Grid>
+            </Paper>
+          </Grid>
 
-              <Grid item sm={6} xs={12} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button color="accent" onClick={this.handleRefreshTabsButtonClick.bind(this)}>Refresh Tabs</Button>
-                <Button color="accent" onClick={this.handleRefreshPricesButtonClick.bind(this)}>Refresh Prices</Button>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-        <Grid 
-          item
-          md={6}
-          sm={6}
-          xs={12}
-          style={{ justifyContent: 'flex-start' }}>
-          <Input
-            placeholder="Filter..."
-            style={{ width: '100%' }}
-            onKeyUp={(event) => {
-              this.setState({
-                filter: event.target.value
-              })
-            }}
-          />
-        </Grid>
-        <Grid 
-          item
-          md={6}
-          sm={6}
-          xs={12}
-          style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={this.state.sortByType}
-                  onChange={this.handleCheckbox('sortByType')}
-                  value="type"
-                />
-              }
-              label="Type"
+          <Grid 
+            item
+            md={6}
+            sm={6}
+            xs={12}
+            style={{ justifyContent: 'flex-start' }}>
+            <Input
+              placeholder="Filter..."
+              style={{ width: '100%' }}
+              onKeyUp={(event) => {
+                this.setState({
+                  filter: event.target.value
+                })
+              }}
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={this.state.sortByWorth}
-                  onChange={this.handleCheckbox('sortByWorth')}
-                  value="worth"
-                />
-              }
-              label="Worth"
-            />
-          </FormGroup>
+          </Grid>
+
+          <Grid item md={6} sm={6} xs={12} style={{ 
+            display: 'flex',
+            justifyContent: 'flex-end' 
+          }} />
         </Grid>
 
-        {items.map(item => (
+        <Grid container className="report-items">
+        {items.map(item => item.stackSize ? (
           <Grid
             item
             key={item.name}
@@ -1708,6 +1576,7 @@ class Dashboard extends React.Component {
             xs={12}
           >
             <Paper
+            className="report-screen-item paper-box" 
               style={{
                 padding: 8
               }}
@@ -1743,71 +1612,397 @@ class Dashboard extends React.Component {
               </div>
             </Paper>
           </Grid>
-        ))}
-      </Grid>
-    )
-  }
-}
+        ): null)}
+        </Grid>
 
-// Nav Bar Component
-class NavBar extends React.Component {
-  render () {
-    const classes = this.props.classes;
+        <Dialog
+          open={this.state.isEditingReportSettings}
+          onRequestClose={this.handleReportSettingsCancelled.bind(this)}
+        >
+          <DialogTitle>Edit Report Settings</DialogTitle>
 
-    return (
-      <div className={classes.root} style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        padding: 5,
-        width: 'auto',
-        background: blueGrey[500],
-        boxShadow: '0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px 0px rgba(0, 0, 0, 0.14), 0px 1px 10px 0px rgba(0, 0, 0, 0.12)'
-      }}>
-        <div className='navbar'>
-          <AppBar position="static" style={{ boxShadow: 'none' }}>
-            <Toolbar>
-              <Typography type="title" color="inherit" className={classes.flex}>
-                Currency Cop
-              </Typography>
+          <DialogContent>
+            <DialogContentText style={{marginBottom: 24}}>
+              Here you will find them dank report settings.
+            </DialogContentText>
 
-              <Account 
-                config={this.props.config}
-                leagues={this.props.leagues}
-                leagueIndex={this.props.leagueIndex}
-                characters={this.props.characters}
-                clearConfig={this.props.clearConfig}
-                updateConfig={this.props.updateConfig}
+            <FormControl className="report-form-control" fullWidth>
+              <InputLabel htmlFor="name">Name</InputLabel>
+              <Input 
+                id="name" 
+                value={this.state.settings.name}
+                onChange={this.handleChange('name')} 
               />
-            </Toolbar>
-          </AppBar>
-        </div>
+            </FormControl>
+
+            <FormControl className="report-form-control" fullWidth>
+              <InputLabel htmlFor="league">League</InputLabel>
+              <Select
+                value={this.state.settings.league}
+                onChange={this.handleChange('league')}
+                input={<Input id="league" />}
+              >
+                {this.props.leagues.map(league => (
+                  <MenuItem key={league.id} value={league.id}>{league.id}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl className="report-form-control" fullWidth>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={this.state.settings.autoRefresh}
+                    onChange={this.handleChange('autoRefresh')}
+                  />
+                }
+                label="Enable Auto-Refresh"
+              />
+            </FormControl>
+
+            <FormControl className="report-form-control" fullWidth>
+              <InputLabel htmlFor="auto-refresh-interval">Auto-Refresh Interval</InputLabel>
+              <Select
+                value={this.state.settings.autoRefreshInterval}
+                onChange={this.handleChange('autoRefreshInterval')}
+                input={<Input id="auto-refresh-interval" />}
+              >
+                <MenuItem value={1000 * 60 * 1}>Minute</MenuItem>
+                <MenuItem value={1000 * 60 * 15}>15 Minutes</MenuItem>
+                <MenuItem value={1000 * 60 * 30}>30 Minutes</MenuItem>
+                <MenuItem value={1000 * 60 * 60}>Hour</MenuItem>
+                <MenuItem value={1000 * 60 * 60 * 2}>2 Hours</MenuItem>
+                <MenuItem value={1000 * 60 * 60 * 6}>6 Hours</MenuItem>
+                <MenuItem value={1000 * 60 * 60 * 24}>Day</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl className="report-form-control" fullWidth>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={this.state.settings.autoRefreshTabs}
+                    onChange={this.handleChange('autoRefreshTabs')}
+                  />
+                }
+                label="Auto-refresh Tabs?"
+              />
+            </FormControl>
+
+            <FormControl className="report-form-control" fullWidth>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={this.state.settings.autoRefreshRates}
+                    onChange={this.handleChange('autoRefreshRates')}
+                  />
+                }
+                label="Auto-refresh Item Rates?"
+              />
+            </FormControl>
+
+            <FormControl className="report-form-control" fullWidth>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={this.state.settings.onlySearchTabsWithCurrency}
+                    onChange={this.handleChange('onlySearchTabsWithCurrency')}
+                  />
+                }
+                label="Only refresh tabs currency was found in?"
+              />
+            </FormControl>
+
+            <FormControl className="report-form-control report-form-tabs-list" fullWidth>
+              <Typography style={{ marginBottom: 16 }}>Tabs report applies to: <span>(this will clear tab history!)</span></Typography>
+              <Grid container>
+                {data.stashTabs.map((tab, index) => (
+                  <Grid item
+                    className='tab-selector'
+                    key={index}
+                    style={
+                      this.state.settings.tabsToSearch.indexOf(index) > -1
+                      ? {background: 'rgba(255,255,255,0.3)', margin: 5}
+                      : {background: 'rgba(255,255,255,0)', margin: 5}
+                    }
+                    onClick={event => this.handleReportStashTabSelected(event, index)}
+                  >
+                    <Typography component="span">
+                      {tab.n}
+                    </Typography>
+                  </Grid>
+                ))}
+              </Grid>
+            </FormControl>
+
+            <Button onClick={this.refreshTabsList.bind(this)} className="btn-border">Refresh Tabs List</Button>
+          </DialogContent>
+
+          <DialogActions>
+            <Button 
+              onClick={this.handleReportSettingsCancelled.bind(this)} 
+              style={{ opacity: '0.6' }}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={this.handleReportSettingsSave.bind(this)}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              {this.state.buttonLoadingText || 'Save Settings'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
     )
   }
 }
 
-const AppNavBar = withStyles({
-  root: {
-    width: '100%',
-  },
+// Login Screen
+class LoginScreen extends React.Component {
+  state = {
+    value: '',
+    error: false
+  }
 
-  flex: {
-    flex: 1,
-  },
+  componentWillMount() {
+    this.setState({ 
+      value: this.props.value || ''
+    })
+  }
 
-  menuButton: {
-    marginLeft: 12,
-    marginRight: 20,
-  },
-})(NavBar)
+  componentWillUpdate(nextProps) {
+    if (nextProps.value !== this.props.value) {
+      // eslint-disable-next-line react/no-will-update-set-state
+      this.setState({
+        value: nextProps.value 
+      })
+    }
+  }
+
+  componentWillUnmount () {
+    this.setState({
+      error: null
+    })
+  }
+
+  handleChange = (event, value) => {
+    this.setState({ value })
+  }
+
+  handleLoginButtonClick () {
+    let {value} = this.state
+
+    if (!value) {
+      return this.setState({
+        error: 'Identifier is required!'
+      })
+    }
+
+    if (!Constants.POE_COOKIE_REGEXP.test(value)) {
+      return this.setState({
+        error: `POESESSIONID must be a 32 character hexadecimal string!`
+      })
+    }
+
+    // Attempt login
+    this.props.onLogin(value)
+  }
+
+  render() {
+    const { value, ...other } = this.props
+
+    let thread = 'https://www.pathofexile.com/forum/view-thread/1989935/page/9#p14857124'
+
+    return (
+      <Grid container
+        className="draggable"
+        align="center"
+        justify="center"
+        direction="column"
+        style={{ height: '100vh' }}
+      >
+        <Grid item
+          className="not-draggable"
+          style={{ textAlign: 'center' }}
+        >
+          <Typography
+            type="title"
+            component="h1"
+          >
+            Login to Path of Exile
+          </Typography>
+
+          <Typography
+            type="body1"
+            component="p"
+            color="secondary"
+            style={{ marginTop: 16 }}
+          >
+            👮 Need help finding your session id?&nbsp;
+            <a href={thread} onClick={GoToUrl.bind(this)}>
+              Click here!
+            </a>
+          </Typography>
+        </Grid>
+
+        <Grid item
+          className="not-draggable"
+          style={{ minWidth: 300, marginTop: 24, marginBottom: 32 }}
+        >
+          <Grid container
+            justify="flex-start"
+            direction="column"
+          >
+            <Input
+              error={!!this.state.error}
+              id={Constants.POE_COOKIE_NAME}
+              placeholder={Constants.POE_COOKIE_NAME}
+              value={this.state.value}
+              onChange={event => this.setState({ 
+                value: event.target.value 
+              })}
+              fullWidth
+              autoFocus
+            />
+
+            {this.state.error ? (
+              <Typography style={{ fontSize: 14, marginTop: 8 }}>
+                ⚠️ {this.state.error}
+              </Typography>
+            ) : null}
+          </Grid>
+        </Grid>
+
+        <Grid item
+          className="not-draggable"
+          style={{ minWidth: 300 }}
+        >
+          <Grid container
+            justify="flex-end"
+            direction="row"
+          >
+            <Button raised color="accent" onClick={this.handleLoginButtonClick.bind(this)}>
+              Login
+            </Button>
+          </Grid>
+        </Grid>
+      </Grid>
+    )
+  }
+}
+
+// Loading Screen
+class LoadingScreen extends React.Component {
+  render () {
+    return (
+      <Grid 
+        container
+        align="center"
+        justify="center"
+        direction="row"
+        spacing={0} 
+        style={{
+          height: '100%'
+        }}
+      >
+        <Grid item>
+          <Typography type="body1" component="p">
+            {this.props.message}
+          </Typography>
+        </Grid>
+      </Grid>
+    )
+  }
+}
+
+// AppControl Buttons
+class AppControl extends React.Component {
+  componentWillMount () {
+    this.setState({
+      window: remote.getCurrentWindow()
+    })
+
+    this.handleFullscreenButtonClick = this.handleFullscreenButtonClick.bind(this)
+    this.handleMinimizeButtonClick = this.handleMinimizeButtonClick.bind(this)
+    this.handleCloseButtonClick = this.handleCloseButtonClick.bind(this)
+  }
+
+  handleMinimizeButtonClick () {
+    this.state.window.minimize()
+  }
+
+  handleFullscreenButtonClick () {
+    let {window} = this.state
+
+    if (process.platform === 'darwin') {
+      if (!window.isFullScreen()) {
+        window.setFullScreen(true)
+      }
+
+      window.setFullScreen(false)
+    }
+
+    if (!window.isMaximized()) {
+      return window.maximize()
+    }
+
+    window.unmaximize()
+  }
+
+  handleCloseButtonClick () {
+    this.state.window.close()
+  }
+
+  render () {
+    return (
+      <div className="app-control">
+        <div className="fullscreen-control" onClick={this.handleFullscreenButtonClick}></div>
+        <div className="minimize-control" onClick={this.handleMinimizeButtonClick}></div>
+        <div className="close-control" onClick={this.handleCloseButtonClick}></div>
+      </div>
+    )
+  }
+}
+
+// Nav Bar Component
+class AppNavBar extends React.Component {
+  render () {
+    return (
+      <div className='draggable' style={{
+        width: '100%',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        padding: `25px 0 5px 0`,
+        width: 'auto',
+        borderBottom: '1px solid hsla(0, 0%, 100%, 0.05)'
+      }}>
+        <AppBar position="static" style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
+          <Toolbar style={{ padding: `0 15px` }}>
+            <Typography className="header-title" type="title" color="inherit" style={{ flex: 1 }}>
+              <img className="header-logo" src={require('../assets/logo.png')} />
+              Currency Cop
+            </Typography>
+            {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
+          </Toolbar>
+        </AppBar>
+      </div>
+    )
+  }
+}
 
 // Application Root
 class App extends React.Component {
   state = {
-    loading: 'Calculating mobs inside Path of Exile',
-    leagues: null
+    config: null,
+    leagues: null,
+    reports: null,
+    isLoggedIn: false,
+    isLoading: false,
+    isViewingReport: false
   }
 
   styles = {
@@ -1819,139 +2014,19 @@ class App extends React.Component {
     }
   }
 
-  componentWillMount () {
-    document.addEventListener('ClearConfig', event => {
-      this.clearConfig()
-    })
-
-    document.addEventListener('AppNotification', event => {
-      this.setState({
-        globalSnackMessage: event.detail
-      })
-
-      setTimeout(() => {
-        this.setState({
-          globalSnackMessage: null
-        })
-      }, 5000)
-    })
-
-    return this.load()
-  }
-
-  componentWillUnmount () {
-    document.removeEventListener('AppNotification')
-  }
-
-  setLoadingMessage (message) {
-    this.setState({
-      loading: message
-    })
-  }
-
-  load () {
-    return Promise.resolve()
-      .then(() => {
-        this.setLoadingMessage('Welcome back!')
-        return loadConfig()
-      })
-      .then(() => {
-        let {
-          ACCOUNT_COOKIE, ACCOUNT_LEAGUE_INDEX,
-          NINJA_PRICES
-        } = ConfigKeys
-
-        // Missing league index
-        if (Config[ACCOUNT_COOKIE] && Config[ACCOUNT_LEAGUE_INDEX] == null) {
-          Config = {}
-          saveConfig()
-        }
-
-        // Coming from 1.0.0
-        if (Config[NINJA_PRICES]) {
-          let leagues = Object.keys(Config[NINJA_PRICES])
-          if (leagues.length && Config[NINJA_PRICES][leagues[0]].lines) {
-            Config = {}
-            saveConfig()
-          }
-        }
-
-        // Pre-1.0.4b
-        // Clear configuration for localstorage
-        if (localStorage.userData) {
-          localStorage.removeItem('userData')
-        }
-
-        // Pre-1.0.4b
-        // Clear configuration for localstorage
-        if (localStorage.userConfig) {
-          localStorage.removeItem('userConfig')
-        }
-
-        // Pre-1.0.5b
-        // Clear configuration for localstorage
-        if (localStorage[ConfigKeys.ACCOUNT_COOKIE]) {
-          let keys = Object.keys(DefaultConfig())
-          if (keys && keys.forEach) {
-            keys.forEach(key => {
-              try { localStorage.removeItem(key) } catch (e) { }
-            })
-          }
-        }
-
-        // Update state
-        return this.setState({
-          config: Config
-        })
-      }).then(() => {
-        this.setLoadingMessage('Time to get a drink')
-        return GetLeagues()
-      }).then(response => {
-        this.setLoadingMessage('Wouldn\'t want you to dehydrate')
-        this.setState({
-          leagues: response.data
-        })
-
-        return this.state.config[ConfigKeys.ACCOUNT_COOKIE]
-          ? GetCharacters(
-              this.state.config[ConfigKeys.ACCOUNT_COOKIE],
-              this.state.config[ConfigKeys.ACCOUNT_USERNAME]
-            )
-          : false
-      })
-      .then(response => {
-        if (response) {
-          this.updateConfig(ConfigKeys.ACCOUNT_CHARACTERS, response.data)
-        }
-
-        document.dispatchEvent(new CustomEvent('AppNotification', {
-          message: 'Testing!'
-        }))
-
-        this.setLoadingMessage('[ Currency Cop ]')
-
-        setTimeout(() => {
-          this.setState({
-            loading: false
-          })
-        }, 200)
-      })
-      .catch(error => {
-        this.setLoadingMessage('Houston, we have a problem.')
-        Log.error(`[App] Error occurred during load: ${error.message} - ${error.stack}`)
-      })
-  }
-
   clearConfig () {
     Config = DefaultConfig()
-    saveConfig()
+    ConfigFile.save(Config)
+
     this.setState({
+      isLoggedIn: false,
       config: Config
     })
   }
 
   updateConfig (key, value) {
-    setConfig(key, value)
+    Config[key] = value
+    ConfigFile.save(Config)
     return this.setState({
       config: {
         ...this.state.config,
@@ -1961,64 +2036,323 @@ class App extends React.Component {
     })
   }
 
+  createReport (report) {
+    let {reports} = this.state
+
+    reports.push(report)
+    ReportFile.save(reports)
+
+    return this.setState({
+      reports
+    }, () => {
+      report.fetch(true, true).then(() => {
+        this.updateReports(reports)
+      })
+    })
+  }
+
+  updateReport (newReport) {
+    let {reports} = this.state
+    reports.forEach(report => {
+      if (report.id === newReport.id) {
+        report = newReport
+      }
+    })
+    return this.updateReports(reports)
+  }
+
+  updateReports (reports) {
+    ReportFile.save(reports)
+    return this.setState({
+      reports
+    })
+  }
+
+  setLoadingMessage (message) {
+    return this.setState({
+      isLoading: message
+    })
+  }
+
+  load () {
+    return Promise.resolve()
+      .then(() => {
+        Log.info(`Loading Currency Cop v${AppVersion}`)
+        this.setLoadingMessage('Loading Configuration')
+      })
+      .then(() => ConfigFile.load(DefaultConfig()))
+      .then(config => {
+        Config = config
+        return this.setState({
+          config: Config
+        })
+      })
+      .then(() => {
+        this.setLoadingMessage('Loading Reports')
+      })
+      .then(() => ReportFile.load([]))
+      .then(reports => {
+        return this.setState({
+          reports: reports
+        })
+      })
+      .then(() => {
+        this.setLoadingMessage('Fetching Leagues')
+      })
+      .then(() => GetLeagues())
+      .then(response => {
+        return this.setState({
+          leagues: response.data
+        })
+      })
+      .then(() => {
+        this.setLoadingMessage('Checking Session')
+      })
+      .then(() => this.handleLogin())
+      .then(() => {
+        this.setLoadingMessage('Setting up Reports')
+      })
+      .then(() => this.handleReports())
+      .then(() => {
+        this.setLoadingMessage('[ Currency Cop ]')
+      })
+      .then(() => {
+        setTimeout(() => {
+          this.setLoadingMessage(false)
+        }, 200)
+      })
+      .catch(error => {
+        this.setLoadingMessage('Houston, we have a problem.')
+        Log.error(`[App] Error occurred during load: ${error.message} - ${error.stack}`)
+      })
+  }
+
+  handleReports () {
+    if (this.state.isLoggedIn) {
+      let cookie = getConfig(ConfigKeys.ACCOUNT_COOKIE)
+      let account = getConfig(ConfigKeys.ACCOUNT_USERNAME)
+      let {reports} = this.state
+      let changed = false
+
+      // Create Report Object
+      // Update Report Cookies
+      // Create Report Id
+      reports.forEach((report, index) => {
+        if (report.account === account) {
+          if (report.cookie !== cookie) {
+            report.cookie = cookie
+            changed = true
+          }
+        }
+
+        if (!report.id) {
+          report.id = UUID()
+        }
+
+        reports[index] = new ReportBuilder(report)
+      })
+
+      // Start Report Fetching
+      reports.forEach((report, index) => {
+        if (report.history.length < 1) {
+          report.fetch(true, true)
+            .then(() => this.updateReport(index, report))
+            .then(() => report.enableAutoRefresh())
+        } else {
+          report.enableAutoRefresh()
+        }
+      })
+
+      if (changed) {
+        this.updateReports(reports)
+      }
+    }
+  }
+
+  handleLogin (value) {
+    value = value || this.state.config[ConfigKeys.ACCOUNT_COOKIE]
+    if (!value) {
+      return
+    }
+
+    return LoginWithCookie(value)
+      .then(response => {
+        if (response.status != 302) {
+          ApiLog.warn(`${response.status} status response for [LOGIN]: Expired Session ID`)
+          throw ({
+            snack: 'Session expired. Try re-logging into pathofexile.com to get a new Session ID.'
+          })
+        }
+
+        return GetAccountName(value)
+      })
+      .then(response => {
+        if (!response) {
+          ApiLog.warn(`Empty response from [POE_ACCOUNT_NAME]: Server failed to respond?`)
+          throw ({
+            snack: 'Server failed to respond during login. Please re-login.'
+          })
+        }
+
+        let matches = response.data.match(Constants.POE_ACCOUNT_NAME_REGEXP)
+        if (!matches[1]) {
+          Log.error(`Unable to find account name on [POE_ACCOUNT_NAME] request: ${response.data}`)
+          throw ({
+            snack: 'Failed to find account name.'
+          })
+        }
+
+        let accountName = decodeURIComponent(matches[1])
+        this.updateConfig(ConfigKeys.ACCOUNT_USERNAME, accountName)
+        this.updateConfig(ConfigKeys.ACCOUNT_COOKIE, value)
+
+        events.emit('notificaton', {
+          message: `Logged in as: ${accountName}`
+        })
+
+        this.setState({
+          isLoggedIn: true
+        })
+      })
+      .catch(error => {
+        if (error.message) {
+          Log.critical(`[Login] Error occurred: ${error.message} - ${error.stack}`)
+        }
+
+        events.emit('clear_config')
+        events.emit('notification', {
+          message: error.snack || `Login failed... Please try again!`,
+          action: CopyLogsButton
+        })
+      })
+  }
+
+  componentWillMount () {
+    events.on('create_report', event => {
+      EventLog.info(`Saving & starting report ${event.report.settings.name}`)
+      this.createReport(event.report)
+    })
+    
+    events.on('view_report', event => {
+      EventLog.info(`Viewing Report ${event.reportId}`)
+      this.setState({
+        isViewingReportId: event.reportId,
+        isViewingReport: this.state.reports[event.reportId]
+      })
+    })
+
+    events.on('update_report', event => {
+      EventLog.info(`Updating report`)
+      this.updateReport(event.report)
+    })
+
+    events.on('stop_viewing_report', event => {
+      EventLog.info(`Stopped viewing report`)
+      this.setState({
+        isViewingReportId: null,
+        isViewingReport: null
+      })
+    })
+
+    events.on('update_config', event => {
+      EventLog.info('Updating configuration')
+      this.updateConfig(event.key, event.value)
+    })
+
+    events.on('clear_config', event => {
+      EventLog.info('Clearing configuration')
+      this.clearConfig()
+    })
+
+    events.on('notification', event => {
+      EventLog.info('Global notification occurred', event.message)
+
+      this.setState({
+        globalSnackMessage: event.message,
+        globalSnackAction: event.action || null
+      })
+
+      setTimeout(() => {
+        this.setState({
+          globalSnackMessage: null,
+          globalSnackAction: null
+        })
+      }, 5000)
+    })
+
+    // Begin fetching application data
+    return this.load()
+  }
+
+  componentWillUnmount () {
+    events.off('create_report')
+    events.off('update_report')
+    events.off('update_config')
+    events.off('clear_config')
+    events.off('notification')
+  }
+
   render() {
-    if (this.state.loading) {
+    if (this.state.isLoading) {
       return (
         <MuiThemeProvider theme={theme}>
-          <Grid 
-            container
-            align="center"
-            justify="center"
-            direction="row"
-            spacing={0} 
-            style={{
-              height: '100%'
-            }}
-          >
-            <Grid item>
-              <Typography type="body1" component="p">
-                {this.state.loading}
-              </Typography>
-            </Grid>
-          </Grid>
+          <withTheme>
+            <AppControl />
+            <LoadingScreen message={this.state.isLoading} />
+          </withTheme>
         </MuiThemeProvider>
       )
     }
 
-    // let characters = this.state.config[ConfigKeys.ACCOUNT_CHARACTERS]
-    // let characterIndex = this.state.config[ConfigKeys.ACCOUNT_CHARACTER_INDEX]
-    // let character = characters ? characters[characterIndex] : null
-
-    let leagueIndex = this.state.config[ConfigKeys.ACCOUNT_LEAGUE_INDEX]
-    let league = leagueIndex != null
-      ? this.state.leagues[leagueIndex].id
-      : null
-
-    console.debug('[App]', 'State Config', this.state)
-    console.debug('[App]', 'League Index', leagueIndex)
-    console.debug('[App]', 'League', league)
+    if (!this.state.isLoggedIn) {
+      return (
+        <MuiThemeProvider theme={theme}>
+          <withTheme>
+            <AppControl />
+            <LoginScreen onLogin={this.handleLogin.bind(this)} />
+          </withTheme>
+        </MuiThemeProvider>
+      )
+    }
 
     return (
       <MuiThemeProvider theme={theme}>
         <withTheme>
+          <AppControl />
+
           <AppNavBar 
             config={this.state.config} 
-            leagues={this.state.leagues}
-            leagueIndex={leagueIndex}
-            league={league}
-            clearConfig={this.clearConfig.bind(this)}
-            updateConfig={this.updateConfig.bind(this)}
           />
 
-          <Dashboard
-            config={this.state.config}
-            leagues={this.state.leagues}
-            league={league}
-            updateConfig={this.updateConfig.bind(this)}
-          />
+          <div style={{
+              position: 'fixed',
+              padding: 15,
+              top: 94,
+              left: 0,
+              right: 0
+            }}
+          >
+            {!this.state.isViewingReport ? (
+              <DashboardScreen
+                config={this.state.config}
+                leagues={this.state.leagues}
+                reports={this.state.reports}
+              />
+            ) : null}
+
+            {this.state.isViewingReport ? (
+              <ReportScreen
+                config={this.state.config}
+                report={this.state.isViewingReport}
+                reportId={this.state.isViewingReportId}
+                leagues={this.state.leagues}
+              />
+            ) : null}
+          </div>
 
           <Snackbar
             open={!!this.state.globalSnackMessage}
+            action={this.state.globalSnackAction}
             onRequestClose={this.handleSnackRequestClose}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             message={(
