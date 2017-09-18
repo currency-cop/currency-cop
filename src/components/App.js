@@ -383,6 +383,51 @@ function GetFragmentOverview (league, date) {
   })
 }
 
+function GetDivCardOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_DIV_CARDS_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'DIV_CARD_RESPONSE',
+    onError: 'DIV_CARD_ERROR'
+  })
+}
+
+function GetMapOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_MAP_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'MAP_RESPONSE',
+    onError: 'MAP_ERROR'
+  })
+}
+
+function GetUniqueMapOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_MAP_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_MAP_RESPONSE',
+    onError: 'UNIQUE_MAP_ERROR'
+  })
+}
+
 // API Classes
 class ReportBuilder {
   constructor (options) {
@@ -447,6 +492,10 @@ class ReportBuilder {
     item.chaosValue = data.lineItem.chaosEquivalent || data.lineItem.chaosValue
     item.orderId = data.details.poeTradeId || data.lineItem.id
     item.type = data.type
+
+    if (data.lineItem.stackSize) {
+      item.maxStackSize = data.lineItem.stackSize
+    }
 
     return item
   }
@@ -559,6 +608,9 @@ class ReportBuilder {
       .then(() => this.fetchCurrencyRates())
       .then(() => this.fetchEssenceRates())
       .then(() => this.fetchFragmentRates())
+      .then(() => this.fetchDivCardRates())
+      .then(() => this.fetchMapRates())
+      .then(() => this.fetchUniqueMapRates())
   }
 
   fetchEssenceRates (queue) {
@@ -571,6 +623,54 @@ class ReportBuilder {
             return response.status !== 200
             ? this.fetchEssenceRates(queue)
             : this.processFetchedRates('essence', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchDivCardRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetDivCardOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchDivCardRates(queue)
+              : this.processFetchedRates('card', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchMapRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetMapOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchMapRates(queue)
+              : this.processFetchedRates('map', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchUniqueMapRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetUniqueMapOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchUniqueMapRates(queue)
+              : this.processFetchedRates('map_unique', response.data)
           })
           .then(resolve)
           .catch(reject)
@@ -710,9 +810,22 @@ class ReportBuilder {
               return
             }
 
+            // if (
+            //    reportItem.type === 'card' 
+            // && !!reportItem.maxStackSize
+            // && reportItem.maxStackSize > 0
+            // && !reportItem.stackSizeChaosValue) {
+            //   reportItem.stackSizeChaosValue = reportItem.chaosValue
+            //   reportItem.chaosValue = parseFloat((reportItem.chaosValue / reportItem.maxStackSize).toFixed(2))
+            //   reportItem.stackSize = 0
+            // }
+
             // Ensure stack details exist
             if (!reportItem.stackSize) {
               reportItem.stackSize = 0
+            }
+
+            if (!reportItem.stacks) {
               reportItem.stacks = []
             }
 
@@ -1440,6 +1553,13 @@ class ReportScreen extends React.Component {
       })
   }
 
+  deleteReport () {
+    events.emit('delete_report', {
+      report: this.props.report
+    })
+    this.goToDashboard()
+  }
+
   render () {
     let { settings, data, history } = this.props.report
     if (!history || !history.length) {
@@ -1739,9 +1859,11 @@ class ReportScreen extends React.Component {
           </DialogContent>
 
           <DialogActions>
+            <Button onClick={this.deleteReport.bind(this)} style={{ opacity: '0.5' }}>Delete Report</Button>
+
             <Button 
               onClick={this.handleReportSettingsCancelled.bind(this)} 
-              style={{ opacity: '0.6' }}
+              style={{ opacity: '0.5' }}
               disabled={!!this.state.buttonLoadingText}
             >
               Cancel
@@ -1958,8 +2080,8 @@ class AppControl extends React.Component {
   render () {
     return (
       <div className="app-control">
-        <div className="fullscreen-control" onClick={this.handleFullscreenButtonClick}></div>
         <div className="minimize-control" onClick={this.handleMinimizeButtonClick}></div>
+        <div className="fullscreen-control" onClick={this.handleFullscreenButtonClick}></div>
         <div className="close-control" onClick={this.handleCloseButtonClick}></div>
       </div>
     )
@@ -1973,10 +2095,10 @@ class AppNavBar extends React.Component {
       <div className='draggable' style={{
         width: '100%',
         position: 'fixed',
-        top: 0,
+        top: 25,
         left: 0,
         right: 0,
-        padding: `25px 0 5px 0`,
+        padding: `0 0 5px 0`,
         width: 'auto',
         borderBottom: '1px solid hsla(0, 0%, 100%, 0.05)'
       }}>
@@ -2049,6 +2171,16 @@ class App extends React.Component {
         this.updateReports(reports)
       })
     })
+  }
+
+  deleteReport (report) {
+    let {reports} = this.state
+    reports.forEach(function (item, index, object) {
+      if (item.id === report.id) {
+        object.splice(index, 1);
+      }
+    })
+    return this.updateReports(reports)
   }
 
   updateReport (newReport) {
@@ -2241,6 +2373,11 @@ class App extends React.Component {
       })
     })
 
+    events.on('delete_report', event => {
+      EventLog.info(`Deleting report`)
+      this.deleteReport(event.report)
+    })
+
     events.on('update_report', event => {
       EventLog.info(`Updating report`)
       this.updateReport(event.report)
@@ -2286,7 +2423,10 @@ class App extends React.Component {
 
   componentWillUnmount () {
     events.off('create_report')
+    events.off('delete_report')
     events.off('update_report')
+    events.off('view_report')
+    events.off('stop_viewing_report')
     events.off('update_config')
     events.off('clear_config')
     events.off('notification')

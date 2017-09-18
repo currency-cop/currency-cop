@@ -1,0 +1,104 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\John\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js install
+
+PATH: 
+  C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\John\bin;C:\Python34;C:\Python34\Scripts;C:\tools\ruby23\bin;C:\Python27;C:\Python27\Scripts;C:\Program Files (x86)\Intel\iCLS Client;C:\Program Files\Intel\iCLS Client;C:\ProgramData\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files (x86)\gdipp;C:\ProgramData\chocolatey\bin;C:\Program Files\iojs;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Users\John\AppData\Roaming\npm;C:\Program Files\nodejs;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\Program Files (x86)\MacType;C:\Program Files (x86)\Skype\Phone;C:\Program Files\Redis;C:\Program Files\OpenVPN\bin;C:\HashiCorp\Vagrant\bin;C:\Program Files (x86)\GtkSharp\2.12\bin;C:\Users\John\AppData\Roaming\npm;C:\Program Files\nodejs;C:\Users\John\AppData\Local\Microsoft\WindowsApps;C:\Users\John\AppData\Roaming\Dashlane\4.7.1.28771\bin\Firefox_Extension\{442718d9-475e-452a-b3e1-fb1ee16b8e9f}\components;C:\Users\John\AppData\Roaming\Dashlane\4.7.1.28771\ucrt;A:\Programs\Microsoft VS Code\bin
+
+Yarn version: 
+  0.17.10
+
+Node version: 
+  6.7.0
+
+Platform: 
+  win32 x64
+
+npm manifest: 
+  {
+    "name": "currency-cop",
+    "version": "1.2.0-beta1",
+    "description": "Calculate Net Worth in Path of Exile",
+    "author": "Nijiko Yonskai",
+    "license": "MIT",
+    "main": "main.js",
+    "scripts": {
+      "pack": "electron-builder --publish=never --dir",
+      "dist": "electron-builder --publish=never --x64 --ia32",
+      "win64": "electron-builder --publish=never --win --x64",
+      "win32": "electron-builder --publish=never --win --ia32",
+      "prod": "webpack --config webpack.build.config.js && electron --noDevServer .",
+      "dev": "webpack-dev-server --hot --host 0.0.0.0 --config=./webpack.dev.config.js",
+      "build": "webpack --config webpack.build.config.js",
+      "package": "webpack --config webpack.build.config.js",
+      "postpackage": "electron-packager ./ --ignore=src --overwrite=true --icon=favicon.ico --out=./builds"
+    },
+    "devDependencies": {
+      "babel-core": "^6.26.0",
+      "babel-loader": "^6.4.1",
+      "babel-plugin-transform-es3-member-expression-literals": "^6.22.0",
+      "babel-plugin-transform-es3-property-literals": "^6.22.0",
+      "babel-preset-es2015": "^6.24.1",
+      "babel-preset-react": "^6.24.1",
+      "babel-preset-stage-0": "^6.24.1",
+      "babili-webpack-plugin": "^0.0.11",
+      "css-loader": "^0.28.1",
+      "electron": "^1.6.7",
+      "electron-builder": "^19.27.3",
+      "electron-packager": "^8.7.0",
+      "extract-text-webpack-plugin": "^2.1.0",
+      "file-loader": "^0.11.1",
+      "html-webpack-plugin": "^2.28.0",
+      "material-ui": "^1.0.0-beta.10",
+      "material-ui-icons": "^1.0.0-beta.5",
+      "react": "^15.4.2",
+      "react-dom": "^15.4.2",
+      "style-loader": "^0.17.0",
+      "typeface-roboto": "0.0.35",
+      "webpack": "^2.5.1",
+      "webpack-dev-server": "^2.4.5"
+    },
+    "dependencies": {
+      "axios": "^0.16.2",
+      "tiny-emitter": "^2.0.2",
+      "electron-updater": "^2.8.9"
+    },
+    "build": {
+      "appId": "org.nijiko.made.CurrencyCop",
+      "productName": "CurrencyCop",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "files": [
+        "dist/",
+        "node_modules/",
+        "main.js",
+        "package.json"
+      ],
+      "publish": {
+        "provider": "generic",
+        "url": "https://poe.technology/update/${os}"
+      },
+      "win": {
+        "target": [
+          "nsis",
+          "portable"
+        ]
+      },
+      "nsis": {
+        "menuCategory": true,
+        "license": "LICENSE"
+      },
+      "directories": {
+        "buildResources": "build",
+        "output": "release"
+      }
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: ENOENT: no such file or directory, open 'A:\Projects\poe-currency\node_modules\@types\node\inspector.d.ts'
+      at Error (native)

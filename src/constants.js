@@ -15,4 +15,8 @@ module.exports = {
   NINJA_CURRENCY_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetCurrencyOverview',
   NINJA_FRAGMENT_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetFragmentOverview',
   NINJA_ESSENCE_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetEssenceOverview',
+
+  NINJA_UNIQUE_MAP_OVERVIEW_URL: 'http://cdn.poe.ninja/api/Data/GetUniqueMapOverview',
+  NINJA_DIV_CARDS_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetDivinationCardsOverview',
+  NINJA_MAP_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetMapOverview'
 }

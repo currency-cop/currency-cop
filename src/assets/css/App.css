@@ -26,8 +26,9 @@ a:hover {
 }
 
 /* Paper */
-.MuiDialog-paper-413,
-.MuiMenu-root-446 {
+[class*="MuiDialog-paper"],
+[class*="MuiMenu-root"],
+.menu-component {
   background: hsl(222, 2%, 17%) !important;
 }
 
@@ -47,6 +48,8 @@ a:hover {
   -webkit-app-region: drag
 }
 
+.app-control,
+.app-control div,
 .account-actions,
 .not-draggable {
   -webkit-app-region: no-drag
@@ -226,8 +229,10 @@ a:hover {
 }
 
 .paper-box,
-div[class*="MuiDialog-paper"],
-div[class*="MuiMenu-root"] {
+[class*="MuiDialog-paper"],
+.c414,
+[class*="MuiMenu-root"],
+.c421 {
   background: hsl(0, 0%, 17%) !important;
 }
 
@@ -294,4 +299,21 @@ span[class*="MuiSwitch-checked"] {
 @keyframes reportItemSmallShimmer {
   0% { background-position: -238px 0 }
   100% {  background-position: 238px 0 }
+}
+
+/* Scrollbars */
+
+::-webkit-scrollbar-track {
+	border-radius: 3px;
+	background-color: rgba(0,0,0,0.05);
+}
+
+::-webkit-scrollbar {
+	width: 6px;
+	background-color: rgba(0,0,0,0.2);
+}
+
+::-webkit-scrollbar-thumb {
+	border-radius: 3px;
+	background-color: rgba(255,255,255,0.08);
 }
