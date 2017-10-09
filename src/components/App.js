@@ -21,6 +21,7 @@ import { ListItem, ListItemText } from 'material-ui/List'
 import { RadioGroup } from 'material-ui/Radio'
 import { InputLabel } from 'material-ui/Input'
 import { MenuItem } from 'material-ui/Menu'
+import Tooltip from 'material-ui/Tooltip'
 import Paper from 'material-ui/Paper'
 
 import {
@@ -32,10 +33,14 @@ import {
 
 // Icons
 import KeyboardArrowLeftIcon from 'material-ui-icons/KeyboardArrowLeft'
+import CloudDownloadIcon from 'material-ui-icons/CloudDownload'
 import SettingsIcon from 'material-ui-icons/Settings'
 
 // App Environment
 const AppVersion = process.env.npm_package_version
+const AppPlatform = process.platform === 'darwin'
+  ? 'osx'
+  : 'windows'
 
 // App Theme
 const theme = createMuiTheme({
@@ -217,7 +222,11 @@ function getConfig (key) {
 
 // Api
 function GoToUrl (url, event) {
-  if (url && url.preventDefault) {
+  if (url && url.preventDefault && !url.target.href) {
+    event = url
+    event.preventDefault()
+    shell.openExternal(event.target.parentNode.href)
+  } else if (url && url.preventDefault) {
     event = url
     event.preventDefault()
     shell.openExternal(event.target.href)
@@ -425,6 +434,15 @@ function GetUniqueMapOverview (league, date) {
     },
     onSuccess: 'UNIQUE_MAP_RESPONSE',
     onError: 'UNIQUE_MAP_ERROR'
+  })
+}
+
+function DoVersionCheck () {
+  return DoServerRequest({
+    method: 'get',
+    url: `https://poe.technology/latest`,
+    onSuccess: 'VERSION_CHECK_RESPONSE',
+    onError: 'VERSION_CHECK_ERROR'
   })
 }
 
@@ -2166,6 +2184,7 @@ class AppControl extends React.Component {
 // Nav Bar Component
 class AppNavBar extends React.Component {
   render () {
+    let link = "https://poe.technology/releases"
     return (
       <div className='draggable' style={{
         width: '100%',
@@ -2183,6 +2202,15 @@ class AppNavBar extends React.Component {
               <img className="header-logo" src={require('../assets/logo.png')} />
               Currency Cop
             </Typography>
+            {!this.props.upToDate ? (
+              <Tooltip id="tooltip-icon" label={`New Version Available! v${this.props.newVersion}`} placement="bottom">
+                <IconButton aria-label="New Version">
+                  <a href={link} onClick={GoToUrl}>
+                    <CloudDownloadIcon />
+                  </a>
+                </IconButton>
+              </Tooltip>
+            ) : null}
             {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
           </Toolbar>
         </AppBar>
@@ -2199,7 +2227,8 @@ class App extends React.Component {
     reports: null,
     isLoggedIn: false,
     isLoading: false,
-    isViewingReport: false
+    isViewingReport: false,
+    upToDate: true
   }
 
   styles = {
@@ -2329,6 +2358,15 @@ class App extends React.Component {
         setTimeout(() => {
           this.setLoadingMessage(false)
         }, 200)
+      })
+      .then(() => DoVersionCheck())
+      .then(resp => {
+        if (resp.data.version !== AppVersion) {
+          this.setState({
+            upToDate: false,
+            newVersion: resp.data.version
+          })
+        }
       })
       .catch(error => {
         this.setLoadingMessage('Houston, we have a problem.')
@@ -2538,7 +2576,9 @@ class App extends React.Component {
           <AppControl />
 
           <AppNavBar 
-            config={this.state.config} 
+            config={this.state.config}
+            upToDate={this.state.upToDate}
+            newVersion={this.state.newVersion}
           />
 
           <div style={{

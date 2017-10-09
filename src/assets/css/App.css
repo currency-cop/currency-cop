@@ -290,6 +290,11 @@ span[class*="MuiSwitch-checked"] {
   color: hsl(222, 80%, 47%) !important;
 }
 
+[class*="MuiTooltip-tooltipBottom"] {
+  font-family: 'Roboto';
+  margin-top: 0 !important;
+}
+
 /* Animations */
 @keyframes reportItemLargeShimmer {
   0% { background-position: -298px 0 }
