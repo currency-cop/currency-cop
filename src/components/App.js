@@ -550,8 +550,9 @@ class ReportBuilder {
         continue
 
       // Ignore tab without data
-      if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
-        continue
+      if (tab.wasProcessed)
+        if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
+          continue
 
       this.fetchTab(queue, tab)
     }
@@ -779,8 +780,11 @@ class ReportBuilder {
           return
 
         // Ignore tab without data
-        if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
-          return
+        if (tab.wasProcessed)
+          if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
+            return
+
+        
 
         if (tab && tab.items && tab.items.forEach) {
           tab.items.forEach(item => {
@@ -1204,6 +1208,20 @@ class DashboardScreen extends React.Component {
     })
   }
 
+  handleReportStashTabSelectAll (event) {
+    let {report} = this.state
+
+    report.data.stashTabs.forEach((tab, index) => {
+      if (report.settings.tabsToSearch.indexOf(index) < 0) {
+        report.settings.tabsToSearch.push(index)
+      }
+    })
+
+    this.setState({
+      report
+    })
+  }
+
   handleReportStashTabSelected (event, index) {
     let {report} = this.state
     let exists = report.settings.tabsToSearch.indexOf(index)
@@ -1219,8 +1237,164 @@ class DashboardScreen extends React.Component {
     })
   }
 
+  renderDialogs () {
+    let {report} = this.state
+
+    return (
+      <div className="dialogs">
+        <Dialog
+          open={this.state.isSelectingReportTabs}
+          onRequestClose={this.handleCreateReportCancelled.bind(this)}
+        >
+          <DialogTitle>Select Report Tabs</DialogTitle>
+          <DialogContent>
+            <DialogContentText
+              style={{marginBottom: 24}}
+            >
+              Selected tabs will be used determine how much worth they hold.
+            </DialogContentText>
+
+            <Grid container>
+              {
+                report && report.data.stashTabs
+              ? report.data.stashTabs.map((tab, index) => (
+                <Grid item
+                  className='tab-selector'
+                  key={index}
+                  style={
+                    report.settings.tabsToSearch.indexOf(index) > -1
+                    ? {background: 'rgba(255,255,255,0.3)', margin: 5}
+                    : {background: 'rgba(255,255,255,0)', margin: 5}
+                  }
+                  onClick={event => this.handleReportStashTabSelected(event, index)}
+                >
+                  <Typography component="span">
+                    {tab.n}
+                  </Typography>
+                </Grid>
+              )) : null}
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={this.handleCreateReportCancelled.bind(this)} 
+              style={{ opacity: '0.6' }}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={this.handleSelectTabsSubmit.bind(this)}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              {this.state.buttonLoadingText || 'Create Report 🎉'}
+            </Button>
+            <Button 
+              onClick={this.handleReportStashTabSelectAll.bind(this)}
+              disabled={!!this.state.buttonLoadingText}
+              style={{ position: 'absolute', left: 16, bottom: 8, opacity: '0.6' }}
+            >
+              {this.state.buttonLoadingText || 'Select All Tabs'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={this.state.isCreatingReport} onRequestClose={this.handleCreateReportCancelled.bind(this)}>
+          <DialogTitle>{"Create New Report"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText
+              style={{ marginBottom: 16 }}
+            >
+              Reports allow you to track and monitor your wealth in a league across multiple tabs.
+            </DialogContentText>
+
+            <div
+              style={{ marginBottom: 16 }}
+            >
+              <Input
+                error={!!this.state.nameError}
+                id='name'
+                placeholder='Report Name'
+                onChange={this.handleReportNameChange.bind(this)}
+                fullWidth
+                autoFocus
+              />
+              {this.state.nameError ? (
+                <Typography style={{ fontSize: 14, marginTop: 8 }}>
+                  ⚠️ {this.state.nameError}
+                </Typography>
+              ) : null}
+            </div>
+
+            <LeagueDropdown 
+              labelText={'Report League'}
+              leagues={this.props.leagues}
+              onSelect={this.handleLeagueSelected.bind(this)}
+            />
+          </DialogContent>
+
+          <DialogActions>
+            <Button 
+              onClick={this.handleCreateReportCancelled.bind(this)} 
+              style={{ opacity: '0.6' }}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={this.handleCreateReportSubmit.bind(this)}
+              disabled={!!this.state.buttonLoadingText}
+            >
+              {this.state.buttonLoadingText || 'Select Tabs'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+    )
+  }
+
+  renderEmptyView () {
+    return (
+      <Grid container
+        className="draggable"
+        align="center"
+        justify="center"
+        direction="column"
+        style={{ height: 'calc(100vh - 95px)' }}
+      >
+        <Grid item className="not-draggable" style={{ textAlign: 'center' }}>
+          <Typography type="title" component="h1" style={{ marginBottom: 8 }}>
+            Hi <span style={{ color: 'rgba(229, 124, 57, 1.0)' }}>{getConfig(ConfigKeys.ACCOUNT_USERNAME)}</span> 🎃
+          </Typography>
+
+          <Typography type="title" component="h1" style={{ marginBottom: 8 }}>
+            Looks like you aren't tracking any tabs!
+          </Typography>
+
+          <Typography component="p" style={{ opacity: '0.6' }}>
+            Fortunately, it's pretty easy to get started! Show me what you got!
+          </Typography>
+        </Grid>
+
+        <Grid item className="not-draggable" style={{ marginTop: 16, minWidth: 300 }}>
+          <Grid container justify="center" direction="row">
+            <Button raised style={{ backgroundColor: 'rgba(229, 124, 57, 1.0)', color: 'white' }} onClick={this.handleCreateReportButton.bind(this)}>
+              Create your first report
+            </Button>
+          </Grid>
+        </Grid>
+
+        {this.renderDialogs()}
+      </Grid>
+    )
+  }
+
   render () {
     let {report} = this.state
+
+    if (!this.props.reports || !this.props.reports.length) {
+      return this.renderEmptyView()
+    }
 
     return (
       <Grid container>
@@ -1293,106 +1467,7 @@ class DashboardScreen extends React.Component {
           })}
         </Grid>
 
-        <Dialog
-          open={this.state.isSelectingReportTabs}
-          onRequestClose={this.handleCreateReportCancelled.bind(this)}
-        >
-          <DialogTitle>Select Report Tabs</DialogTitle>
-          <DialogContent>
-            <DialogContentText
-              style={{marginBottom: 24}}
-            >
-              Select which tabs you'd like to run your report against.
-            </DialogContentText>
-
-            <Grid container>
-              {
-                report && report.data.stashTabs
-              ? report.data.stashTabs.map((tab, index) => (
-                <Grid item
-                  className='tab-selector'
-                  key={index}
-                  style={
-                    report.settings.tabsToSearch.indexOf(index) > -1
-                    ? {background: 'rgba(255,255,255,0.3)', margin: 5}
-                    : {background: 'rgba(255,255,255,0)', margin: 5}
-                  }
-                  onClick={event => this.handleReportStashTabSelected(event, index)}
-                >
-                  <Typography component="span">
-                    {tab.n}
-                  </Typography>
-                </Grid>
-              )) : null}
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button 
-              onClick={this.handleCreateReportCancelled.bind(this)} 
-              style={{ opacity: '0.6' }}
-              disabled={!!this.state.buttonLoadingText}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={this.handleSelectTabsSubmit.bind(this)}
-              disabled={!!this.state.buttonLoadingText}
-            >
-              {this.state.buttonLoadingText || 'Create Report'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={this.state.isCreatingReport} onRequestClose={this.handleCreateReportCancelled.bind(this)}>
-          <DialogTitle>{"Create New Report"}</DialogTitle>
-          <DialogContent>
-            <DialogContentText
-              style={{ marginBottom: 16 }}
-            >
-              Reports allow you to track and monitor your wealth across multiple leagues and tabs.
-            </DialogContentText>
-
-            <div
-              style={{ marginBottom: 16 }}
-            >
-              <Input
-                error={!!this.state.nameError}
-                id='name'
-                placeholder='Report Name'
-                onChange={this.handleReportNameChange.bind(this)}
-                fullWidth
-                autoFocus
-              />
-              {this.state.nameError ? (
-                <Typography style={{ fontSize: 14, marginTop: 8 }}>
-                  ⚠️ {this.state.nameError}
-                </Typography>
-              ) : null}
-            </div>
-
-            <LeagueDropdown 
-              labelText={'Report League'}
-              leagues={this.props.leagues}
-              onSelect={this.handleLeagueSelected.bind(this)}
-            />
-          </DialogContent>
-
-          <DialogActions>
-            <Button 
-              onClick={this.handleCreateReportCancelled.bind(this)} 
-              style={{ opacity: '0.6' }}
-              disabled={!!this.state.buttonLoadingText}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={this.handleCreateReportSubmit.bind(this)}
-              disabled={!!this.state.buttonLoadingText}
-            >
-              {this.state.buttonLoadingText || 'Select Tabs'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {this.renderDialogs()}
       </Grid>
     )
   }
@@ -2102,7 +2177,7 @@ class AppNavBar extends React.Component {
         width: 'auto',
         borderBottom: '1px solid hsla(0, 0%, 100%, 0.05)'
       }}>
-        <AppBar position="static" style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
+        <AppBar position="static" style={{ backgroundColor: 'transparent', boxShadow: 'none', userSelect: 'none' }}>
           <Toolbar style={{ padding: `0 15px` }}>
             <Typography className="header-title" type="title" color="inherit" style={{ flex: 1 }}>
               <img className="header-logo" src={require('../assets/logo.png')} />
@@ -2246,7 +2321,9 @@ class App extends React.Component {
       })
       .then(() => this.handleReports())
       .then(() => {
-        this.setLoadingMessage('[ Currency Cop ]')
+        this.setLoadingMessage((
+          <span style={{ color: 'rgba(239, 157, 58, 1.0)', fontWeight: 'bold' }}>[ Currency Cop ]</span>
+        ))
       })
       .then(() => {
         setTimeout(() => {
