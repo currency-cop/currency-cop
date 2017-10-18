@@ -4,3 +4,4 @@ node_modules/
 dist/
 builds/
 release/
+yarn-error.log
