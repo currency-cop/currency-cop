@@ -1149,9 +1149,28 @@ class DashboardScreen extends React.Component {
 
     report.settings.league = this.props.leagues[4].id
 
+    this.generateDefaultReportName(report)
     this.setState({
       isCreatingReport: true,
       report
+    })
+  }
+
+  generateDefaultReportName (report) {
+    let nameMap = {};
+    this.props.reports.forEach(function (rep) {
+      nameMap[rep.settings.name] = true;
+    })
+
+    let defaultReportNumber = 0
+    let defaultReportName;
+    do {
+      defaultReportNumber++
+      defaultReportName = `${report.settings.league}-${defaultReportNumber}`
+    } while (nameMap[defaultReportName])
+    report.settings.name = defaultReportName
+    this.setState({
+      defaultReportName
     })
   }
 
@@ -1168,13 +1187,18 @@ class DashboardScreen extends React.Component {
   }
 
   handleCreateReportSubmit (event) {
-    if (!this.state.report.settings.name) {
+    let report = this.state.report
+    if (!report.settings.name) {
       return this.setState({
         nameError: 'Name is required!'
       })
     }
-
-    let report = this.state.report
+    let reports = this.props.reports
+    if (reports.some(function (rep) { return rep.settings.name === report.settings.name })) {
+      return this.setState({
+        nameError: 'Name already exists!'
+      })
+    }
 
     this.setState({
       buttonLoadingText: 'Fetching Tabs...'
@@ -1337,6 +1361,7 @@ class DashboardScreen extends React.Component {
                 error={!!this.state.nameError}
                 id='name'
                 placeholder='Report Name'
+                defaultValue={this.state.defaultReportName}
                 onChange={this.handleReportNameChange.bind(this)}
                 fullWidth
                 autoFocus
