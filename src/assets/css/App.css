@@ -48,6 +48,8 @@ a:hover {
   -webkit-app-region: drag
 }
 
+button,
+.tab-selector,
 .app-control,
 .app-control div,
 .account-actions,
@@ -76,7 +78,7 @@ a:hover {
   right: 15px;
 }
 
-.app-control div {
+.app-control [class*="-control"] {
   width: 10px;
   height: 10px;
   background: #646870;
@@ -85,8 +87,14 @@ a:hover {
   margin-right: 8px;
 }
 
-.app-control div:hover {
+.app-control [class*="-control"]:hover {
   cursor: pointer;
+}
+
+.app-control .app-update {
+  position: absolute;
+  top: -12px;
+  left: -48px;
 }
 
 .app-control .close-control:hover {
@@ -292,7 +300,12 @@ span[class*="MuiSwitch-checked"] {
 
 [class*="MuiTooltip-tooltipBottom"] {
   font-family: 'Roboto';
-  margin-top: 0 !important;
+  margin-top: -10px !important;
+}
+
+.app-control [class*="MuiTooltip-popper"] {
+  min-width: 200px;
+  text-align: center;
 }
 
 /* Animations */

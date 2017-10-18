@@ -1,6 +1,7 @@
 // Core
 import '../assets/css/App.css'
 import Constants from '../constants'
+import pkg from '../../package.json'
 
 // Third Party
 import { ipcRenderer, shell, remote, clipboard } from 'electron'
@@ -37,7 +38,7 @@ import CloudDownloadIcon from 'material-ui-icons/CloudDownload'
 import SettingsIcon from 'material-ui-icons/Settings'
 
 // App Environment
-const AppVersion = process.env.npm_package_version
+const AppVersion = pkg.version
 const AppPlatform = process.platform === 'darwin'
   ? 'osx'
   : 'windows'
@@ -802,11 +803,14 @@ class ReportBuilder {
           if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
             return
 
-        
-
         if (tab && tab.items && tab.items.forEach) {
           tab.items.forEach(item => {
             let reportItem = getItemObject(item.typeLine)
+
+            // Check for "Superior" in item name
+            if (!reportItem && item.typeLine.indexOf('Superior') > -1) {
+              reportItem = getItemObject(item.typeLine.replace('Superior ', ''))
+            }
 
             // Chaos orb doesn't exist by default so we must create them.
             if (!reportItem && item.typeLine === 'Chaos Orb') {
@@ -1707,7 +1711,18 @@ class ReportScreen extends React.Component {
             justifyContent: 'flex-end',
             display: 'flex'
           }}>
-            <Button className="btn-border">History</Button>
+            <Button 
+              className="btn-border" 
+              style={{marginRight: 8}}
+              onClick={this.props.report.refresh.bind(this.props.report)}
+            >
+              Refresh
+            </Button>
+
+            <Tooltip id="tooltip-icon" label="Coming Soon" placement="bottom">
+              <Button className="btn-border">History</Button>
+            </Tooltip>
+
             <IconButton onClick={this.showSettingsDialog.bind(this)}><SettingsIcon /></IconButton>
           </Grid>
 
@@ -1898,7 +1913,7 @@ class ReportScreen extends React.Component {
                     onChange={this.handleChange('autoRefreshTabs')}
                   />
                 }
-                label="Auto-refresh Tabs?"
+                label="Refresh Tabs?"
               />
             </FormControl>
 
@@ -1910,7 +1925,7 @@ class ReportScreen extends React.Component {
                     onChange={this.handleChange('autoRefreshRates')}
                   />
                 }
-                label="Auto-refresh Item Rates?"
+                label="Refresh Item Rates?"
               />
             </FormControl>
 
@@ -2171,8 +2186,20 @@ class AppControl extends React.Component {
   }
 
   render () {
+    let link = "https://poe.technology/releases"
     return (
       <div className="app-control">
+        <div className="app-update">
+          {!this.props.upToDate && this.props.newVersion ? (
+              <Tooltip id="tooltip-icon" label={`New Version Available! v${this.props.newVersion}`} placement="bottom">
+                <IconButton aria-label="New Version">
+                  <a href={link} onClick={GoToUrl}>
+                    <CloudDownloadIcon />
+                  </a>
+                </IconButton>
+              </Tooltip>
+            ) : null}
+        </div>
         <div className="minimize-control" onClick={this.handleMinimizeButtonClick}></div>
         <div className="fullscreen-control" onClick={this.handleFullscreenButtonClick}></div>
         <div className="close-control" onClick={this.handleCloseButtonClick}></div>
@@ -2184,7 +2211,6 @@ class AppControl extends React.Component {
 // Nav Bar Component
 class AppNavBar extends React.Component {
   render () {
-    let link = "https://poe.technology/releases"
     return (
       <div className='draggable' style={{
         width: '100%',
@@ -2202,15 +2228,6 @@ class AppNavBar extends React.Component {
               <img className="header-logo" src={require('../assets/logo.png')} />
               Currency Cop
             </Typography>
-            {!this.props.upToDate ? (
-              <Tooltip id="tooltip-icon" label={`New Version Available! v${this.props.newVersion}`} placement="bottom">
-                <IconButton aria-label="New Version">
-                  <a href={link} onClick={GoToUrl}>
-                    <CloudDownloadIcon />
-                  </a>
-                </IconButton>
-              </Tooltip>
-            ) : null}
             {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
           </Toolbar>
         </AppBar>
@@ -2573,12 +2590,13 @@ class App extends React.Component {
     return (
       <MuiThemeProvider theme={theme}>
         <withTheme>
-          <AppControl />
+          <AppControl
+            upToDate={this.state.upToDate}
+            newVersion={this.state.newVersion}
+           />
 
           <AppNavBar 
             config={this.state.config}
-            upToDate={this.state.upToDate}
-            newVersion={this.state.newVersion}
           />
 
           <div style={{
