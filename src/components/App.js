@@ -1404,7 +1404,6 @@ class DashboardScreen extends React.Component {
     return (
       <Grid container
         className="draggable"
-        align="center"
         justify="center"
         direction="column"
         style={{ height: 'calc(100vh - 95px)' }}
@@ -1713,7 +1712,6 @@ class ReportScreen extends React.Component {
         <Grid 
           container
           className="report-header"
-          align="center"
           justify="flex-start"
           direction="row"
           style={{
@@ -1755,7 +1753,6 @@ class ReportScreen extends React.Component {
             <Paper className="report-total paper-box" style={{ padding: 16 }}>
               <Grid
                 container
-                align="center"
                 justify="space-between"
                 direction="row"
               >
@@ -2073,7 +2070,6 @@ class LoginScreen extends React.Component {
     return (
       <Grid container
         className="draggable"
-        align="center"
         justify="center"
         direction="column"
         style={{ height: '100vh' }}
@@ -2154,7 +2150,6 @@ class LoadingScreen extends React.Component {
     return (
       <Grid 
         container
-        align="center"
         justify="center"
         direction="row"
         spacing={0} 
