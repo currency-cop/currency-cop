@@ -285,7 +285,7 @@ class LeagueDropdown extends React.Component {
 class LogoutButton extends React.Component {
   render () {
     return (
-      <Button dense onClick={this.props.onClick}>
+      <Button onClick={this.props.onClick}>
         {this.props.children}
       </Button>
     )
@@ -627,78 +627,78 @@ class DashboardScreen extends React.Component {
     }
 
     return (
-      <Grid container>
-        <Grid item>
-          <Button className="btn-border" onClick={this.handleCreateReportButton.bind(this)}>Add Report</Button>
-        </Grid>
+      <div className="dashboard-viewport">
+        <div className="dashboard-container">
+          <div className="dashboard-actions row start-xs">
+            <div className="col-xs-12">
+              <div className="box">
+                <Button className="btn-border" onClick={this.handleCreateReportButton.bind(this)}>Add Report</Button>
+              </div>
+            </div>
+          </div>
 
-        <Grid container
-          className="report-list"
-        >
-          {this.props.reports.map((report, index) => {
-            let {history} = report
-            let hasChange = {
-              change: 0,
-              absChange: 0,
-              direction: null
-            }
+          <div className="dashboard-reports row start-xs">
+            { this.props.reports.map((report, index) => {
+              let {history, settings} = report
+              let hasChange = {
+                change: 0,
+                absChange: 0,
+                direction: null
+              }
 
-            if (history && history.length > 1) {
-              hasChange = getPercentageChange(history[1].reportTotal || 0, history[0].reportTotal || 0)
-            }
+              if (history && history.length > 1) {
+                hasChange = getPercentageChange(history[1].reportTotal || 0, history[0].reportTotal || 0)
+              }
 
-            return (
-              <Grid item
-                key={index}
-                xs
-              >
-                <div 
-                  className="report-item"
-                  onClick={event => this.handleReportSelected(event, index)}
-                >
-                  <div className="report-title">
-                    <Typography className="report-name">
-                      {report.settings.name}
-                    </Typography>
-                    <Typography className="report-league">
-                      {report.settings.league}
-                    </Typography>
-                    {report.history.length ? (
-                      <Typography className="report-meta">
-                        {Ago(report.history[0].refreshedAt)}
-                      </Typography>
-                    ) : null}
+              let changeClass = `change ${
+                hasChange.direction === 'up' 
+                ? 'up' 
+                : hasChange.direction === 'down' 
+                ? 'down'
+                : ''
+              }`
+
+              return (
+                <div className="report col-xs" key={index}>
+                  <div className="report-container">
+                    <div className="report-item" onClick={e => this.handleReportSelected(e, index)}>
+                      <div className="report-item-title">
+                        <span className="report-name">{settings.name}</span>
+                        <span className="report-league">{settings.league}</span>
+                        <span className="report-meta">
+                          { report.history.length ? Ago(report.history[0].refreshedAt) : null }
+                        </span>
+                      </div>
+
+                      <div className="report-item-body">
+                        { report.history.length ? (
+                          <div className="report-item-meta">
+                            <p className="amount">
+                              {report.history[0].reportTotal.toFixed(2)} <span>C</span>
+                            </p>
+                            <p className={changeClass}>
+                              {hasChange.absChange !== 0
+                                ? `${hasChange.direction === 'up' ? '+' : '-'} ${hasChange.absChange}%`
+                                : 'No Change'
+                              }
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="report-item-meta">
+                            <p className="amount loading"></p>
+                            <p className="change loading"></p>
+                          </div>
+                        ) }
+                      </div>
+                    </div>
                   </div>
-                  {report.history.length ? (
-                    <div className="report-item-meta">
-                      <Typography className="amount" type="body1" component="p" style={{ fontSize: 18 }}>
-                        {report.history[0].reportTotal.toFixed(2)} <span>C</span>
-                      </Typography>
-                      <Typography 
-                        type="body1"
-                        component="p"
-                        className={`change ${hasChange.direction==='up'?'up':hasChange.direction==='down'?'down':''}`}
-                      >
-                        {hasChange.absChange !== 0
-                          ? `${hasChange.direction==='up'?'+':'-'} ${hasChange.absChange}%`
-                          : 'No Change'
-                        }
-                      </Typography>
-                    </div>
-                  ) : (
-                    <div className="report-item-meta">
-                      <Typography className="amount loading"></Typography>
-                      <Typography className="change loading"></Typography>
-                    </div>
-                  )}
                 </div>
-              </Grid>
-            )
-          })}
-        </Grid>
-
-        {this.renderDialogs()}
-      </Grid>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+        // {this.renderDialogs()}
     )
   }
 }
@@ -1382,27 +1382,37 @@ class AppControl extends React.Component {
 class AppNavBar extends React.Component {
   render () {
     return (
-      <div className='draggable' style={{
-        width: '100%',
-        position: 'fixed',
-        top: 25,
-        left: 0,
-        right: 0,
-        padding: `0 0 5px 0`,
-        width: 'auto',
-        borderBottom: '1px solid hsla(0, 0%, 100%, 0.05)'
-      }}>
-        <AppBar position="static" style={{ backgroundColor: 'transparent', boxShadow: 'none', userSelect: 'none' }}>
-          <Toolbar style={{ padding: `0 15px` }}>
-            <Typography className="header-title" type="title" color="inherit" style={{ flex: 1 }}>
-              <img className="header-logo" src={require('../assets/logo.png')} />
-              Currency Cop
-            </Typography>
-            {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
-          </Toolbar>
-        </AppBar>
-      </div>
+      <header class="nav-bar">
+        <h1 class="brand">
+          <img className="header-logo" src={require('../assets/logo.png')} />
+          Currency Cop
+        </h1>
+
+        {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
+      </header>
     )
+    // return (
+    //   <div className='draggable' style={{
+    //     width: '100%',
+    //     position: 'fixed',
+    //     top: 25,
+    //     left: 0,
+    //     right: 0,
+    //     padding: `0 0 5px 0`,
+    //     width: 'auto',
+    //     borderBottom: '1px solid hsla(0, 0%, 100%, 0.05)'
+    //   }}>
+    //     <AppBar position="static" style={{ backgroundColor: 'transparent', boxShadow: 'none', userSelect: 'none' }}>
+    //       <Toolbar style={{ padding: `0 15px` }}>
+    //         <Typography className="header-title" type="title" color="inherit" style={{ flex: 1 }}>
+    //           <img className="header-logo" src={require('../assets/logo.png')} />
+    //           Currency Cop
+    //         </Typography>
+    //         {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
+    //       </Toolbar>
+    //     </AppBar>
+    //   </div>
+    // )
   }
 }
 
@@ -1774,15 +1784,10 @@ class App extends React.Component {
           ) : null}
         </div>
 
-        <Snackbar
-          open={!!this.state.globalSnackMessage}
-          action={this.state.globalSnackAction}
-          onRequestClose={this.handleSnackRequestClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          message={(
-            <span id="global-message-id">{this.state.globalSnackMessage}</span>
-          )}
-        />
+        <div className="snack-bar">
+          <span id="global-message-id">{this.state.globalSnackMessage}</span>
+          {this.state.globalSnackAction}
+        </div>
       </div>
     );
   }

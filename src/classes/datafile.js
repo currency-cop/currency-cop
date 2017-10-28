@@ -1,3 +1,5 @@
+import fs from 'fs'
+
 class DataFile {
   constructor (type, filename) {
     this.filename = filename
