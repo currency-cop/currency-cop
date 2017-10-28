@@ -1,0 +1,21 @@
+.btn {
+  position: relative;
+  border: none;
+  color: #888;
+  background: #222;
+  border-radius: 4px;
+  padding: 8px 32px;
+  cursor: pointer;
+  transition: all .3s;
+  outline: none;
+}
+
+.btn:hover {
+  color: white;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.btn:active {
+  box-shadow: none;
+  color: #444;
+}

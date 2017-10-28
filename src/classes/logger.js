@@ -15,7 +15,7 @@ var path = require('path');
  *   destination: 'file'|'console'|'both'
  * }
  */
-function logger(options){
+function Logger (options) {
   var _cnt = -1;
   var _prev_log_period = 0;
   var _log_status = {};
@@ -250,4 +250,4 @@ function logger(options){
   }
 }
 
-module.exports = logger;
+module.exports = Logger

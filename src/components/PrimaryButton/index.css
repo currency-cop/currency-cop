@@ -1,0 +1,18 @@
+.btn-primary {
+  background: none;
+  border: 2px solid #333;
+  border-radius: 50px;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+  background: hsl(30, 100%,50%);
+  border-color: hsl(30, 100%,50%);
+}
+
+.btn-primary:active {
+  box-shadow: none;
+  color: #444;
+  border-color: #222;
+  background: #222;
+}

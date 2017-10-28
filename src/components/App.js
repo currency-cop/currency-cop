@@ -1,41 +1,55 @@
+// Styles
+import '../assets/css/grid.css'
+import '../assets/css/app.css'
+import '../assets/css/login.css'
+
 // Core
-import '../assets/css/App.css'
 import Constants from '../constants'
+import Logger from '../classes/logger'
+import ReportBuilder from '../classes/reportbuilder'
+import DataFile from '../classes/datafile'
+import Queue from '../classes/queue'
+import Ago from '../classes/ago'
 import pkg from '../../package.json'
+
+import {
+  UUID,
+  GoToUrl,
+  clone,
+  padNumber,
+  promiseDelay,
+  getNinjaDate,
+  getPercentageChange
+} from '../helpers'
+
+import {
+  DoServerRequest,
+  LoginWithCookie,
+  GetAccountName,
+  GetLeagues,
+  GetCharacters,
+  GetLeagueStashTab,
+  GetCurrencyOverview,
+  GetEssenceOverview,
+  GetFragmentOverview,
+  GetDivCardOverview,
+  GetMapOverview,
+  GetUniqueMapOverview,
+  DoVersionCheck
+} from '../api'
 
 // Third Party
 import { ipcRenderer, shell, remote, clipboard } from 'electron'
 import React, { Component } from 'react'
 import Emitter from 'tiny-emitter'
-import Logger from '../logger'
 import Axios from 'axios'
-import Queue from '../queue'
-import Ago from '../ago'
 import path from 'path'
 import fs from 'fs'
 
 // Material UI
-import { MuiThemeProvider, createMuiTheme, withTheme, withStyles } from 'material-ui/styles'
-import { DialogActions, DialogContent, DialogContentText, DialogTitle } from 'material-ui/Dialog'
-import { FormGroup, FormControl, FormControlLabel, FormHelperText } from 'material-ui/Form'
-import { ListItem, ListItemText } from 'material-ui/List'
-import { RadioGroup } from 'material-ui/Radio'
-import { InputLabel } from 'material-ui/Input'
-import { MenuItem } from 'material-ui/Menu'
-import Tooltip from 'material-ui/Tooltip'
-import Paper from 'material-ui/Paper'
-
-import {
-  AppBar, Toolbar, IconButton, MenuIcon,
-  Button, Typography, Input, Grid, Snackbar,
-  Menu, Checkbox, Radio, List, Dialog, TextField,
-  Select, Switch
-} from 'material-ui'
-
-// Icons
-import KeyboardArrowLeftIcon from 'material-ui-icons/KeyboardArrowLeft'
-import CloudDownloadIcon from 'material-ui-icons/CloudDownload'
-import SettingsIcon from 'material-ui-icons/Settings'
+import Button from './Button'
+import Input from './Input'
+import PrimaryButton from './PrimaryButton'
 
 // App Environment
 const AppVersion = pkg.version
@@ -43,71 +57,26 @@ const AppPlatform = process.platform === 'darwin'
   ? 'osx'
   : 'windows'
 
-// App Theme
-const theme = createMuiTheme({
-  palette: {
-    type: 'dark',
-    primary: {
-      50: '#e4e5e7',
-      100: '#bdbec2',
-      200: '#919399',
-      300: '#646870',
-      400: '#434752',
-      500: '#222733',
-      600: '#1e232e',
-      700: '#191d27',
-      800: '#141720',
-      900: '#0c0e14',
-      A100: '#a7d2ff',
-      A200: '#74b7ff',
-      A400: '#419dff',
-      A700: '#288fff',
-      'contrastDefaultColor': 'light',
-    },
-    secondary: {
-      50: '#edeef0',
-      100: '#d1d6da',
-      200: '#b2bac1',
-      300: '#939ea8',
-      400: '#7c8a96',
-      500: '#657583',
-      600: '#5d6d7b',
-      700: '#536270',
-      800: '#495866',
-      900: '#374553',
-      A100: '#5874ff',
-      A200: '#254aff',
-      A400: '#0028f1',
-      A700: '#0024d8',
-      'contrastDefaultColor': 'light',
-    },
-    background: {
-      paper: '#222733',
-      default: '#191d27'
-    }
-  }
-})
-
-// Configure Event System
-const events = new Emitter()
-
 // Application folder location
 const userDataPath = remote.app.getPath('userData')
 const logsDataPath = path.join(userDataPath, 'Logs')
 const reportsFilename = path.join(userDataPath, 'Reports.db')
 const configFilename = path.join(userDataPath, 'User.db')
 
+// Configure Event System
+global.events = new Emitter()
+
 // Configure Logger
-const logger = new Logger({
+global.logger = new Logger({
   logdir: logsDataPath,
   level: 1
 })
 
 // Create Loggers
-const Log = logger.topic('Core')
-const ConfigLog = logger.topic('Config')
-const ApiLog = logger.topic('API')
-const EventLog = logger.topic('Events')
+global.Log = logger.topic('Core')
+global.ConfigLog = logger.topic('Config')
+global.ApiLog = logger.topic('API')
+global.EventLog = logger.topic('Events')
 
 // Capture uncaught errors
 process.on('uncaughtException', function (error) {
@@ -125,81 +94,10 @@ let ConfigKeys = {
   ACCOUNT_USERNAME:                     'ACCOUNT_USERNAME'
 }
 
-// Helpers
 function DefaultConfig () {
   return {
     [ConfigKeys.ACCOUNT_COOKIE]:              null,
     [ConfigKeys.ACCOUNT_USERNAME]:            null,
-  }
-}
-
-function UUID () {
-  return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36)
-}
-
-function padNumber (i) {
-  return (i < 10) ? `0${i}` : `${i}`
-}
-
-function promiseDelay (time) {
-  return new Promise(function (fulfill) {
-    setTimeout(fulfill, time);
-  });
-}
-
-function getNinjaDate () {
-  let date = new Date()
-  return [
-    padNumber(date.getFullYear()),
-    padNumber(date.getMonth()),
-    padNumber(date.getDay())
-  ].join('-')
-}
-
-function clone (obj) {
-  return JSON.parse(JSON.stringify(obj))
-}
-
-function getPercentageChange (a, b) {
-  let change = parseFloat((((b - a) / a) * 100).toFixed(2))
-  let direction = change < 0
-    ? 'down'
-    : change > 0
-    ? 'up'
-    : null
-  let absChange = Math.abs(change)
-
-  return {
-    change,
-    absChange,
-    direction
-  }
-}
-
-// Class
-class DataFile {
-  constructor (type, filename) {
-    this.filename = filename
-    this.log = logger.topic(type)
-  }
-
-  load (defaults) {
-    try {
-      this.log.info(`Loading file from: ${this.filename}`)
-      return JSON.parse(fs.readFileSync(this.filename))
-    } catch(error) {
-      this.log.warn(`File could not be loaded: ${error.message}`)
-      return defaults
-    }
-  }
-
-  save (data) {
-    try {
-      this.log.info(`Saving file: ${this.filename}`)
-      fs.writeFileSync(this.filename, JSON.stringify(data))
-    } catch (error) {
-      this.log.critical(`Could not save file: ${error.message}`)
-    }
   }
 }
 
@@ -221,729 +119,14 @@ function getConfig (key) {
   }
 }
 
-// Api
-function GoToUrl (url, event) {
-  if (url && url.preventDefault && !url.target.href) {
-    event = url
-    event.preventDefault()
-    shell.openExternal(event.target.parentNode.href)
-  } else if (url && url.preventDefault) {
-    event = url
-    event.preventDefault()
-    shell.openExternal(event.target.href)
-  } else {
-    event.preventDefault()
-    shell.openExternal(url)
-  }
-}
-
-function DoServerRequest (options) {
-  // Prevent collision
-  let uuid = UUID()
-  options.onSuccess += `_${uuid}`
-  options.onError += `_${uuid}`
-
-  // Make request
-  console.debug(`Making HTTP request to: ${options.url}`)
-  console.debug(`Request options`, options)
-
-  ipcRenderer.send('HTTP_REQUEST', options)
-
-  return new Promise((resolve, reject) => {
-    ipcRenderer.once(options.onSuccess, (event, response) => {
-      if (response.status > 200) {
-        // The request was made and the server responded with a status code
-        // that is not 200
-        ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
-      }
-
-      return resolve(response)
-    })
-
-    ipcRenderer.once(options.onError, (event, error) => {
-      if (error.response) {
-        // The request was made and the server responded with a status code 
-        // that falls out of the range of 2xx
-        ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
-      } else if (error.request) {
-        // The request was made but no response was received 
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of 
-        // http.ClientRequest in node.js
-        ApiLog.error(`Request sent to [${options.url}], no response received: ${error.message}`)
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        ApiLog.error(`Unable to make HTTP request to [${options.url}]: ${error.message}`)
-      }
-
-      return reject(error)
-    })
-  })
-}
-
-function LoginWithCookie (cookie) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.POE_LOGIN_URL,
-    options: {
-      headers: {
-        'Cookie': `${Constants.POE_COOKIE_NAME}=${cookie}`
-      },
-      maxRedirects: 0
-    },
-    onSuccess: 'LOGIN_RESPONSE',
-    onError: 'LOGIN_ERROR'
-  })
-}
-
-function GetAccountName (cookie) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.POE_MY_ACCOUNT_URL,
-    options: {
-      headers: {
-        'Cookie': `${Constants.POE_COOKIE_NAME}=${cookie}`
-      }
-    },
-    onSuccess: 'MY_ACCOUNT_RESPONSE',
-    onError: 'MY_ACCOUNT_ERROR'
-  })
-}
-
-function GetLeagues () {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.POE_LEAGUE_LIST_URL,
-    options: {},
-    onSuccess: 'LEAGUE_LIST_RESPONSE',
-    onError: 'LEAGUE_LIST_ERROR'
-  })
-}
-
-function GetCharacters (cookie, accountName) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.POE_GET_CHARACTERS_URL,
-    options: {
-      headers: {
-        'Cookie': `${Constants.POE_COOKIE_NAME}=${cookie}`
-      }
-    },
-    onSuccess: 'CHARACTERS_RESPONSE',
-    onError: 'CHARACTERS_ERROR'
-  })
-}
-
-function GetLeagueStashTab (cookie, options) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.POE_STASH_ITEMS_URL,
-    options: {
-      headers: {
-        'Cookie': `${Constants.POE_COOKIE_NAME}=${cookie}`
-      },
-      params: options
-    },
-    onSuccess: `STASH_TAB_RESPONSE`,
-    onError: `STASH_TAB_ERROR`
-  })
-}
-
-function GetCurrencyOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_CURRENCY_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'CURRENCY_RESPONSE',
-    onError: 'CURRENCY_ERROR'
-  })
-}
-
-function GetEssenceOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_ESSENCE_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'ESSENCE_RESPONSE',
-    onError: 'ESSENCE_ERROR'
-  })
-}
-
-function GetFragmentOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_FRAGMENT_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'FRAGMENT_RESPONSE',
-    onError: 'FRAGMENT_ERROR'
-  })
-}
-
-function GetDivCardOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_DIV_CARDS_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'DIV_CARD_RESPONSE',
-    onError: 'DIV_CARD_ERROR'
-  })
-}
-
-function GetMapOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_MAP_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'MAP_RESPONSE',
-    onError: 'MAP_ERROR'
-  })
-}
-
-function GetUniqueMapOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_UNIQUE_MAP_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'UNIQUE_MAP_RESPONSE',
-    onError: 'UNIQUE_MAP_ERROR'
-  })
-}
-
-function DoVersionCheck () {
-  return DoServerRequest({
-    method: 'get',
-    url: `https://poe.technology/latest`,
-    onSuccess: 'VERSION_CHECK_RESPONSE',
-    onError: 'VERSION_CHECK_ERROR'
-  })
-}
-
-// API Classes
-class ReportBuilder {
-  constructor (options) {
-    this.additionalDelay = 60000
-    this.cookie = options.cookie
-    this.account = options.account
-    this.settings = options.settings
-    this.data = options.data
-    this.history = options.history || []
-    this.interval = null
-    this.fetching = false
-    this.id = UUID()
-  }
-
-  notice (message) {
-    let reportName = this.settings.name
-
-    events.emit('notification', {
-      message: `[${reportName}] ${message}`
-    })
-  }
-
-  enableAutoRefresh () {
-    if (this.interval) {
-      clearInterval(this.interval)
-    }
-
-    if (this.settings.autoRefresh) {
-      Log.info(`Enabling auto-refresh for [${this.settings.name}] interval of [${this.settings.autoRefreshInterval}]`)
-      this.interval = setInterval(() => {
-        Log.info(`Refreshing [${this.settings.name}]`)
-        return this.refresh()
-      }, this.settings.autoRefreshInterval)
-    }
-  }
-
-  updateSettings (settings, fetchImmediately) {
-    let previous = this.settings
-    this.settings = settings
-    this.enableAutoRefresh()
-
-    if (fetchImmediately) {
-      this.refresh()
-    }
-  }
-
-  refresh () {
-    return this.fetch()
-      .then(() => {
-        events.emit('update_report', {
-          report: this
-        })
-      })
-  }
-
-  buildItem (data) {
-    let item = {}
-
-    item.name = data.lineItem.currencyTypeName || data.lineItem.name
-    item.lname = item.name.toLowerCase()
-    item.icon = data.lineItem.icon || data.details.icon
-    item.chaosValue = data.lineItem.chaosEquivalent || data.lineItem.chaosValue
-    item.orderId = data.details.poeTradeId || data.lineItem.id
-    item.type = data.type
-
-    if (data.lineItem.stackSize) {
-      item.maxStackSize = data.lineItem.stackSize
-    }
-
-    return item
-  }
-
-  fetchTabsList () {
-    return new Promise((resolve, reject) => {
-      return GetLeagueStashTab(this.cookie, {
-        accountName: this.account,
-        tabIndex: 0,
-        league: this.settings.league,
-        tabs: 1
-      }).then(response => {
-        if (response.status === 404) {
-          this.notice(`No tabs found in ${league} league. Try another one? 🤷`)
-        }
-
-        if (response.status === 403) {
-          events.emit('clear_config')
-          this.notice(`Session expired. You have been logged out.`)
-        }
-
-        if (!response.data || !response.data.tabs) {
-          this.notice(`No tabs found in ${league} league. Try another one? 🤷`)
-        } else if (response.status === 200) {
-          return response
-        }
-
-        throw (null)
-      }).then(response => {
-        this.data.stashTabs = response.data.tabs
-        return resolve()
-      })
-      .catch(err => {
-        throw err
-      })
-    })
-  }
-
-  fetchTabs () {
-    let queue = new Queue(1)
-    let stash = this.data.stashTabs
-
-    for (var i = 0; i < stash.length; i++) {
-      let tab = this.data.stashTabs[i]
-
-      // Ignore hideout tabs
-      if (tab.hidden) 
-        continue
-
-      // Ignore non-indexed tabs
-      if (this.settings.tabsToSearch.indexOf(i) < 0) 
-        continue
-
-      // Ignore tab without data
-      if (tab.wasProcessed)
-        if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
-          continue
-
-      this.fetchTab(queue, tab)
-    }
-
-    return queue.push(() => {
-      return true
-    })
-  }
-
-  fetchTab (queue, tab, delay) {
-    delay = delay || 1350 // 60 / 45 (rate limited)
-    queue.unshift(() => new Promise((resolve, reject) => {
-      return promiseDelay(delay)
-        .then(() => {
-          this.notice(`Fetching tab ${tab.n}...`)
-        })
-        .then(() => {
-          return GetLeagueStashTab(this.cookie, {
-            accountName: this.account,
-            tabIndex: tab.i,
-            league: this.settings.league,
-            tabs: 0
-          })
-        })
-        .then(response => {
-          if (response.status === 429) {
-            this.notice(`Ooohwee, too many requests Jerry! Gonna have to wait a minute for tab ${tab.n}!`)
-            return this.fetchTab(queue, tab, delay + this.additionalDelay)
-          }
-
-          if (response.status === 403) {
-            events.emit('clear_config')
-            this.notice(`Session expired. You have been logged out.`)
-            throw (null)
-          }
-
-          if (!response) {
-            return resolve()
-          }
-
-          return response.data
-        })
-        .then(response => {
-          tab.items = response.items
-          return resolve()
-        })
-    }))
-  }
-
-  fetchRates () {
-    return Promise.resolve()
-      .then(() => this.notice('Fetching currency rates...'))
-      .then(() => (this.data.rates = []))
-      .then(() => this.fetchCurrencyRates())
-      .then(() => this.fetchEssenceRates())
-      .then(() => this.fetchFragmentRates())
-      .then(() => this.fetchDivCardRates())
-      .then(() => this.fetchMapRates())
-      .then(() => this.fetchUniqueMapRates())
-  }
-
-  fetchEssenceRates (queue) {
-    let league = this.settings.league.replace('SSF ', '')
-
-    return (queue || new Queue(1))
-      .unshift(() => new Promise((resolve, reject) => {
-        return GetEssenceOverview(league, getNinjaDate())
-          .then(response => {
-            return response.status !== 200
-            ? this.fetchEssenceRates(queue)
-            : this.processFetchedRates('essence', response.data)
-          })
-          .then(resolve)
-          .catch(reject)
-      }))
-  }
-
-  fetchDivCardRates (queue) {
-    let league = this.settings.league.replace('SSF ', '')
-
-    return (queue || new Queue(1))
-      .unshift(() => new Promise((resolve, reject) => {
-        return GetDivCardOverview(league, getNinjaDate())
-          .then(response => {
-            return response.status !== 200
-              ? this.fetchDivCardRates(queue)
-              : this.processFetchedRates('card', response.data)
-          })
-          .then(resolve)
-          .catch(reject)
-      }))
-  }
-
-  fetchMapRates (queue) {
-    let league = this.settings.league.replace('SSF ', '')
-
-    return (queue || new Queue(1))
-      .unshift(() => new Promise((resolve, reject) => {
-        return GetMapOverview(league, getNinjaDate())
-          .then(response => {
-            return response.status !== 200
-              ? this.fetchMapRates(queue)
-              : this.processFetchedRates('map', response.data)
-          })
-          .then(resolve)
-          .catch(reject)
-      }))
-  }
-
-  fetchUniqueMapRates (queue) {
-    let league = this.settings.league.replace('SSF ', '')
-
-    return (queue || new Queue(1))
-      .unshift(() => new Promise((resolve, reject) => {
-        return GetUniqueMapOverview(league, getNinjaDate())
-          .then(response => {
-            return response.status !== 200
-              ? this.fetchUniqueMapRates(queue)
-              : this.processFetchedRates('map_unique', response.data)
-          })
-          .then(resolve)
-          .catch(reject)
-      }))
-  }
-
-  fetchFragmentRates (queue) {
-    let league = this.settings.league.replace('SSF ', '')
-
-    return (queue || new Queue(1))
-      .unshift(() => new Promise((resolve, reject) => {
-        return GetFragmentOverview(league, getNinjaDate())
-          .then(response => {
-            return response.status !== 200
-              ? this.fetchFragmentRates(queue)
-              : this.processFetchedRates('fragment', response.data)
-          })
-          .then(resolve)
-          .catch(reject)
-      }))
-  }
-
-  fetchCurrencyRates (queue) {
-    let league = this.settings.league.replace('SSF ', '')
-
-    return (queue || new Queue(1))
-      .unshift(() => new Promise((resolve, reject) => {
-        return GetCurrencyOverview(league, getNinjaDate())
-          .then(response => {
-            return response.status !== 200
-            ? this.fetchCurrencyRates(queue)
-            : this.processFetchedRates('currency', response.data)
-          })
-          .then(resolve)
-          .catch(reject)
-      }))
-  }
-
-  processFetchedRates (type, data) {
-    return new Promise((resolve, reject) => {
-      let rates = this.data.rates || []
-
-      let rateExists = (itemName) => {
-        let litemName = itemName.toLowerCase()
-        return rates.find(value => value.lname === litemName)
-      }
-
-      let getCurrencyDetailsItem = (itemName) => {
-        return data.currencyDetails.find(value => value.name === itemName)
-      }
-
-      let getLineItemName = (lineItem) => {
-        return data.currencyDetails
-          ? lineItem.currencyTypeName
-          : lineItem.name
-      }
-
-      if (data.lines && data.lines.forEach) {
-        data.lines.forEach(lineItem => {
-          let exists = rateExists(getLineItemName(lineItem))
-
-          // Entry already exists
-          if (exists) {
-            return
-          }
-
-          let details = data.currencyDetails
-            ? getCurrencyDetailsItem(lineItem.currencyTypeName)
-            : {}
-
-          rates.push(this.buildItem({
-            lineItem,
-            details,
-            type
-          }))
-        })
-      }
-
-      this.data.rates = rates
-
-      return resolve()
-    })
-  }
-
-  build (type, data) {
-    let tabs = this.data.stashTabs
-    let items = clone(this.data.rates)
-
-    // Helpers
-    let getItemObject = (itemName) => {
-      let litemName = itemName.toLowerCase()
-      return items.find(value => {
-        return value.lname === litemName
-      })
-    }
-
-    // Iterate over each tab, then each tabs items
-    if (tabs && tabs.forEach) {
-      tabs.forEach((tab, i) => {
-        // Ignore hideout tabs
-        if (tab.hidden) 
-          return
-
-        // Ignore non-indexed tabs
-        if (this.settings.tabsToSearch.indexOf(i) < 0) 
-          return
-
-        // Ignore tab without data
-        if (tab.wasProcessed)
-          if (this.settings.onlySearchTabsWithCurrency && !tab.hasCurrency)
-            return
-
-        if (tab && tab.items && tab.items.forEach) {
-          tab.items.forEach(item => {
-            let reportItem = getItemObject(item.typeLine)
-
-            // Check for "Superior" in item name
-            if (!reportItem && item.typeLine.indexOf('Superior') > -1) {
-              reportItem = getItemObject(item.typeLine.replace('Superior ', ''))
-            }
-
-            // Chaos orb doesn't exist by default so we must create them.
-            if (!reportItem && item.typeLine === 'Chaos Orb') {
-              items.unshift({
-                name: item.typeLine,
-                lname: item.typeLine.toLowerCase(),
-                icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1',
-                orderId: 1,
-                type: 'currency',
-                chaosValue: 1,
-                stackSize: item.stackSize,
-                stacks: [{
-                  tab: tab.n,
-                  stackSize: item.stackSize,
-                  x: item.x,
-                  y: item.y
-                }]
-              })
-            }
-
-            // Skip anything else
-            if (!reportItem) {
-              return
-            }
-
-            // if (
-            //    reportItem.type === 'card' 
-            // && !!reportItem.maxStackSize
-            // && reportItem.maxStackSize > 0
-            // && !reportItem.stackSizeChaosValue) {
-            //   reportItem.stackSizeChaosValue = reportItem.chaosValue
-            //   reportItem.chaosValue = parseFloat((reportItem.chaosValue / reportItem.maxStackSize).toFixed(2))
-            //   reportItem.stackSize = 0
-            // }
-
-            // Ensure stack details exist
-            if (!reportItem.stackSize) {
-              reportItem.stackSize = 0
-            }
-
-            if (!reportItem.stacks) {
-              reportItem.stacks = []
-            }
-
-            if (isNaN(reportItem.stackSize)) {
-              reportItem.stackSize = 0
-            }
-
-            reportItem.stackSize += item.stackSize || 1
-            reportItem.stacks.push({
-              tab: tab.n,
-              stackSize: item.stackSize,
-              x: item.x,
-              y: item.y
-            })
-          })
-        }
-      })
-    }
-
-    return items
-  }
-
-  fetch (tabs, rates) {
-    let {
-      autoRefreshTabs,
-      autoRefreshRates
-    } = this.settings
-
-    return Promise.resolve()
-      .then(() => (autoRefreshRates || rates) ? this.fetchRates() : null)
-      .then(() => (autoRefreshTabs || tabs) ? this.fetchTabs() : null)
-      .then(() => this.build())
-      .then(report => {
-        let reportTotal = 0
-
-        if (report && report.forEach) {
-          report.forEach(item => {
-            if (item.stackSize) {
-              reportTotal += item.stackSize * item.chaosValue
-            }
-          })
-        }
-
-        this.history.unshift({
-          refreshedAt: Date.now(),
-          refreshedTabs: tabs || autoRefreshTabs,
-          refreshedRates: rates || autoRefreshRates,
-          data: this.data,
-          settings: this.settings,
-          reportTotal,
-          report
-        })
-
-        return this
-      })
-      .catch(error => {
-        if (!error) return
-        throw error
-      })
-  }
-}
-
-ReportBuilder.defaultSettingsObject = function () {
-  return {
-    name: null,
-    league: null,
-    autoRefresh: false,
-    autoRefreshInterval: 1000 * 60 * 60, // 1 hour
-    autoRefreshRates: false,
-    autoRefreshTabs: true,
-    onlySearchTabsWithCurrency: false,
-    tabsToSearch: [],
-  }
-}
-
-ReportBuilder.defaultDataObject = function () {
-  return {
-    stashTabs: null,
-    rates: null
-  }
-}
-
 // Helper Components
 const CopyLogsButton = (
-  <Button color="accent" dense onClick={event => {
+  <Button onClick={event => {
     let originalValue = event.target.innerText
     clipboard.writeText(logger.getCurrentLogsFile().toString())
     event.target.innerText = 'Copied!'
     setTimeout(() => event.target.innerText = originalValue, 2000)
-  }}>
-    Copy Logs
-  </Button>
+  }}>Copy Logs</Button>
 )
 
 // Character Dropdown
@@ -2048,6 +1231,7 @@ class LoginScreen extends React.Component {
 
   handleLoginButtonClick () {
     let {value} = this.state
+    console.log('omg...')
 
     if (!value) {
       return this.setState({
@@ -2067,83 +1251,55 @@ class LoginScreen extends React.Component {
 
   render() {
     const { value, ...other } = this.props
-
     let thread = 'https://www.pathofexile.com/forum/view-thread/1989935/page/9#p14857124'
 
     return (
-      <Grid container
-        className="draggable"
-        align="center"
-        justify="center"
-        direction="column"
-        style={{ height: '100vh' }}
-      >
-        <Grid item
-          className="not-draggable"
-          style={{ textAlign: 'center' }}
-        >
-          <Typography
-            type="title"
-            component="h1"
-          >
-            Login to Path of Exile
-          </Typography>
+      <div className="login-viewport viewport">
+        <div className="viewport row middle-xs center-xs">
+          <div className="login-container">
+            <div className="draggable row">
+              <div className="col-xs-12">
+                <div className="box">
+                  {this.state.error ? (
+                    <p className="error" style={{ fontSize: 12 }}>⚠️ {this.state.error}</p>
+                  ) : null}
 
-          <Typography
-            type="body1"
-            component="p"
-            color="secondary"
-            style={{ marginTop: 16 }}
-          >
-            👮 Need help finding your session id?&nbsp;
-            <a href={thread} onClick={GoToUrl.bind(this)}>
-              Click here!
-            </a>
-          </Typography>
-        </Grid>
+                  <h2>Login</h2>
+                </div>
+              </div>
+            </div>
 
-        <Grid item
-          className="not-draggable"
-          style={{ minWidth: 300, marginTop: 24, marginBottom: 32 }}
-        >
-          <Grid container
-            justify="flex-start"
-            direction="column"
-          >
-            <Input
-              error={!!this.state.error}
-              id={Constants.POE_COOKIE_NAME}
-              placeholder={Constants.POE_COOKIE_NAME}
-              value={this.state.value}
-              onChange={event => this.setState({ 
-                value: event.target.value 
-              })}
-              fullWidth
-              autoFocus
-            />
+            <div className="draggable row center-xs">
+              <div className="col-xs-12">
+                <div className="not-draggable box">
+                  <div>
+                    <label>Session ID</label>
+                    <Input
+                      id={Constants.POE_COOKIE_NAME}
+                      placeholder={Constants.POE_COOKIE_NAME}
+                      value={this.state.value}
+                      onChange={event => this.setState({ 
+                        value: event.target.value 
+                      })}
+                    />
+                    <p>
+                      👮 Need help finding your session id?&nbsp;
+                      <a href={thread} onClick={GoToUrl.bind(this)}>Click here!</a>
+                    </p>
+                  </div>
 
-            {this.state.error ? (
-              <Typography style={{ fontSize: 14, marginTop: 8 }}>
-                ⚠️ {this.state.error}
-              </Typography>
-            ) : null}
-          </Grid>
-        </Grid>
-
-        <Grid item
-          className="not-draggable"
-          style={{ minWidth: 300 }}
-        >
-          <Grid container
-            justify="flex-end"
-            direction="row"
-          >
-            <Button raised color="accent" onClick={this.handleLoginButtonClick.bind(this)}>
-              Login
-            </Button>
-          </Grid>
-        </Grid>
-      </Grid>
+                  <PrimaryButton style={{
+                    marginTop: 8,
+                    width: '100%'
+                  }} onClick={this.handleLoginButtonClick.bind(this)}>
+                    Login
+                  </PrimaryButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     )
   }
 }
@@ -2152,22 +1308,11 @@ class LoginScreen extends React.Component {
 class LoadingScreen extends React.Component {
   render () {
     return (
-      <Grid 
-        container
-        align="center"
-        justify="center"
-        direction="row"
-        spacing={0} 
-        style={{
-          height: '100%'
-        }}
-      >
-        <Grid item>
-          <Typography type="body1" component="p">
-            {this.props.message}
-          </Typography>
-        </Grid>
-      </Grid>
+      <div className="login-viewport viewport">
+        <div className="viewport row middle-xs center-xs">
+          <p>{this.props.message}</p>
+        </div>
+      </div>
     )
   }
 }
@@ -2213,7 +1358,7 @@ class AppControl extends React.Component {
   render () {
     let link = "https://poe.technology/releases"
     return (
-      <div className="app-control">
+      <div className="app-control not-draggable">
         <div className="app-update">
           {!this.props.upToDate && this.props.newVersion ? (
               <Tooltip id="tooltip-icon" label={`New Version Available! v${this.props.newVersion}`} placement="bottom">
@@ -2271,15 +1416,6 @@ class App extends React.Component {
     isLoading: false,
     isViewingReport: false,
     upToDate: true
-  }
-
-  styles = {
-    root: {
-      paddingTop: theme.spacing.unit,
-      paddingBottom: theme.spacing.unit,
-      paddingLeft: theme.spacing.unit * 2,
-      paddingRight: theme.spacing.unit * 2
-    }
   }
 
   clearConfig () {
@@ -2592,75 +1728,62 @@ class App extends React.Component {
   render() {
     if (this.state.isLoading) {
       return (
-        <MuiThemeProvider theme={theme}>
-          <withTheme>
-            <AppControl />
-            <LoadingScreen message={this.state.isLoading} />
-          </withTheme>
-        </MuiThemeProvider>
+        <div className="app-viewport draggable">
+          <AppControl />
+          <LoadingScreen message={this.state.isLoading} />
+        </div>
       )
     }
 
     if (!this.state.isLoggedIn) {
       return (
-        <MuiThemeProvider theme={theme}>
-          <withTheme>
-            <AppControl />
-            <LoginScreen onLogin={this.handleLogin.bind(this)} />
-          </withTheme>
-        </MuiThemeProvider>
+        <div className="app-viewport draggable">
+          <AppControl />
+          <LoginScreen onLogin={this.handleLogin.bind(this)} />
+        </div>
       )
     }
 
     return (
-      <MuiThemeProvider theme={theme}>
-        <withTheme>
-          <AppControl
-            upToDate={this.state.upToDate}
-            newVersion={this.state.newVersion}
-           />
-
-          <AppNavBar 
-            config={this.state.config}
+      <div className="app-viewport draggable">
+        <AppControl
+          upToDate={this.state.upToDate}
+          newVersion={this.state.newVersion}
           />
 
-          <div style={{
-              position: 'fixed',
-              padding: 15,
-              top: 94,
-              left: 0,
-              right: 0
-            }}
-          >
-            {!this.state.isViewingReport ? (
-              <DashboardScreen
-                config={this.state.config}
-                leagues={this.state.leagues}
-                reports={this.state.reports}
-              />
-            ) : null}
+        <AppNavBar 
+          config={this.state.config}
+        />
 
-            {this.state.isViewingReport ? (
-              <ReportScreen
-                config={this.state.config}
-                report={this.state.isViewingReport}
-                reportId={this.state.isViewingReportId}
-                leagues={this.state.leagues}
-              />
-            ) : null}
-          </div>
+        <div className="main-viewport">
+          {!this.state.isViewingReport ? (
+            <DashboardScreen
+              config={this.state.config}
+              leagues={this.state.leagues}
+              reports={this.state.reports}
+            />
+          ) : null}
 
-          <Snackbar
-            open={!!this.state.globalSnackMessage}
-            action={this.state.globalSnackAction}
-            onRequestClose={this.handleSnackRequestClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-            message={(
-              <span id="global-message-id">{this.state.globalSnackMessage}</span>
-            )}
-          />
-        </withTheme>
-      </MuiThemeProvider>
+          {this.state.isViewingReport ? (
+            <ReportScreen
+              config={this.state.config}
+              report={this.state.isViewingReport}
+              reportId={this.state.isViewingReportId}
+              leagues={this.state.leagues}
+            />
+          ) : null}
+        </div>
+
+        <Snackbar
+          open={!!this.state.globalSnackMessage}
+          action={this.state.globalSnackAction}
+          onRequestClose={this.handleSnackRequestClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          message={(
+            <span id="global-message-id">{this.state.globalSnackMessage}</span>
+          )}
+        />
+      </div>
     );
   }
 }

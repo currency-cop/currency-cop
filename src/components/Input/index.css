@@ -1,0 +1,13 @@
+.form-input {
+  position: relative;
+  border: none;
+  color: #888;
+  background: #222;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all .3s;
+  outline: none;
+  margin-bottom: 8px;
+  width: 100%;
+}

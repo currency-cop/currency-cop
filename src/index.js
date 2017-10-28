@@ -1,5 +1,7 @@
 import React from 'react'
 import { render } from 'react-dom'
+
+// Import styles
 import 'typeface-roboto'
 
 // Import application
