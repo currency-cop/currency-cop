@@ -914,9 +914,13 @@ class ReportBuilder {
   }
 }
 
+
 ReportBuilder.defaultSettingsObject = function () {
+  
+  let tempName = new Date().toISOString().slice(0,10);
+  
   return {
-    name: null,
+    name: tempName,
     league: null,
     autoRefresh: false,
     autoRefreshInterval: 1000 * 60 * 60, // 1 hour
