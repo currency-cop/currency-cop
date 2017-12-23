@@ -16,7 +16,13 @@ module.exports = {
   NINJA_FRAGMENT_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetFragmentOverview',
   NINJA_ESSENCE_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetEssenceOverview',
 
-  NINJA_UNIQUE_MAP_OVERVIEW_URL: 'http://cdn.poe.ninja/api/Data/GetUniqueMapOverview',
+  NINJA_UNIQUE_MAP_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueMapOverview',
   NINJA_DIV_CARDS_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetDivinationCardsOverview',
-  NINJA_MAP_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetMapOverview'
+  NINJA_MAP_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetMapOverview',
+
+  NINJA_UNIQUE_JEWEL_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueJewelOverview',
+  NINJA_UNIQUE_FLASK_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueFlaskOverview',
+  NINJA_UNIQUE_WEAPON_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueWeaponOverview',
+  NINJA_UNIQUE_ARMOUR_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueArmourOverview',
+  NINJA_UNIQUE_ACCESSORY_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueAccessoryOverview',
 }

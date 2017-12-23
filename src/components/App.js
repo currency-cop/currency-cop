@@ -438,6 +438,66 @@ function GetUniqueMapOverview (league, date) {
   })
 }
 
+function GetUniqueJewelOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_JEWEL_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_JEWEL_RESPONSE',
+    onError: 'UNIQUE_JEWEL_ERROR'
+  })
+}
+
+function GetUniqueFlaskOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_FLASK_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_FLASK_RESPONSE',
+    onError: 'UNIQUE_FLASK_ERROR'
+  })
+}
+
+function GetUniqueArmourOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_ARMOUR_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_ARMOUR_RESPONSE',
+    onError: 'UNIQUE_ARMOUR_ERROR'
+  })
+}
+
+function GetUniqueAccessoryOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_ACCESSORY_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_ACCESSORY_RESPONSE',
+    onError: 'UNIQUE_ACCESSORY_ERROR'
+  })
+}
+
 function DoVersionCheck () {
   return DoServerRequest({
     method: 'get',
@@ -507,6 +567,7 @@ class ReportBuilder {
 
     item.name = data.lineItem.currencyTypeName || data.lineItem.name
     item.lname = item.name.toLowerCase()
+    item.links = data.lineItem.links || 0
     item.icon = data.lineItem.icon || data.details.icon
     item.chaosValue = data.lineItem.chaosEquivalent || data.lineItem.chaosValue
     item.orderId = data.details.poeTradeId || data.lineItem.id
@@ -631,6 +692,11 @@ class ReportBuilder {
       .then(() => this.fetchDivCardRates())
       .then(() => this.fetchMapRates())
       .then(() => this.fetchUniqueMapRates())
+      .then(() => this.fetchUniqueJewelRates())
+      .then(() => this.fetchUniqueFlaskRates())
+      .then(() => this.fetchUniqueWeaponRates())
+      .then(() => this.fetchUniqueArmourRates())
+      .then(() => this.fetchUniqueAccessoryRates())
   }
 
   fetchEssenceRates (queue) {
@@ -697,6 +763,86 @@ class ReportBuilder {
       }))
   }
 
+  fetchUniqueJewelRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetUniqueJewelOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchUniqueJewelRates(queue)
+              : this.processFetchedRates('jewel_unique', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchUniqueFlaskRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetUniqueJewelOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchUniqueFlaskRates(queue)
+              : this.processFetchedRates('flask_unique', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchUniqueWeaponRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetUniqueJewelOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchUniqueWeaponRates(queue)
+              : this.processFetchedRates('weapon_unique', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchUniqueArmourRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetUniqueArmourOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchUniqueArmourRates(queue)
+              : this.processFetchedRates('armour_unique', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
+  fetchUniqueAccessoryRates (queue) {
+    let league = this.settings.league.replace('SSF ', '')
+
+    return (queue || new Queue(1))
+      .unshift(() => new Promise((resolve, reject) => {
+        return GetUniqueArmourOverview(league, getNinjaDate())
+          .then(response => {
+            return response.status !== 200
+              ? this.fetchUniqueAccessoryRates(queue)
+              : this.processFetchedRates('accessory_unique', response.data)
+          })
+          .then(resolve)
+          .catch(reject)
+      }))
+  }
+
   fetchFragmentRates (queue) {
     let league = this.settings.league.replace('SSF ', '')
 
@@ -733,9 +879,9 @@ class ReportBuilder {
     return new Promise((resolve, reject) => {
       let rates = this.data.rates || []
 
-      let rateExists = (itemName) => {
+      let rateExists = (itemName, links) => {
         let litemName = itemName.toLowerCase()
-        return rates.find(value => value.lname === litemName)
+        return rates.find(value => value.lname === litemName && value.links === links)
       }
 
       let getCurrencyDetailsItem = (itemName) => {
@@ -748,9 +894,13 @@ class ReportBuilder {
           : lineItem.name
       }
 
+      let getLineItemLinks = (lineItem) => {
+        return lineItem.links || 0
+      }
+
       if (data.lines && data.lines.forEach) {
         data.lines.forEach(lineItem => {
-          let exists = rateExists(getLineItemName(lineItem))
+          let exists = rateExists(getLineItemName(lineItem), getLineItemLinks(lineItem))
 
           // Entry already exists
           if (exists) {
@@ -780,10 +930,32 @@ class ReportBuilder {
     let items = clone(this.data.rates)
 
     // Helpers
-    let getItemObject = (itemName) => {
+    let getItemObject = (itemName, links) => {
       let litemName = itemName.toLowerCase()
       return items.find(value => {
-        return value.lname === litemName
+        return value.lname === litemName && value.links === links
+      })
+    }
+
+    let getItemLinks = (item) => 
+    {
+      if (item.sockets == null)
+        return 0;
+
+      var groupCount = [0, 0, 0, 0, 0];
+      for (var i = 0; i < item.sockets.length; i++) {
+        groupCount[item.sockets[i].group]++
+      }
+
+      var max = Math.max(groupCount[0], groupCount[1])
+      this.notice(`getItemLinks ${JSON.stringify(item.sockets)} group ${JSON.stringify(groupCount)} max ${max}`)
+      return max > 4 ? max : 0;
+    }
+
+    let getArmourItemObject = (itemName, links) => {
+      let litemName = itemName.toLowerCase()
+      return items.find(value => {
+        return value.lname === litemName && value.links === links
       })
     }
 
@@ -805,11 +977,11 @@ class ReportBuilder {
 
         if (tab && tab.items && tab.items.forEach) {
           tab.items.forEach(item => {
-            let reportItem = getItemObject(item.typeLine)
+            let reportItem = getItemObject(item.typeLine, 0)
 
             // Check for "Superior" in item name
             if (!reportItem && item.typeLine.indexOf('Superior') > -1) {
-              reportItem = getItemObject(item.typeLine.replace('Superior ', ''))
+              reportItem = getItemObject(item.typeLine.replace('Superior ', ''), 0)
             }
 
             // Chaos orb doesn't exist by default so we must create them.
@@ -829,6 +1001,11 @@ class ReportBuilder {
                   y: item.y
                 }]
               })
+            }
+
+            // Unique items look up by name, and link count
+            if (!reportItem && item.frameType == 3) {
+              reportItem = getItemObject(item.name.replace('<<set:MS>><<set:M>><<set:S>>', ''), getItemLinks(item))
             }
 
             // Skip anything else
