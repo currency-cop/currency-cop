@@ -1588,7 +1588,7 @@ class DashboardScreen extends React.Component {
       >
         <Grid item className="not-draggable" style={{ textAlign: 'center' }}>
           <Typography type="title" component="h1" style={{ marginBottom: 8 }}>
-            Hi <span style={{ color: 'rgba(229, 124, 57, 1.0)' }}>{getConfig(ConfigKeys.ACCOUNT_USERNAME)}</span> 🎃
+            Hi <span style={{ color: 'rgba(229, 56, 77, 1)' }}>{getConfig(ConfigKeys.ACCOUNT_USERNAME)}</span> 🎄
           </Typography>
 
           <Typography type="title" component="h1" style={{ marginBottom: 8 }}>
@@ -1602,7 +1602,7 @@ class DashboardScreen extends React.Component {
 
         <Grid item className="not-draggable" style={{ marginTop: 16, minWidth: 300 }}>
           <Grid container justify="center" direction="row">
-            <Button raised style={{ backgroundColor: 'rgba(229, 124, 57, 1.0)', color: 'white' }} onClick={this.handleCreateReportButton.bind(this)}>
+            <Button raised style={{ backgroundColor: 'rgba(229, 56, 77, 1)', color: 'white' }} onClick={this.handleCreateReportButton.bind(this)}>
               Create your first report
             </Button>
           </Grid>
