@@ -236,33 +236,41 @@ button,
   background: hsl(0, 0%, 20%);
 }
 
-.report-item .report-name {
+.report-item .report-item-title {
+  flex: 1;
+}
+
+.report-item .report-item-title .report-name {
   color: white;
   line-height: 32px;
   font-size: 24px;
 }
 
-.report-item .report-title {
-  flex: 1;
+.report-item .report-item-title .report-league {
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
 }
 
-.report-item .report-meta {
+
+.report-item .report-item-title .report-meta {
   font-size: 11px;
   color: rgba(255,255,255,0.2);
 }
 
-.report-item .report-item-meta {
+.report-item .report-item-body .report-item-meta {
   text-align: right;
 }
 
-.report-item .amount {
+.report-item .report-item-body .report-item-meta .amount {
   font-size: 32px !important;
   line-height: 32px;
   text-transform: uppercase;
   color: rgba(97, 98, 97, 1.0);
 }
 
-.report-item .amount.loading {
+.report-item .report-item-body .report-item-meta .amount.loading {
   height: 20px;
   border-radius: 3px;
   animation-duration: 2s;
@@ -280,18 +288,18 @@ button,
   );
 }
 
-.report-item .amount span {
+.report-item .report-item-body .report-item-meta .amount span {
   color: rgba(97, 98, 97, 1.0)
 }
 
-.report-item .change {
+.report-item .report-item-body .report-item-meta .change {
   color: hsla(223, 10%, 100%, 0.2);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-size: 11px;
 }
 
-.report-item .change.loading {
+.report-item .report-item-body .report-item-meta .change.loading {
   width: 80%;
   height: 20px;
   border-radius: 3px;
@@ -308,13 +316,6 @@ button,
     hsla(0, 0%, 100%, 0.05) 40%, 
     hsla(0, 0%, 100%, 0.05) 100%
   );
-}
-
-.report-item .report-league {
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 11px;
 }
 
 /* Report */
