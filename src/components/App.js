@@ -96,6 +96,7 @@ const userDataPath = remote.app.getPath('userData')
 const logsDataPath = path.join(userDataPath, 'Logs')
 const reportsFilename = path.join(userDataPath, 'Reports.db')
 const configFilename = path.join(userDataPath, 'User.db')
+const totalFilename = path.join(userDataPath, 'Total.txt')
 
 // Configure Logger
 const logger = new Logger({
@@ -210,6 +211,7 @@ let Reports = {}
 // Files
 let ConfigFile = new DataFile('Config', configFilename)
 let ReportFile = new DataFile('Report', reportsFilename)
+let TotalFile = new DataFile('Total', totalFilename)
 
 // Configuration Helpers
 function getConfig (key) {
@@ -1071,6 +1073,8 @@ class ReportBuilder {
             }
           })
         }
+
+        TotalFile.save(parseFloat(reportTotal.toFixed(2)));
 
         this.history.unshift({
           refreshedAt: Date.now(),
