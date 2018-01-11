@@ -348,6 +348,21 @@ function GetLeagueStashTab (cookie, options) {
   })
 }
 
+function GetInventoryTab(cookie, options) {
+  return DoServerRequest({
+    method: "get",
+    url: Constants.POE_INVENTORY_ITEMS_URL,
+    options: {
+      headers: {
+        Cookie: `${Constants.POE_COOKIE_NAME}=${cookie}`
+      },
+      params: options
+    },
+    onSuccess: `STASH_TAB_RESPONSE`,
+    onError: `STASH_TAB_ERROR`
+  });
+}
+
 function GetCurrencyOverview (league, date) {
   return DoServerRequest({
     method: 'get',
@@ -650,6 +665,12 @@ class ReportBuilder {
           this.notice(`Fetching tab ${tab.n}...`)
         })
         .then(() => {
+          if (tab.type === "InventoryStash") {
+            return GetInventoryTab(this.cookie,	{
+              accountName: this.account,
+              character: tab.characterName
+            })
+          }
           return GetLeagueStashTab(this.cookie, {
             accountName: this.account,
             tabIndex: tab.i,
@@ -679,7 +700,58 @@ class ReportBuilder {
           tab.items = response.items
           return resolve()
         })
-    }))
+	}))
+  }
+  
+  fetchInventoryList() {
+    return new Promise((resolve, reject) => {
+      let report = this;
+      return GetCharacters(this.cookie, this.account)
+        .then(response => {
+          if (response.status === 404) {
+            this.notice(
+              `No tabs found in ${league} league. Try another one? 🤷`
+            );
+            this.notice(response);
+          }
+
+          if (response.status === 403) {
+            events.emit("clear_config");
+            this.notice(`Session expired. You have been logged out.`);
+          }
+
+          if (!response.data) {
+            this.notice(
+              `No tabs found in ${league} league. Try another one? 🤷`
+            );
+          } else if (response.status === 200) {
+            return response;
+          }
+
+          throw null;
+        })
+        .then(response => {
+          if (response.status === 200) {
+            let inventoryTabs = [];
+            response.data.forEach(element => {
+              if (element.league === report.settings.league) {
+                let tab = JSON.parse(
+                  '{"n":"MUNZ (Remove-only)","i":0,"id":"xxx","type":"InventoryStash","hidden":false}'
+                );
+                tab.n = `${element.name}-inventory`;
+                tab.characterName = element.name;
+                tab.account = report.account;
+                inventoryTabs.push(tab);
+              }
+            });
+            report.data.stashTabs = [
+              ...report.data.stashTabs,
+              ...inventoryTabs
+            ];
+            return resolve();
+          }
+        });
+    });
   }
 
   fetchRates () {
@@ -1383,12 +1455,14 @@ class DashboardScreen extends React.Component {
 
     report.fetchTabsList()
       .then(() => {
-        this.setState({
-          buttonLoadingText: null,
-          isCreatingReport: false,
-          isSelectingReportTabs: true,
-          report
-        })
+          report.fetchInventoryList().then(() => {
+            this.setState({
+              buttonLoadingText: null,
+              isCreatingReport: false,
+              isSelectingReportTabs: true,
+              report
+             })
+          })
       })
       .catch(err => {
         this.setState({
