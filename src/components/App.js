@@ -784,7 +784,7 @@ class ReportBuilder {
 
     return (queue || new Queue(1))
       .unshift(() => new Promise((resolve, reject) => {
-        return GetUniqueJewelOverview(league, getNinjaDate())
+        return GetUniqueFlaskOverview(league, getNinjaDate())
           .then(response => {
             return response.status !== 200
               ? this.fetchUniqueFlaskRates(queue)
@@ -2022,7 +2022,12 @@ class ReportScreen extends React.Component {
                   <img 
                     src={item.icon}
                     width={32}
-                    style={{ verticalAlign: 'middle' }}
+                    style={{ 
+						verticalAlign: 'middle',
+						objectFit: 'contain',
+						width: '32px',
+					    height: '32px'
+					}}
                     title={item.name}
                   />
                   ⨯ {item.stackSize || 0}
