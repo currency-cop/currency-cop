@@ -2132,7 +2132,7 @@ class ReportScreen extends React.Component {
                     src={item.icon}
                     width={32}
                     style={{ verticalAlign: 'middle' }}
-                    title={item.name}
+                    title={item.type === "gem" ? `${item.name} (${item.gemLevel}/${item.gemQuality}% ${item.corrupted ? 'corrupted' : ''})` : item.name}
                   />
                   ⨯ {item.stackSize || 0}
                 </Typography>
