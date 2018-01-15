@@ -2023,11 +2023,11 @@ class ReportScreen extends React.Component {
                     src={item.icon}
                     width={32}
                     style={{ 
-						verticalAlign: 'middle',
-						objectFit: 'contain',
-						width: '32px',
-					    height: '32px'
-					}}
+			verticalAlign: 'middle',
+			objectFit: 'contain',
+			width: '32px',
+			height: '32px'
+			}}
                     title={item.name}
                   />
                   ⨯ {item.stackSize || 0}
