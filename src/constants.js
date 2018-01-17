@@ -6,6 +6,7 @@ module.exports = {
   POE_MY_ACCOUNT_URL: 'https://www.pathofexile.com/my-account',
   POE_GET_CHARACTERS_URL: 'https://www.pathofexile.com/character-window/get-characters',
   POE_STASH_ITEMS_URL: `https://www.pathofexile.com/character-window/get-stash-items`,
+  POE_INVENTORY_ITEMS_URL: `https://www.pathofexile.com/character-window/get-items`,
 
   POE_COOKIE_NAME: 'POESESSID',
   POE_COOKIE_REGEXP: /^[0-9A-Fa-f]{32}$/,
