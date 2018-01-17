@@ -735,9 +735,11 @@ class ReportBuilder {
             let inventoryTabs = [];
             response.data.forEach(element => {
               if (element.league === report.settings.league) {
-                let tab = JSON.parse(
-                  '{"n":"MUNZ (Remove-only)","i":0,"id":"xxx","type":"InventoryStash","hidden":false}'
-                );
+                let tab = {}
+		tab.id = 0
+		tab.id = "inventory"
+	        tab.type = "InventoryStash"
+		tab.hidden = false
                 tab.n = `${element.name}-inventory`;
                 tab.characterName = element.name;
                 tab.account = report.account;
