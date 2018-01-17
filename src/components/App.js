@@ -933,11 +933,11 @@ class ReportBuilder {
 
       let rateExists = (type, item) => {
         let litemName = getLineItemName(item).toLowerCase()
-        let gemLevel = item.gemLevel
-        let gemQuality = item.gemQuality
-        if(type == "gem") {
+        if (type == "gem") {
+          let gemLevel = item.gemLevel
+          let gemQuality = item.gemQuality
           return rates.find(value => {
-            value.lname === litemName && value.gemLevel == gemLevel && value.gemQuality == gemQuality
+            return value.lname === litemName && value.gemLevel == gemLevel && value.gemQuality == gemQuality
           })
         }
         let links = getLineItemLinks(item)
@@ -1000,41 +1000,19 @@ class ReportBuilder {
         level = parseInt(level.values[0][0])
       } else {
         level = 1;
-      } 
-
-      // ninja only returns quality = 20 or 0 so we adjust the actual value to get approximate worth
-      if(quality >= 16) {
-        quality = 20
-      } else {
-        quality = 0
       }
-
-      // ninja only return level = 0, 20, 21 so we set level 19 to level 20 and all other we set to 0
-      // maybe make the check check for level 18 because it is nearly 20?
-      if(level === 19) {
-        level = 20
-      } else if (level < 19) {
-        level = 1
-      }
-
-      item.typeLine = `${item.typeLine} - ${level} - ${quality}%`
-
       return [level, quality, item];
     }
 
     // Helpers
     let getGemObject = (item) => {
       let gemName = item.typeLine.toLowerCase()
-      let gemQuality
-      let gemLevel
       let gemCorrupted = item.corrupted || false;
-      [gemLevel, gemQuality, item] = getGemProperties(item)
+      let [gemLevel, gemQuality] = getGemProperties(item)
       return items.find(value => {
         return value.lname === gemName && value.gemLevel === gemLevel && value.gemQuality === gemQuality && value.corrupted === gemCorrupted
       })
     }
-
-    //TODO: add check for gem level and quality here
 
     let getItemLinks = (item) => 
     {
