@@ -736,10 +736,10 @@ class ReportBuilder {
             response.data.forEach(element => {
               if (element.league === report.settings.league) {
                 let tab = {}
-		tab.id = 0
-		tab.id = "inventory"
-	        tab.type = "InventoryStash"
-		tab.hidden = false
+                tab.id = 0
+                tab.id = "inventory"
+                tab.type = "InventoryStash"
+                tab.hidden = false
                 tab.n = `${element.name}-inventory`;
                 tab.characterName = element.name;
                 tab.account = report.account;
