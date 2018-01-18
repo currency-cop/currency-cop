@@ -2,6 +2,12 @@ exports.UUID = () => {
   return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36)
 }
 
+exports.formatNumber = (n, decimals = 2, sectionDelimiter = ",", decimalDelimiter = ".") => {
+  return n.toFixed(decimals).replace(/./g, function (c, i, a) {
+    return i && c !== decimalDelimiter && ((a.length - i) % 3 === 0) ? sectionDelimiter + c : c;
+  })
+}
+
 exports.padNumber = (i) => {
   return (i < 10) ? `0${i}` : `${i}`
 }
@@ -55,4 +61,19 @@ exports.GoToUrl = (url, event) => {
     event.preventDefault()
     shell.openExternal(url)
   }
+}
+
+// Promises helpers
+exports.p = {
+  tap: fn => d => {
+    fn(d)
+    return d
+  },
+
+  merge: (promise, ot = (d => d), it = (d => d)) => d =>
+    promise(it(d))
+      .then(ot)
+      .then(r => Object.assign({}, d, r)),
+
+  state: (context, fn) => exports.p.tap(d => context.setState(fn(d)))
 }

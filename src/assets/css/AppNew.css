@@ -1,0 +1,451 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto+Mono:400,500,700|Roboto:400,500,700");
+
+/* Grid Areas */
+
+.layout-item.sidebar {
+  grid-area: sidebar;
+}
+
+.layout-item.content {
+  grid-area: content;
+}
+
+.layout-item.header {
+  grid-area: header;
+}
+
+/* Grid */
+
+.application {
+  display: grid;
+  grid-gap: 0px;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header header"
+    "sidebar content";
+  color: #444;
+  background: #101010;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Header */
+
+.layout-item.header {
+  padding: 0 0 0 15px;
+  height: 30px;
+  line-height: 30px;
+  background-color: #101010;
+  display: flex;
+}
+
+.layout-item.header .header-logo {
+  font-weight: 600;
+  color: rgb(201, 201, 201);
+  flex: 1;
+}
+
+.layout-item.header .header-logo .header-image {
+  width: 18px;
+  margin-right: 4px;
+  position: relative;
+  top: 2px;
+  display: inline-block;
+}
+
+.layout-item.header .header-logo .header-text {
+  top: -1px;
+  position: relative;
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.layout-item.header .btn {
+  background: none;
+  padding: 0 5px;
+  margin: 0 10px;
+}
+
+.layout-item.header .btn:hover {
+  box-shadow: none;
+  background: rgba(255,255,255,0.1)
+}
+
+/* Application Controls */
+
+.app-controls [class*="-control"] {
+  display: inline-block;
+  font-family: 'SegoeMDL2';
+  font-size: 12px;
+  padding: 0px 10px;
+  color: #aaa;
+}
+
+.app-controls [class*="-control"]:hover {
+  cursor: pointer;
+}
+
+.app-controls .app-update {
+  position: absolute;
+  top: -12px;
+  left: -48px;
+}
+
+.app-controls .close-control:hover {
+  background: #ef5350;
+  color: white;
+}
+
+.app-controls .minimize-control:hover,
+.app-controls .fullscreen-control:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Sidebar */
+
+.layout-item.sidebar {
+  width: 300px;
+  background: #101010;
+}
+
+.layout-item.sidebar button,
+.layout-item.sidebar .btn {
+  margin: 15px;
+  width: calc(100% - 30px);
+  box-sizing: border-box;
+  padding: 10px 15px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: 0.2s all;
+  text-align: left;
+  letter-spacing: 0.1px;
+}
+
+.layout-item.sidebar button:hover {
+  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.05);
+}
+
+/* Portfolio List */
+
+.portfolio-list,
+.portfolio-list li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.portfolio-item {
+  display: flex;
+  justify-content: space-between;
+  margin: 0px 10px 5px;
+  padding: 10px 10px;
+  border-bottom: 1px solid #202020;
+  font-weight: 500;
+}
+
+.portfolio-item:hover {
+  background: #222;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.portfolio-item.open {
+  background: #222;
+  border-radius: 3px;
+}
+
+.portfolio-item .info .title {
+  color: #fff;
+}
+
+.portfolio-item .info .last-updated {
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.portfolio-item .value {
+  color: #fff;
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.portfolio-item .value .change {
+  color: #F13F42;
+}
+
+
+/* Content */
+
+.layout-item.content {
+  width: 100%;
+  border-radius: 3px 0 0 0;
+  overflow: auto;
+  background: #202020;
+}
+
+/* Portfolio */
+
+.portfolio .portfolio-header {
+  background-image: linear-gradient(to bottom, #1e3c72 0%, #1e3c72 1%, #0D1821 100%);
+  color: #fff;
+  padding: 15px;
+  min-height: 200px;
+}
+
+.portfolio-title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.portfolio-meta {
+  display: flex;
+  color: hsla(210, 100%, 90%, 0.2);
+  font-size: 11px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.portfolio-meta div {
+  margin-right: 15px;
+}
+
+.portfolio-large-stats {
+  margin-top: 30px;
+  margin-bottom: 30px;
+
+  display: flex;
+  justify-content: flex-start;
+}
+
+.direction-up {
+  color: rgba(143, 211, 49, 1.0);
+}
+
+.direction-down {
+  color: #F13F42
+}
+
+.portfolio-large-stats > div {
+  padding-right: 30px;
+  border-right: 1px solid hsla(210, 100%, 90%, 0.1);
+  margin-left: 30px;
+}
+
+.portfolio-large-stats > div:first-child {
+  margin-left: 0;
+}
+
+.portfolio-large-stats > div:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.portfolio-header h3,
+.portfolio-header h2,
+.portfolio-header h1 {
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+}
+
+.portfolio-header h3 {
+  font-size: 24px;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.portfolio-header h2 {
+  font-weight: 500;
+  color: hsla(210, 100%, 90%, 0.5);
+  font-size: 12px;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 16px;
+}
+
+.portfolio-header #portfolio_chart {
+  margin: 0 -15px -15px;
+}
+
+.portfolio-breakdown {
+  margin-top: 15px;
+  margin-bottom: 30px;
+  display: grid;
+  grid-gap: 30px 15px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  text-align: center;
+}
+
+.portfolio-breakdown h4, h5 {
+  margin: 0;
+  padding: 0;
+  font-weight: 500;
+}
+
+.portfolio-breakdown h4 {
+  color: #aaa;
+  font-family: 'Roboto Mono', monospace;
+}
+
+/* Settings */
+
+.portfolio-settings {
+  padding: 15px;
+}
+
+.portfolio-settings h1 {
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  font-size: 16px;
+  margin: 15px 0 0 0;
+  padding: 0;
+  line-height: 16px;
+}
+
+.portfolio-settings h2 {
+  margin-bottom: 8px;
+  line-height: 1.6em;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Form Styles */
+
+.form-group {
+  margin: 0;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.form-group input[type="text"],
+.Select-control,
+.Select.has-value .Select-control {
+  border: 1px solid rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.08);
+  border-radius: 3px;
+  padding: 5px 8px;
+  color: white;
+  font-size: 16px;
+  letter-spacing: 0.6px;
+  margin-bottom: 15px;
+  position: relative;
+  transition: .2s;
+  outline: none;
+}
+
+.form-group input[type="text"]:hover,
+.Select-control:hover,
+.Select.is-focused .Select-control,
+.Select.is-focused:not(.is-open) > .Select-control {
+  border: 1px solid rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.08);
+}
+
+.form-group input[type="text"]:focus,
+.Select:hover > .Select-control,
+.Select.is-focused > .Select-control {
+  border: 1px solid rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.08);
+}
+
+.Select-value,
+.Select-placeholder {
+  padding-top: 5px;
+}
+
+.Select-input {
+  padding: 0 !important;
+}
+
+.Select-input > input {
+  color: white !important;
+}
+
+.Select.has-value.Select--single > .Select-control .Select-value .Select-value-label, 
+.Select.has-value.is-pseudo-focused.Select--single > .Select-control .Select-value .Select-value-label {
+  color: white !important;
+}
+
+.Select-menu-outer,
+.Select-option {
+  background-color: #151515 !important;
+  color: white;
+}
+
+.Select-menu-outer {
+  border-color: rgba(0,0,0,0.5) !important;
+}
+
+.Select-option.is-selected {
+  background-color: rgba(0,0,0,0.3) !important;
+}
+
+.Select-option:hover {
+  background-color: rgba(255,255,255,0.02) !important;
+}
+
+.Select--multi .Select-value {
+  padding-top: 0;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.05);
+}
+
+.Select--multi .Select-value-icon {
+  border-right-color: rgba(255,255,255,0.05);
+  color: #555;
+}
+
+.Select--multi .Select-value-label {
+  padding: 2px 8px;
+}
+
+/* Tab List */
+.tab-selector {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.tab-selector,
+.tab-item {
+  list-style: none;
+}
+
+.tab-item:hover {
+  cursor: pointer;
+}
+
+.tab-item {
+  flex-grow: 1;
+  display: inline-block;
+  border: 1px solid rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.08);
+  padding: 2px 24px 1px;
+  border-radius: 30px;
+  opacity: 0.5;
+  margin: 5px;
+  text-align: center;
+}
+
+.tab-item.selected {
+  background: rgba(0,0,0,0.2);
+  opacity: 1;
+}

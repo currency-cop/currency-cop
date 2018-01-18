@@ -2,6 +2,7 @@ import { ipcRenderer } from 'electron'
 import Constants from './constants'
 import { UUID } from './helpers'
 
+
 function DoServerRequest (options) {
   // Prevent collision
   let uuid = UUID()
@@ -11,7 +12,6 @@ function DoServerRequest (options) {
   // Make request
   console.debug(`Making HTTP request to: ${options.url}`)
   console.debug(`Request options`, options)
-
   ipcRenderer.send('HTTP_REQUEST', options)
 
   return new Promise((resolve, reject) => {
@@ -44,6 +44,7 @@ function DoServerRequest (options) {
     })
   })
 }
+
 
 function LoginWithCookie (cookie) {
   return DoServerRequest({
@@ -95,6 +96,32 @@ function GetCharacters (cookie, accountName) {
     },
     onSuccess: 'CHARACTERS_RESPONSE',
     onError: 'CHARACTERS_ERROR'
+  })
+}
+
+function GetStashTabs (cookie, options) {
+  options.tabs = 1
+  options.tabIndex = 0
+
+  return GetLeagueStashTab(cookie, options).then(response => {
+    if (response.status === 404) 
+      return []
+
+    if (response.status === 403)
+      throw new Error({ status: 403 })
+
+    if (!response.data || !response.data.tabs)
+      return []
+
+    // Return filtered tab list
+    return response.data.tabs.map(tab => {
+      return tab.hidden ? undefined : {
+        id: tab.id,
+        name: tab.n,
+        index: tab.i,
+        color: [tab.colour.r, tab.colour.g, tab.colour.b]
+      }
+    })
   })
 }
 
@@ -203,6 +230,66 @@ function GetUniqueMapOverview (league, date) {
   })
 }
 
+function GetUniqueJewelOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_JEWEL_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_JEWEL_RESPONSE',
+    onError: 'UNIQUE_JEWEL_ERROR'
+  })
+}
+
+function GetUniqueFlaskOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_FLASK_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_FLASK_RESPONSE',
+    onError: 'UNIQUE_FLASK_ERROR'
+  })
+}
+
+function GetUniqueArmourOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_ARMOUR_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_ARMOUR_RESPONSE',
+    onError: 'UNIQUE_ARMOUR_ERROR'
+  })
+}
+
+function GetUniqueAccessoryOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_ACCESSORY_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_ACCESSORY_RESPONSE',
+    onError: 'UNIQUE_ACCESSORY_ERROR'
+  })
+}
+
 function DoVersionCheck () {
   return DoServerRequest({
     method: 'get',
@@ -212,12 +299,14 @@ function DoVersionCheck () {
   })
 }
 
-// TODO: Convert into an object.
+
+// Exports
 exports.DoServerRequest = DoServerRequest
 exports.LoginWithCookie = LoginWithCookie
 exports.GetAccountName = GetAccountName
 exports.GetLeagues = GetLeagues
 exports.GetCharacters = GetCharacters
+exports.GetStashTabs = GetStashTabs
 exports.GetLeagueStashTab = GetLeagueStashTab
 exports.GetCurrencyOverview = GetCurrencyOverview
 exports.GetEssenceOverview = GetEssenceOverview
@@ -225,4 +314,22 @@ exports.GetFragmentOverview = GetFragmentOverview
 exports.GetDivCardOverview = GetDivCardOverview
 exports.GetMapOverview = GetMapOverview
 exports.GetUniqueMapOverview = GetUniqueMapOverview
+exports.GetUniqueJewelOverview = GetUniqueJewelOverview
+exports.GetUniqueAccessoryOverview = GetUniqueJewelOverview
+exports.GetUniqueArmourOverview = GetUniqueArmourOverview
+exports.GetUniqueFlaskOverview = GetUniqueFlaskOverview
 exports.DoVersionCheck = DoVersionCheck
+
+// Enums
+exports.ItemRateTypes = {
+  currency: GetCurrencyOverview,
+  essence: GetEssenceOverview,
+  fragment: GetFragmentOverview,
+  card: GetDivCardOverview,
+  map: GetMapOverview,
+  unique_map: GetUniqueMapOverview,
+  unique_jewel: GetUniqueJewelOverview,
+  unique_flask: GetUniqueFlaskOverview,
+  unique_armour: GetUniqueArmourOverview,
+  unique_accessory: GetUniqueAccessoryOverview
+}

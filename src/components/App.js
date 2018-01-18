@@ -1,21 +1,20 @@
-// Styles
-import '../assets/css/grid.css'
-import '../assets/css/app.css'
-import '../assets/css/login.css'
-
 // Core
 import Constants from '../constants'
 import Logger from '../classes/logger'
 import ReportBuilder from '../classes/reportbuilder'
+import ApiClient from '../classes/api'
 import DataFile from '../classes/datafile'
 import Queue from '../classes/queue'
 import Ago from '../classes/ago'
 import pkg from '../../package.json'
+import Requester from '../classes/requester'
 
 import {
+  p,
   UUID,
   GoToUrl,
   clone,
+  formatNumber,
   padNumber,
   promiseDelay,
   getNinjaDate,
@@ -28,6 +27,7 @@ import {
   GetAccountName,
   GetLeagues,
   GetCharacters,
+  GetStashTabs,
   GetLeagueStashTab,
   GetCurrencyOverview,
   GetEssenceOverview,
@@ -41,10 +41,20 @@ import {
 // Third Party
 import { ipcRenderer, shell, remote, clipboard } from 'electron'
 import React, { Component } from 'react'
+import classes from 'classnames'
+import Select from 'react-select'
+import Switch from 'react-flexible-switch'
 import Emitter from 'tiny-emitter'
 import Axios from 'axios'
 import path from 'path'
 import fs from 'fs'
+
+// Stylesheets
+import 'react-select/dist/react-select.css'
+import '../assets/css/grid.css'
+import '../assets/css/app.css'
+import '../assets/css/login.css'
+import '../assets/css/appnew.css'
 
 // Material UI
 import Button from './Button'
@@ -58,10 +68,11 @@ const AppPlatform = process.platform === 'darwin'
   : 'windows'
 
 // Application folder location
-const userDataPath = remote.app.getPath('userData')
-const logsDataPath = path.join(userDataPath, 'Logs')
-const reportsFilename = path.join(userDataPath, 'Reports.db')
-const configFilename = path.join(userDataPath, 'User.db')
+const userDataPath      = remote.app.getPath('userData')
+const logsDataPath      = path.join(userDataPath, 'Logs')
+const reportsFilename   = path.join(userDataPath, 'Portfolios.db')
+const configFilename    = path.join(userDataPath, 'Settings.db')
+const cacheFilename     = path.join(userDataPath, 'Cache.db')
 
 // Configure Event System
 global.events = new Emitter()
@@ -73,10 +84,10 @@ global.logger = new Logger({
 })
 
 // Create Loggers
-global.Log = logger.topic('Core')
-global.ConfigLog = logger.topic('Config')
-global.ApiLog = logger.topic('API')
-global.EventLog = logger.topic('Events')
+global.Log          = logger.topic('Core')
+global.ApiLog       = logger.topic('API')
+global.EventLog     = logger.topic('Events')
+global.ConfigLog    = logger.topic('Config')
 
 // Capture uncaught errors
 process.on('uncaughtException', function (error) {
@@ -106,8 +117,8 @@ let Config = DefaultConfig()
 let Reports = {}
 
 // Files
-let ConfigFile = new DataFile('Config', configFilename)
-let ReportFile = new DataFile('Report', reportsFilename)
+let ConfigFile  = new DataFile('Config', configFilename)
+let ReportFile  = new DataFile('Portfolio', reportsFilename)
 
 // Configuration Helpers
 function getConfig (key) {
@@ -300,7 +311,7 @@ class AccountActions extends React.Component {
 
   render () {
     return (
-      <div className="account-actions" style={{ display: 'flex' }}>
+      <div className="account-actions">
         <LogoutButton onClick={this.handleLogoutClick.bind(this)}>
           {decodeURIComponent(getConfig(ConfigKeys.ACCOUNT_USERNAME))} (logout)
         </LogoutButton>
@@ -702,6 +713,7 @@ class DashboardScreen extends React.Component {
     )
   }
 }
+
 
 // Report Screen
 class ReportScreen extends React.Component {
@@ -1197,6 +1209,7 @@ class ReportScreen extends React.Component {
   }
 }
 
+
 // Login Screen
 class LoginScreen extends React.Component {
   state = {
@@ -1229,13 +1242,11 @@ class LoginScreen extends React.Component {
     this.setState({ value })
   }
 
-  handleLoginButtonClick () {
+  async handleLoginButtonClick () {
     let {value} = this.state
-    console.log('omg...')
-
     if (!value) {
       return this.setState({
-        error: 'Identifier is required!'
+        error: 'POESESSIONID is required!'
       })
     }
 
@@ -1246,7 +1257,12 @@ class LoginScreen extends React.Component {
     }
 
     // Attempt login
-    this.props.onLogin(value)
+    let error = await this.props.onLogin(value)
+    if (error) {
+      return this.setState({
+        error: error.message
+      })
+    }
   }
 
   render() {
@@ -1304,6 +1320,7 @@ class LoginScreen extends React.Component {
   }
 }
 
+
 // Loading Screen
 class LoadingScreen extends React.Component {
   render () {
@@ -1317,8 +1334,23 @@ class LoadingScreen extends React.Component {
   }
 }
 
+
+// App Control Bar
+class AppControlBar extends React.Component {
+  render () {
+    return (
+      <div className="app-control not-draggable">
+        <AppControls
+          newVersion={this.props.newVersion}
+          upToDate={this.props.upToDate} />
+      </div>
+    )
+  }
+}
+
+
 // AppControl Buttons
-class AppControl extends React.Component {
+class AppControls extends React.Component {
   componentWillMount () {
     this.setState({
       window: remote.getCurrentWindow()
@@ -1357,8 +1389,9 @@ class AppControl extends React.Component {
 
   render () {
     let link = "https://poe.technology/releases"
+
     return (
-      <div className="app-control not-draggable">
+      <div className="app-controls not-draggable">
         <div className="app-update">
           {!this.props.upToDate && this.props.newVersion ? (
               <Tooltip id="tooltip-icon" label={`New Version Available! v${this.props.newVersion}`} placement="bottom">
@@ -1370,62 +1403,64 @@ class AppControl extends React.Component {
               </Tooltip>
             ) : null}
         </div>
-        <div className="minimize-control" onClick={this.handleMinimizeButtonClick}></div>
-        <div className="fullscreen-control" onClick={this.handleFullscreenButtonClick}></div>
-        <div className="close-control" onClick={this.handleCloseButtonClick}></div>
+        <div className="minimize-control" onClick={this.handleMinimizeButtonClick}>&#xE738;</div>
+        <div className="fullscreen-control" onClick={this.handleFullscreenButtonClick}>&#xE71A;</div>
+        <div className="close-control" onClick={this.handleCloseButtonClick}>&#xE711;</div>
       </div>
     )
   }
 }
 
+
 // Nav Bar Component
 class AppNavBar extends React.Component {
   render () {
     return (
-      <header class="nav-bar">
-        <h1 class="brand">
-          <img className="header-logo" src={require('../assets/logo.png')} />
-          Currency Cop
-        </h1>
+      <header className="nav-bar row middle-xs">
+        <div className="col-xs-6">
+          <h1 class="brand">
+            <img className="header-logo" src={require('../assets/logo.png')} />
+            Currency Cop
+          </h1>
+        </div>
 
-        {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
+        <div className="col-xs-6 text-right">
+          <div className="row end-xs">
+            <div className="col-xs">
+              {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
+
+              <AppControls
+                newVersion={this.props.newVersion}
+                upToDate={this.props.upToDate} />
+            </div>
+          </div>
+        </div>
       </header>
     )
-    // return (
-    //   <div className='draggable' style={{
-    //     width: '100%',
-    //     position: 'fixed',
-    //     top: 25,
-    //     left: 0,
-    //     right: 0,
-    //     padding: `0 0 5px 0`,
-    //     width: 'auto',
-    //     borderBottom: '1px solid hsla(0, 0%, 100%, 0.05)'
-    //   }}>
-    //     <AppBar position="static" style={{ backgroundColor: 'transparent', boxShadow: 'none', userSelect: 'none' }}>
-    //       <Toolbar style={{ padding: `0 15px` }}>
-    //         <Typography className="header-title" type="title" color="inherit" style={{ flex: 1 }}>
-    //           <img className="header-logo" src={require('../assets/logo.png')} />
-    //           Currency Cop
-    //         </Typography>
-    //         {getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null}
-    //       </Toolbar>
-    //     </AppBar>
-    //   </div>
-    // )
   }
 }
+
 
 // Application Root
 class App extends React.Component {
   state = {
+    upToDate: true,
     config: null,
-    leagues: null,
     reports: null,
     isLoggedIn: false,
     isLoading: false,
     isViewingReport: false,
-    upToDate: true
+
+    client: new ApiClient({
+      logger: global.logger,
+      cacheFileLocation: cacheFilename
+    }),
+
+    screen: null,
+    leagues: [],
+    portfolios: [],
+    tabs: {},
+    jobs: null
   }
 
   clearConfig () {
@@ -1498,68 +1533,70 @@ class App extends React.Component {
     })
   }
 
-  load () {
-    return Promise.resolve()
-      .then(() => {
-        Log.info(`Loading Currency Cop v${AppVersion}`)
+  async load (skipAuthorization) {
+    Log.info(`Loading Currency Cop v${AppVersion}`)
+
+    try {
+      if (!skipAuthorization) {
+        // Configuration
         this.setLoadingMessage('Loading Configuration')
-      })
-      .then(() => ConfigFile.load(DefaultConfig()))
-      .then(config => {
+        let config = await ConfigFile.load(DefaultConfig())
+        await this.setState({ config })
         Config = config
-        return this.setState({
-          config: Config
-        })
-      })
-      .then(() => {
-        this.setLoadingMessage('Loading Reports')
-      })
-      .then(() => ReportFile.load([]))
-      .then(reports => {
-        return this.setState({
-          reports: reports
-        })
-      })
-      .then(() => {
-        this.setLoadingMessage('Fetching Leagues')
-      })
-      .then(() => GetLeagues())
-      .then(response => {
-        return this.setState({
-          leagues: response.data
-        })
-      })
-      .then(() => {
-        this.setLoadingMessage('Checking Session')
-      })
-      .then(() => this.handleLogin())
-      .then(() => {
-        this.setLoadingMessage('Setting up Reports')
-      })
-      .then(() => this.handleReports())
-      .then(() => {
-        this.setLoadingMessage((
-          <span style={{ color: 'rgba(239, 157, 58, 1.0)', fontWeight: 'bold' }}>[ Currency Cop ]</span>
-        ))
-      })
-      .then(() => {
-        setTimeout(() => {
-          this.setLoadingMessage(false)
-        }, 200)
-      })
-      .then(() => DoVersionCheck())
-      .then(resp => {
-        if (resp.data.version !== AppVersion) {
-          this.setState({
-            upToDate: false,
-            newVersion: resp.data.version
-          })
+
+        // Re-authorization Checks
+        this.setLoadingMessage('Checking Authorization')
+        let abort = await this.handleLogin(this.state.config[ConfigKeys.ACCOUNT_COOKIE])
+        if (abort) {
+          return
         }
-      })
-      .catch(error => {
-        this.setLoadingMessage('Houston, we have a problem.')
-        Log.error(`[App] Error occurred during load: ${error.message} - ${error.stack}`)
-      })
+      }
+
+      this.setLoadingMessage('Loading Api Cache')
+      await this.state.client.cache.load({})
+
+      this.setLoadingMessage('Fetching Leagues')
+      let leagues = await this.state.client.getLeagues()
+      await this.setState({ leagues })
+
+      this.setLoadingMessage('Initialize Workers')
+      await this.setupJobSystem()
+
+      this.setLoadingMessage('Gathering Tabs')
+      await this.getTabsForEachLeague()
+      await this.setupTabJobs()
+
+      this.setLoadingMessage('Loading Portfolios')
+      let reports = await ReportFile.load([])
+      await this.setState({ reports })
+
+      this.setLoadingMessage('Configuring Events')
+      await this.handleReports()
+
+      // Application Banner Message
+      this.setLoadingMessage((
+        <span style={{ color: 'rgba(239, 157, 58, 1.0)', fontWeight: 'bold' }}>
+          [ Currency Cop ]
+        </span>
+      ))
+
+      // Remove Loading Message
+      setTimeout(() => {
+        this.setLoadingMessage(false)
+      }, 200)
+
+      // Check Application Version
+      let versionCheck = await DoVersionCheck()
+      if (versionCheck.data.version !== AppVersion) {
+        this.setState({
+          upToDate: false,
+          newVersion: versionCheck.data.version
+        })
+      }
+    } catch (error) {
+      this.setLoadingMessage('Houston, we have a problem.')
+      Log.error(`[App] Error occurred during load: ${error.message} - ${error.stack}`)
+    }
   }
 
   handleReports () {
@@ -1604,62 +1641,90 @@ class App extends React.Component {
     }
   }
 
-  handleLogin (value) {
-    value = value || this.state.config[ConfigKeys.ACCOUNT_COOKIE]
-    if (!value) {
-      return
+  async handleLogin (sessionId) {
+    if (!sessionId) {
+      events.emit('clear_config')
+      return {
+        message: 'Session identifier is required.'
+      }
     }
 
-    return LoginWithCookie(value)
-      .then(response => {
-        if (response.status != 302) {
-          ApiLog.warn(`${response.status} status response for [LOGIN]: Expired Session ID`)
-          throw ({
-            snack: 'Session expired. Try re-logging into pathofexile.com to get a new Session ID.'
-          })
-        }
-
-        return GetAccountName(value)
+    try {
+      let { client } = this.state
+      client = await client.authorize({ sessionId })
+      this.updateConfig(ConfigKeys.ACCOUNT_USERNAME, client.accountName)
+      this.updateConfig(ConfigKeys.ACCOUNT_COOKIE, client.accountSessionId)
+      this.setState({
+        client
       })
-      .then(response => {
-        if (!response) {
-          ApiLog.warn(`Empty response from [POE_ACCOUNT_NAME]: Server failed to respond?`)
-          throw ({
-            snack: 'Server failed to respond during login. Please re-login.'
-          })
-        }
+    } catch (error) {
+      events.emit('clear_config')
+    }
 
-        let matches = response.data.match(Constants.POE_ACCOUNT_NAME_REGEXP)
-        if (!matches[1]) {
-          Log.error(`Unable to find account name on [POE_ACCOUNT_NAME] request: ${response.data}`)
-          throw ({
-            snack: 'Failed to find account name.'
-          })
-        }
+    this.load(true)
+    return true
+  }
 
-        let accountName = decodeURIComponent(matches[1])
-        this.updateConfig(ConfigKeys.ACCOUNT_USERNAME, accountName)
-        this.updateConfig(ConfigKeys.ACCOUNT_COOKIE, value)
+  getTabsForEachLeague () {
+    let cookie = getConfig(ConfigKeys.ACCOUNT_COOKIE)
+    let accountName = getConfig(ConfigKeys.ACCOUNT_USERNAME)
+    let requests = []
 
-        events.emit('notificaton', {
-          message: `Logged in as: ${accountName}`
+    this.state.leagues.forEach(league => {
+      requests.push(new Promise((resolve, reject) => {
+        return this.state.client.getTabsList({
+          league: league.id
         })
+          .then(tabs => this.handleTabsList(league.id, tabs))
+          .catch(error => {
+            console.log(error)
+          })
+      }))
+    })
+  }
 
-        this.setState({
-          isLoggedIn: true
+  // Handle incoming tab list response for a specific league
+  handleTabsList (league, list) {
+    let current = JSON.stringify(this.state.tabs[league] || {})
+    if (current != JSON.stringify(list)) {
+      this.setState({
+        tabs: {
+          ...this.state.tabs,
+          [league]: list
+        }
+      })
+    }
+  }
+
+  setupJobSystem () {
+    let jobs = new Requester()
+
+    jobs.evenlySpaced = true
+    jobs.setRateLimitByString('40:60:60')
+    jobs.setCacheExpiry(240)
+    jobs.start()
+
+    this.setState({
+      jobs
+    })
+  }
+
+  setupTabJobs () {
+    for (const league in this.state.tabs) {
+      let tabs = this.state.tabs[league]
+      tabs.forEach(tab => {
+        this.state.jobs.add({
+          name: `${league}-${tab.id}`,
+          method: () => {
+            return this.state.client.getTab({
+              league: league,
+              tab: tab.index,
+              tabId: tab.id
+            })
+          }
         })
       })
-      .catch(error => {
-        if (error.message) {
-          Log.critical(`[Login] Error occurred: ${error.message} - ${error.stack}`)
-        }
-
-        events.emit('clear_config')
-        events.emit('notification', {
-          message: error.snack || `Login failed... Please try again!`,
-          action: CopyLogsButton
-        })
-      })
+    }
   }
 
   componentWillMount () {
@@ -1720,6 +1785,58 @@ class App extends React.Component {
       }, 5000)
     })
 
+    // View
+    events.on('/screen/portfolio', ({ portfolioId }) => {
+      EventLog.info(`Viewing Portfolio ${ portfolioId }`)
+      this.setState({
+        screen: (
+          <AppPortfolio portfolio={ this.state.reports[portfolioId] } />
+        )
+      })
+    })
+
+    events.on('/screen/portfolio/create', () => {
+      EventLog.info(`Creating Portfolio`)
+      this.setState({
+        screen: (
+          <AppPortfolioSettings
+            tabs={ this.state.tabs }
+            leagues={ this.state.leagues } />
+        )
+      })
+    })
+
+    events.on('/screen/portfolio/update', ({ portfolioId }) => {
+      EventLog.info(`Updating Portfolio ${ portfolioId }`)
+      this.setState({
+        screen: (
+          <AppPortfolioSettings
+            tabs={ this.state.tabs }
+            leagues={ this.state.leagues }
+            portfolio={ this.state.reports[portfolioId] } />
+        )
+      })
+    })
+
+
+    // Delete
+    events.on('/portfolio/delete', event => {
+      
+    })
+
+
+    // Update
+    events.on('/portfolio/update', event => {
+
+    })
+
+
+    // Create
+    events.on('/portfolio/create', event => {
+      
+    })
+
+
     // Begin fetching application data
     return this.load()
   }
@@ -1739,16 +1856,22 @@ class App extends React.Component {
     if (this.state.isLoading) {
       return (
         <div className="app-viewport draggable">
-          <AppControl />
+          <AppControlBar 
+            newVersion={this.state.newVersion}
+            upToDate={this.state.upToDate}
+          />
           <LoadingScreen message={this.state.isLoading} />
         </div>
       )
     }
 
-    if (!this.state.isLoggedIn) {
+    if (!this.state.client.accountSessionId) {
       return (
         <div className="app-viewport draggable">
-          <AppControl />
+          <AppControlBar 
+            newVersion={this.state.newVersion}
+            upToDate={this.state.upToDate}
+          />
           <LoginScreen onLogin={this.handleLogin.bind(this)} />
         </div>
       )
@@ -1756,41 +1879,459 @@ class App extends React.Component {
 
     return (
       <div className="app-viewport draggable">
-        <AppControl
-          upToDate={this.state.upToDate}
-          newVersion={this.state.newVersion}
+        <div className="application">
+          <AppHeader 
+            newVersion={this.state.newVersion}
+            upToDate={this.state.upToDate}
+            config={this.state.config}
           />
 
-        <AppNavBar 
-          config={this.state.config}
-        />
+          <AppSidebar
+            config={this.state.config}
+            leagues={this.state.leagues}
+            portfolios={this.state.reports}
+            portfolio={this.state.isViewingReport}
+            portfolioId={this.state.isViewingReportId}
+          />
 
-        <div className="main-viewport">
-          {!this.state.isViewingReport ? (
-            <DashboardScreen
-              config={this.state.config}
-              leagues={this.state.leagues}
-              reports={this.state.reports}
-            />
-          ) : null}
-
-          {this.state.isViewingReport ? (
-            <ReportScreen
-              config={this.state.config}
-              report={this.state.isViewingReport}
-              reportId={this.state.isViewingReportId}
-              leagues={this.state.leagues}
-            />
-          ) : null}
-        </div>
-
-        <div className="snack-bar">
-          <span id="global-message-id">{this.state.globalSnackMessage}</span>
-          {this.state.globalSnackAction}
+          <AppContent
+            screen={ this.state.screen }
+          />
         </div>
       </div>
     );
   }
 }
+
+
+class AppHeader extends React.Component {
+  render () {
+    return (
+      <div className="layout-item header">
+        <div className="header-logo">
+          <img className="header-image" src={ require('../assets/logo.png') } />
+          <span className="header-text">Currency Cop</span>
+        </div>
+
+        { getConfig(ConfigKeys.ACCOUNT_USERNAME) ? ( <AccountActions /> ) : null }
+
+        <AppControls
+          newVersion={this.props.newVersion}
+          upToDate={this.props.upToDate} />
+      </div>
+    )
+  }
+}
+
+
+class AppSidebar extends React.Component {
+  openPortfolioCreateScreen () {
+    events.emit('/screen/portfolio/create')
+  }
+
+  render () {
+    return (
+      <div className="layout-item sidebar">
+        <button onClick={this.openPortfolioCreateScreen}>Add Portfolio</button>
+
+        <AppSidebarPortfolioList
+          portfolios={this.props.portfolios} />
+      </div>
+    )
+  }
+}
+
+
+class AppSidebarPortfolioList extends React.Component {
+  render () {
+    return (
+      <ul className="portfolio-list">
+        { 
+          this.props.portfolios.map((portfolio, index) => {
+            return (
+              <li key={ portfolio.settings.name }>
+                <AppSidebarPortfolioListItem
+                  index={index}
+                  portfolio={portfolio} />
+              </li>
+            )
+          })
+        }
+      </ul>
+    )
+  }
+}
+
+
+class AppSidebarPortfolioListItem extends React.Component {
+  state = {
+    change: false,
+    lastUpdated: null
+  }
+
+  componentWillMount () {
+    this.setState({
+      change: this.getPortfolioChange(this.props.portfolio),
+      holdings: this.getPortfolioHoldings(this.props.portfolio),
+      lastUpdated: this.getPortfolioLastUpdate(this.props.portfolio)
+    })
+  }
+
+  getPortfolioLastUpdate (portfolio) {
+    let { history } = portfolio
+    return history.length ? Ago(history[0].refreshedAt) : null
+  }
+
+  getPortfolioHoldings (portfolio) {
+    let { history } = portfolio
+    return {
+      value: history[0].reportTotal || 0,
+      valueFormatted: formatNumber(history[0].reportTotal || 0),
+      currency: 'C'
+    }
+  }
+
+  getPortfolioChange (portfolio) {
+    let { history } = portfolio
+    let previousHoldings = history[1].reportTotal || 0
+    let currentHoldings = history[0].reportTotal || 0
+    let percentageChange = getPercentageChange(previousHoldings, currentHoldings)
+
+    return {
+      direction: percentageChange.direction,
+      directionIndicator: percentageChange.direction === 'up' ? '+' : '-',
+      directionClassName: percentageChange.direction ? percentageChange.direction : '',
+      value: Math.abs(previousHoldings - currentHoldings),
+      valueFormatted: formatNumber(Math.abs(previousHoldings - currentHoldings)),
+      percentage: percentageChange,
+      currency: 'C'
+    }
+  }
+
+  openPortfolio (portfolioId) {
+    return (e) => {
+      events.emit('/screen/portfolio', {
+        portfolioId
+      })
+    }
+  }
+
+  render () {
+    return (
+      <div className="portfolio-item not-draggable" onClick={ this.openPortfolio(this.props.index) }>
+        <div className="info">
+          <div className="title">
+            { this.props.portfolio.settings.name }
+          </div>
+          <div className="last-updated">
+            { this.state.lastUpdated }
+          </div>
+        </div>
+        
+        <div className="value">
+          <div className="total">
+            { this.state.holdings.valueFormatted } { this.state.holdings.currency }
+          </div>
+          <div className={`change ${ this.state.change.directionClassName }`}>
+           { this.state.change.directionIndicator } { this.state.change.valueFormatted } { this.state.change.currency }
+          </div>
+        </div>
+      </div>
+    )
+  }
+}
+
+
+class AppContent extends React.Component {
+  render () {
+    let screen = this.props.screen
+
+    if (!screen) {
+      screen = <AppPortfolioUnselected />
+    }
+
+    return (
+      <div className="layout-item content">
+        { screen }
+      </div>
+    )
+  }
+}
+
+
+class AppPortfolio extends React.Component {
+  state = {
+    change: false,
+    lastUpdated: null
+  }
+
+  componentWillMount () {
+    this.setState({
+      change: this.getPortfolioChange(this.props.portfolio),
+      holdings: this.getPortfolioHoldings(this.props.portfolio),
+      lastUpdated: this.getPortfolioLastUpdate(this.props.portfolio)
+    })
+  }
+
+  getPortfolioLastUpdate (portfolio) {
+    let { history } = portfolio
+    return history.length ? Ago(history[0].refreshedAt) : null
+  }
+
+  getPortfolioHoldings (portfolio) {
+    let { history } = portfolio
+    return {
+      value: history[0].reportTotal || 0,
+      valueFormatted: formatNumber(history[0].reportTotal || 0),
+      currency: 'C'
+    }
+  }
+
+  getPortfolioChange (portfolio) {
+    let { history } = portfolio
+    let previousHoldings = history[1].reportTotal || 0
+    let currentHoldings = history[0].reportTotal || 0
+    let percentageChange = getPercentageChange(previousHoldings, currentHoldings)
+
+    return {
+      direction: percentageChange.direction,
+      directionIndicator: percentageChange.direction === 'up' ? '+' : '-',
+      directionClassName: percentageChange.direction ? 'direction-' + percentageChange.direction : '',
+      value: Math.abs(previousHoldings - currentHoldings),
+      valueFormatted: formatNumber(Math.abs(previousHoldings - currentHoldings)),
+      percentage: percentageChange,
+      currency: 'C'
+    }
+  }
+
+  render () {
+    return (
+      <div className="layout-content portfolio">
+        <AppPortfolioHeader
+          league={this.props.portfolio.settings.league}
+          name={this.props.portfolio.settings.name}
+          data={this.props.portfolio.history}
+          lastUpdated={this.state.lastUpdated}
+          holdings={this.state.holdings}
+          change={this.state.change} />
+      </div>
+    )
+  }
+}
+
+
+// Todo
+// - Add Chart Rendering after Load
+// - Remove Chart after unload
+class AppPortfolioChart extends React.Component {
+  render () {
+    return <div id="portfolio_chart" />
+  }
+}
+
+
+class AppPortfolioLargeStats extends React.Component {
+  render () {
+    return (
+      <div className="portfolio-large-stats">
+        <div>
+          <h3>{this.props.holdings.valueFormatted} {this.props.holdings.currency}</h3>
+          <h2>Holdings</h2>
+        </div>
+
+        <div className={`${this.props.profit.directionClassName}`}>
+          <h3>{this.props.profit.directionIndicator} {this.props.profit.valueFormatted} {this.props.profit.currency}</h3>
+          <h2>Last Gain / Loss</h2>
+        </div>
+
+        <div>
+          <h3>{this.props.dayProfit} {this.props.currency}</h3>
+          <h2>24H Gain / Loss</h2>
+        </div>
+      </div>
+    )
+  }
+}
+
+
+class AppPortfolioMeta extends React.Component {
+  render () {
+    return (
+      <div className="portfolio-meta">
+        <div className="portfolio-meta-league">{ this.props.league }</div>
+        <div className="portfolio-meta-last-updated">{ this.props.lastUpdated }</div>
+      </div>
+    )
+  }
+}
+
+
+class AppPortfolioHeader extends React.Component {
+  render () {
+    return (
+      <div className="portfolio-header">
+        <AppPortfolioMeta
+          league={this.props.league}
+          lastUpdated={this.props.lastUpdated} />
+
+        <h1>{this.props.name}</h1>
+
+        <AppPortfolioLargeStats
+          holdings={this.props.holdings}
+          profit={this.props.change} />
+
+        <AppPortfolioChart
+          data={this.props.data} />
+      </div>
+    )
+  }
+}
+
+
+class AppPortfolioUnselected extends React.Component {
+  render () {
+    return (
+      <div className="layout-content portfolio">
+        Please Select A Report!
+      </div>
+    )
+  }
+}
+
+
+class AppPortfolioSettings extends React.Component {
+  state = {
+    settings: {
+      name: '',
+      league: '',
+      tracking: []
+    }
+  }
+
+  constructor (props) {
+    super(props)
+
+    this.handleChange = this.handleChange.bind(this)
+    this.handleLeagueChange = this.handleLeagueChange.bind(this)
+    this.handleTabChange = this.handleTabChange.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
+  }
+
+  componentWillMount () {
+    if (!this.props.portfolio) {
+      this.state.settings.league = this.props.leagues[0].id
+    }
+
+    this.setState({
+      settings: this.props.portfolio 
+        ? this.props.portfolio.settings 
+        : this.state.settings
+    })
+  }
+
+  handleChange (e) {
+    e.preventDefault()
+
+    const name = e.target.name
+    const value = e.target.type === 'checkbox' 
+      ? e.target.checked 
+      : e.target.value
+
+    this.setState({
+      settings: {
+        [name]: value
+      }
+    })
+  }
+
+  handleLeagueChange (option) {
+    let value = option ? option.value : ''
+
+    this.setState({
+      settings: {
+        ...this.state.settings,
+        tracking: null,
+        league: value
+      }
+    })
+  }
+
+  handleTabChange (tabs) {
+    this.setState({
+      settings: {
+        ...this.state.settings,
+        tracking: tabs
+      }
+    })
+  }
+
+  handleSubmit (e) {
+    e.preventDefault()
+
+    return this.props.portfolio
+      ? this.handleUpdate()
+      : this.handleCreate()
+  }
+
+  handleCreate () {
+
+  }
+
+  handleUpdate () {
+
+  }
+
+  render () {
+    let tracking = this.state.settings.tracking
+    let tabs = this.props.tabs[this.state.settings.league]
+
+    return (
+      <div className="portfolio-settings">
+        <h1>Portfolio Settings</h1>
+
+        <div className="form-group">
+          <h2>Portfolio Name</h2>
+          <input name="name" type="text" value={this.state.settings.name} onChange={this.handleChange} />
+        </div>
+
+        <div className="form-group">
+          <h2>Portfolio League</h2>
+          <Select 
+            name="league"
+            clearable={false}
+            value={this.state.settings.league}
+            onChange={this.handleLeagueChange}
+            options={ this.props.leagues.map((league, index) => {
+              return {
+                value: league.id,
+                label: league.id
+              }
+            })} />
+        </div>
+
+        <div className="form-group">
+          <h2>Portfolio Tabs</h2>
+          <Select 
+            name="tracking"
+            multi={true}
+            value={this.state.settings.tracking}
+            onChange={this.handleTabChange}
+            options={tabs.map((tab, index) => {
+              return {
+                value: tab.id,
+                label: tab.name,
+                style: {
+                  color: `rgb(${tab.color[0]}, ${tab.color[1]}, ${tab.color[2]})`
+                }
+              }
+            })} />
+        </div>
+
+        <PrimaryButton />
+      </div>
+    )
+  }
+}
+
 
 export default App

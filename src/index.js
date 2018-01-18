@@ -3,6 +3,7 @@ import { render } from 'react-dom'
 
 // Import styles
 import 'typeface-roboto'
+import './assets/fonts/segmdl2-webfont.woff2'
 
 // Import application
 import App from './components/App'

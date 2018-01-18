@@ -8,7 +8,6 @@ class Button extends React.Component {
 
   render () {
     let className = `btn ${this.props.className}`
-    console.log(this.props)
     return (
       <button {...this.props} onClick={this.props.onClick} className={className}>
         {this.props.children}

@@ -6,20 +6,33 @@ class DataFile {
     this.log = logger.topic(type)
   }
 
+  get (key) {
+    return this.data[key]
+  }
+
+  set (key, value) {
+    this.data[key] = value
+    this.save(this.data)
+    return this
+  }
+
   load (defaults) {
     try {
       this.log.info(`Loading file from: ${this.filename}`)
-      return JSON.parse(fs.readFileSync(this.filename))
+      this.data = JSON.parse(fs.readFileSync(this.filename))
+      return this.data
     } catch(error) {
       this.log.warn(`File could not be loaded: ${error.message}`)
-      return defaults
+      this.data = defaults
+      return this.data
     }
   }
 
   save (data) {
     try {
       this.log.info(`Saving file: ${this.filename}`)
-      fs.writeFileSync(this.filename, JSON.stringify(data))
+      this.data = data
+      fs.writeFileSync(this.filename, JSON.stringify(this.data))
     } catch (error) {
       this.log.critical(`Could not save file: ${error.message}`)
     }

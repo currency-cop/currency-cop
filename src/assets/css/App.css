@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'SegoeMDL2';
+  src: url("~/fonts/segmdl2-webfont.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
 * {
   box-sizing: border-box
 }
@@ -121,13 +128,16 @@ a:hover {
 }
 
 /* Header */
-.navbar,
+.nav-bar,
 .draggable {
   -webkit-app-region: drag
 }
 
 a,
 button,
+input,
+select,
+[class*="Select"],
 .tab-selector,
 .app-control *,
 .account-actions *,
@@ -136,56 +146,68 @@ button,
   -webkit-app-region: no-drag
 }
 
-.header-logo {
-  width: 32px;
-  position: relative;
-  top: 4px;
-  margin-right: 8px;
+.nav-bar {
+  padding: 0;
+  margin: 0;
+  background: rgba(0,0,0,0.3)
 }
 
-.header-title {
-  position: relative;
-  top: -14px;
-  font-size: 32px !important;
+.nav-bar h1 {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 28px;
+}
+
+/* Navbar Controls */
+.nav-bar .account-actions,
+.nav-bar .app-controls {
+  display: inline-block;
+}
+
+.nav-bar .account-actions .btn {
+  padding: 4px 10px;
+}
+
+.nav-bar .app-controls {
+  margin-right: -0.5rem;
 }
 
 /* App control */
 .app-control {
   position: fixed;
   z-index: 99999;
-  top: 10px;
-  right: 15px;
+  top: 0;
+  right: 0;
+  left: 0;
+  text-align: right;
+  background: rgba(0,0,0,0.4)
 }
 
-.app-control [class*="-control"] {
-  width: 10px;
-  height: 10px;
-  background: #646870;
+.app-controls [class*="-control"] {
   display: inline-block;
-  border-radius: 50px;
-  margin-right: 8px;
+  font-family: 'SegoeMDL2';
+  font-size: 12px;
+  padding: 8px 14px;
 }
 
-.app-control [class*="-control"]:hover {
+.app-controls [class*="-control"]:hover {
   cursor: pointer;
 }
 
-.app-control .app-update {
+.app-controls .app-update {
   position: absolute;
   top: -12px;
   left: -48px;
 }
 
-.app-control .close-control:hover {
+.app-controls .close-control:hover {
   background: #ef5350
 }
 
-.app-control .minimize-control:hover {
-  background: #fff59d;
-}
-
-.app-control .fullscreen-control:hover {
-  background: #81c784
+.app-controls .minimize-control:hover,
+.app-controls .fullscreen-control:hover {
+  background: rgba(255,255,255,0.1);
 }
 
 /* Main Viewport */
@@ -196,33 +218,22 @@ button,
 .main-viewport {
   position: fixed;
   padding: 15px;
-  top: 94px;
+  top: calc(94px + 28px);
   left: 0;
   right: 0;
-  height: calc(100vh - 94px);
+  height: calc(100vh - (94px + 28px));
 }
 
 /* App Viewport */
 .app-viewport {
-  margin: 1px;
 }
 
-/* Tabs */
-.tab-selector:hover {
-  cursor: pointer;
-}
-
-.tab-selector {
-  border: 2px solid rgba(255,255,255,0.2);
-  padding: 2px 24px 1px !important;
-  border-radius: 30px !important;
+/* Dashboard */
+.dashboard-actions {
+  margin-bottom: 15px;
 }
 
 /* Report Listing */
-.report-list {
-  margin: 0 !important;
-}
-
 .report-item {
   padding: 15px !important;
   background: hsl(0, 0%, 17%);
