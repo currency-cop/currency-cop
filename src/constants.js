@@ -20,6 +20,7 @@ module.exports = {
   NINJA_DIV_CARDS_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetDivinationCardsOverview',
   NINJA_MAP_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetMapOverview',
 
+  NINJA_GEM_OVERVIEW_URL: 'http://poe.ninja/api/Data/GetSkillGemOverview',
   NINJA_UNIQUE_JEWEL_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueJewelOverview',
   NINJA_UNIQUE_FLASK_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueFlaskOverview',
   NINJA_UNIQUE_WEAPON_OVERVIEW_URL: 'http://api.poe.ninja/api/Data/GetUniqueWeaponOverview',
