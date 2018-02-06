@@ -1,4 +1,5 @@
 import { remote } from 'electron'
+import React, { PropTypes } from 'react'
 
 class AppControls extends React.Component {
   componentWillMount () {

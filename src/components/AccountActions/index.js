@@ -1,14 +1,13 @@
+import React, { PropTypes } from 'react'
 import Button from '../Button'
-import Constants from '../../constants'
 
 class AccountActions extends React.Component {
   handleLogoutClick () {
-    this.props.events.emit('/config/clear')
+    CC.Events.emit('/config/clear')
   }
 
   render () {
-    let { config } = this.props
-    let username = config.get(Constants.CONFIG_USERNAME)
+    let username = CC.Config.get(CC.Constants.CONFIG_USERNAME)
     if (username) {
       return (
         <div className="account-actions">

@@ -333,6 +333,10 @@
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
+.form-group:last-of-type {
+  border-bottom: none;
+}
+
 .form-group input[type="text"],
 .Select-control,
 .Select.has-value .Select-control {

@@ -14,7 +14,7 @@ class ApiClient {
   async authorize ({ sessionId }) {
     let sessionResponse = await Api.LoginWithCookie(sessionId)
     if (sessionResponse.status != 302) {
-      this.log.warn(`[AUTHORIZE]: Expired Session ID - ${response.status}`)
+      this.log.warn(`[AUTHORIZE]: Expired Session ID - ${sessionResponse.status}`)
       throw ({
         code: 400,
         message: 'Session ID failed to authorize your account. Try refreshing your session id.'
@@ -155,8 +155,6 @@ class ApiClient {
     if (cacheResult) {
       return cacheResult
     }
-
-    console.log(league, this.cache)
 
     let apiResult = await Api.GetStashTabs(this.accountSessionId, {
       accountName: this.accountName,

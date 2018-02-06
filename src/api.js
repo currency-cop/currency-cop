@@ -19,7 +19,7 @@ function DoServerRequest (options) {
       if (response.status > 200) {
         // The request was made and the server responded with a status code
         // that is not 200
-        ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
+        CC.ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
       }
 
       return resolve(response)
@@ -29,15 +29,15 @@ function DoServerRequest (options) {
       if (error.response) {
         // The request was made and the server responded with a status code 
         // that falls out of the range of 2xx
-        ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
+        CC.ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
       } else if (error.request) {
         // The request was made but no response was received 
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of 
         // http.ClientRequest in node.js
-        ApiLog.error(`Request sent to [${options.url}], no response received: ${error.message}`)
+        CC.ApiLog.error(`Request sent to [${options.url}], no response received: ${error.message}`)
       } else {
         // Something happened in setting up the request that triggered an Error
-        ApiLog.error(`Unable to make HTTP request to [${options.url}]: ${error.message}`)
+        CC.ApiLog.error(`Unable to make HTTP request to [${options.url}]: ${error.message}`)
       }
 
       return reject(error)

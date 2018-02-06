@@ -3,6 +3,7 @@ module.exports = {
   CONFIG_COOKIE:                        'ACCOUNT_COOKIE',
 
   RELEASES_URL:                         'https://poe.technology/releases',
+  SESSION_URL:                          'https://www.pathofexile.com/forum/view-thread/1989935/page/9#p14857124',
 
   POE_MAIN_PAGE_URL:                    'https://www.pathofexile.com/',
   POE_LOGIN_URL:                        'https://www.pathofexile.com/login',
