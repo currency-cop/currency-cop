@@ -5,8 +5,17 @@ import {
   getPercentageChange
 } from '../helpers'
 
+import { Base64 } from 'js-base64'
 import Item from '../classes/item'
 import Ago from '../classes/ago'
+
+function encode (obj) {
+  return Base64.encode(JSON.stringify(obj))
+}
+
+function decode (str) {
+  return JSON.parse(Base64.decode(str))
+}
 
 class Portfolio {
   constructor ({
@@ -15,6 +24,7 @@ class Portfolio {
     league,
     history,
     tabs,
+    tabItems,
     createdAt
   }) {
     this.id = id || UUID()
@@ -22,24 +32,32 @@ class Portfolio {
     this.tabs = tabs || []
     this.league = league
     this.history = history || []
-    this.tabItems = {}
+    this.tabItems = tabItems || {}
     this.line = {}
     this.listeners = []
     this.createdAt = createdAt || Date.now()
     this.isUpdating = false
     this.isOld = false
+
+    // Convert history elements to classes
+    this.history.forEach(record => {
+      record.items.forEach(entry => {
+        entry.item = Item.toItem(entry.item)
+      })
+    })
   }
 
   update (tab, tabItems) {
     this.isUpdating = true
 
-    let existingTabItems = this.tabItems[tab.value]
-    if (existingTabItems && JSON.stringify(existingTabItems) === JSON.stringify(tabItems)) {
+    let tabItemsHash = this.tabItems[tab.value]
+    let currentTabItemsHash = encode(tabItems)
+    if (tabItemsHash && tabItemsHash === currentTabItemsHash) {
       this.isUpdating = false
       return false
     }
 
-    this.tabItems[tab.value] = tabItems
+    this.tabItems[tab.value] = encode(tabItems)
     this.onUpdate()
 
     this.isUpdating = false
@@ -49,13 +67,15 @@ class Portfolio {
   onUpdate () {
     let {tabItems, history, league} = this
     let tabs = Object.keys(tabItems)
-    let cluster = []
     let prices = CC.Prices[league]
+    let cluster = []
 
     tabs.forEach(tabId => {
-      let items = tabItems[tabId]
+      let items = decode(tabItems[tabId])
 
       items.forEach(item => {
+        item = Item.toItem(item)
+  
         let price = prices.find(v => {
           let match = v.fullName === item.fullName
           if (match && v.count > 1) {
@@ -184,6 +204,7 @@ class Portfolio {
     return {
       id: this.id,
       name: this.name,
+      tabs: this.tabs,
       league: this.league,
       history: this.history,
       createdAt: this.createdAt

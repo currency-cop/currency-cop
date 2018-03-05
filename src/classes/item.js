@@ -117,4 +117,11 @@ class Item {
   }
 }
 
+Item.toItem = function ({ source, tab }) {
+  return new Item({
+    item: source,
+    tab
+  })
+}
+
 module.exports = Item

@@ -205,7 +205,8 @@ class App extends React.Component {
 
       this.setLoadingMessage('Loading Portfolios')
       let portfolios = await CC.Portfolios.load([])
-      await this.setState({ 
+      console.log(portfolios)
+      await this.setState({
         portfolios: portfolios.data.map(settings => new Portfolio(settings))
       })
 
@@ -757,27 +758,6 @@ class AppSidebarPortfolioList extends React.Component {
 
 
 class AppSidebarPortfolioListItem extends React.Component {
-  state = {
-    change: false,
-    lastUpdated: null
-  }
-
-  componentWillMount () {
-    this.setState({
-      change: this.props.portfolio.getChange(),
-      holdings: this.props.portfolio.getHoldings(),
-      lastUpdated: this.props.portfolio.getLastUpdateTime()
-    })
-  }
-
-  componentWillReceiveProps () {
-    this.setState({
-      change: this.props.portfolio.getChange(),
-      holdings: this.props.portfolio.getHoldings(),
-      lastUpdated: this.props.portfolio.getLastUpdateTime()
-    })
-  }
-
   openPortfolio (portfolioId) {
     return (e) => {
       CC.Events.emit('/screen/portfolio', {
@@ -802,6 +782,10 @@ class AppSidebarPortfolioListItem extends React.Component {
       )
     }
 
+    let change = this.props.portfolio.getChange()
+    let holdings = this.props.portfolio.getHoldings()
+    let lastUpdated = this.props.portfolio.getLastUpdateTime()
+
     return (
       <div className="portfolio-item not-draggable" onClick={ this.openPortfolio(this.props.index) }>
         <div className="info">
@@ -809,16 +793,16 @@ class AppSidebarPortfolioListItem extends React.Component {
             { this.props.portfolio.name }
           </div>
           <div className="last-updated">
-            { this.state.lastUpdated }
+            { lastUpdated }
           </div>
         </div>
         
         <div className="value">
           <div className="total">
-            { this.state.holdings.valueFormatted } { this.state.holdings.currency }
+            { holdings.valueFormatted } { holdings.currency }
           </div>
-          <div className={`change ${ this.state.change.directionClassName }`}>
-           { this.state.change.directionIndicator } { this.state.change.valueFormatted } { this.state.change.currency }
+          <div className={`change ${ change.directionClassName }`}>
+           { change.directionIndicator } { change.valueFormatted } { change.currency }
           </div>
         </div>
       </div>
@@ -827,27 +811,6 @@ class AppSidebarPortfolioListItem extends React.Component {
 }
 
 class AppPortfolio extends React.Component {
-  state = {
-    change: false,
-    lastUpdated: null
-  }
-
-  componentWillMount () {
-    this.setState({
-      change: this.props.portfolio.getChange(),
-      holdings: this.props.portfolio.getHoldings(),
-      lastUpdated: this.props.portfolio.getLastUpdateTime()
-    })
-  }
-
-  componentWillReceiveProps () {
-    this.setState({
-      change: this.props.portfolio.getChange(),
-      holdings: this.props.portfolio.getHoldings(),
-      lastUpdated: this.props.portfolio.getLastUpdateTime()
-    })
-  }
-
   render () {
     return (
       <div className="layout-content portfolio">
@@ -855,9 +818,9 @@ class AppPortfolio extends React.Component {
           league={this.props.portfolio.league}
           name={this.props.portfolio.name}
           data={this.props.portfolio.history}
-          lastUpdated={this.state.lastUpdated}
-          holdings={this.state.holdings}
-          change={this.state.change} />
+          lastUpdated={this.props.portfolio.getLastUpdateTime()}
+          holdings={this.props.portfolio.getHoldings()}
+          change={this.props.portfolio.getChange()} />
 
         <div className="items">
           <table className="not-draggable">
