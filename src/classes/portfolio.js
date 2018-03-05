@@ -58,7 +58,11 @@ class Portfolio {
       items.forEach(item => {
         let price = prices.find(v => {
           let match = v.fullName === item.fullName
-          if (match) {
+          if (match && v.count > 1) {
+            if (v.icon.indexOf('relic=1') > -1 && item.icon.indexOf('relic=1') < 0) {
+              return false
+            }
+
             if (v.links) {
               return v.links === item.links
             } else if (v.quality && v.level) {

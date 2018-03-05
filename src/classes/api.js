@@ -126,7 +126,12 @@ class ApiClient {
           chaosValue:  entry.chaosEquivalent || entry.chaosValue,
           exaltedValue: entry.exaltedValue,
           links: entry.links,
-          variant: entry.variant
+          variant: entry.variant,
+          count: entry.count
+        }
+
+        if (type === 'currency') {
+          item.count = 1000
         }
 
         if (type === 'unique_jewel') {
@@ -157,7 +162,8 @@ class ApiClient {
         exaltedValue: output.find(v => v.name === 'Exalted Orb').chaosValue,
         stackSize: 10,
         links: undefined,
-        variant: undefined
+        variant: undefined,
+        count: 1000
       })
     }
 
