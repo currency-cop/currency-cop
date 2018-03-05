@@ -275,6 +275,21 @@ function GetUniqueArmourOverview (league, date) {
   })
 }
 
+function GetUniqueWeaponOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_WEAPON_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_WEAPON_RESPONSE',
+    onError: 'UNIQUE_WEAPON_ERROR'
+  })
+}
+
 function GetUniqueAccessoryOverview (league, date) {
   return DoServerRequest({
     method: 'get',
@@ -331,5 +346,6 @@ exports.ItemRateTypes = {
   unique_jewel: GetUniqueJewelOverview,
   unique_flask: GetUniqueFlaskOverview,
   unique_armour: GetUniqueArmourOverview,
+  unique_weapon: GetUniqueWeaponOverview,
   unique_accessory: GetUniqueAccessoryOverview
 }

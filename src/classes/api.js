@@ -1,4 +1,5 @@
 import Api from '../api'
+import Item from './item'
 import Helpers from '../helpers'
 import CacheFile from './cachefile'
 import Constants from '../constants'
@@ -66,67 +67,138 @@ class ApiClient {
   }
 
   async getItemRates (type, league) {
-    league = league.replace('SSF ', '')
+    if (league.indexOf('SSF ') > -1) {
+      league = league.replace('SSF ', '')
+
+      if (league.indexOf(' HC') > -1) {
+        league = league.replace(' HC', '')
+        league = `Hardcore ${league}`
+      }
+    }
 
     let itemRatesCacheName = `${this.accountName}-rates-${type}-${league}`
-    let itemRatesCache = this.cache.get(itemRatesCacheName)
-    if (itemRatesCache) {
-      return itemRatesCache
+    let list = this.cache.get(itemRatesCacheName)
+    let fetched = false
+    if (!list) {
+      let date = Helpers.getNinjaDate()
+      let response = await Api.ItemRateTypes[type](league, date)
+
+      // Only retry at maximum, once.
+      if (response && response.status !== 200) {
+        response = await Api.ItemRateTypes[type](league, date)
+      }
+
+      // On error, detail that we can retry and the error
+      if (!response || !response.data || response.status !== 200) {
+        throw ({
+          retry: true,
+          message: `Failed to obtain ${type} item rates for ${league} league.`
+        })
+      }
+
+      // Process items
+      list = response.data
+      fetched = true
     }
 
-    let date = Helpers.getNinjaDate()
-    let response = await Api.ItemRateTypes[type](league, date)
-
-    // Only retry at maximum, once.
-    if (response && response.status !== 200) {
-      response = await Api.ItemRateTypes[type](league, date)
-    }
-
-    // On error, detail that we can retry and the error
-    if (!response || !response.data || response.status !== 200) {
-      throw ({
-        retry: true,
-        message: `Failed to obtain ${type} item rates for ${league} league.`
-      })
-    }
-
-    // Process items
     let output = []
-    let list = response.data.lines
-    if (list && list.length) {
-      for (const entry of list) {
+    if (list && list.lines && list.lines.length) {
+      for (const entry of list.lines) {
         let name = entry.currencyTypeName || entry.name
+        let fullName = name && entry.baseType ? `${name} ${entry.baseType}` : name ? name : entry.baseType
+
+        let details = {}
+        if (list.currencyDetails) {
+          details = list.currencyDetails.find(v => v.name === name)
+        }
+
         let item = {
+          orderId: details.poeTradeId || entry.poeTradeId || entry.id,
           type: type,
-          icon: entry.icon,
+          icon: details.icon || entry.icon,
           name: name,
           nameLowercase: name.toLowerCase(),
           baseType: entry.baseType,
+          baseTypeLowercase: entry.baseType ? entry.baseType.toLowerCase() : null,
+          fullName: fullName,
+          fullNameLowercase: fullName ? fullName.toLowerCase() : null,
           stackSize: entry.stackSize,
-          chaosValue:  entry.chaosEquivalent || entry.chaosValue
+          chaosValue:  entry.chaosEquivalent || entry.chaosValue,
+          exaltedValue: entry.exaltedValue,
+          links: entry.links,
+          variant: entry.variant
+        }
+
+        if (type === 'unique_jewel') {
+          item.gemLevel = entry.gemLevel
+          item.gemQuality = entry.gemQuality
+          item.corrupted = entry.corrupted
+          item.variant = entry.variant
         }
 
         output.push(item)
       }
     }
 
-    this.cache.set(itemRatesCacheName, list, 60 * 60 * 24)
-    this.cache.save()
+    // Add in chaos orb manually...
+    if (type === 'currency') {
+      output.push({
+        orderId: 1,
+        type: type,
+        icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1',
+        name: 'Chaos Orb',
+        nameLowercase: 'chaos orb',
+        fullName: 'Chaos Orb',
+        fullNameLowercase: 'chaos orb',
+        baseType: undefined,
+        baseTypeLowercase: null,
+        type: 'currency',
+        chaosValue: 1,
+        exaltedValue: output.find(v => v.name === 'Exalted Orb').chaosValue,
+        stackSize: 10,
+        links: undefined,
+        variant: undefined
+      })
+    }
 
-    return list
+    if (fetched) {
+      this.cache.set(itemRatesCacheName, list, 60 * 60 * 24)
+      this.cache.save()
+    }
+
+    return output
   }
 
-  async getTab ({ league, tab, tabId }) {
-    let cacheName = `${this.accountName}-${league}-tabs-${tabId}`
+  _convertTabItems ({ league, tab, items }) {
+    let output = []
+
+    if (items && items.length) {
+      for (let entry of items) {
+        output.push(new Item({
+          tab,
+          item: entry
+        }))
+      }
+    }
+  
+    return output
+  }
+
+  async getTab ({ league, tab }) {
+    let cacheName = `${this.accountName}-${league}-tabs-${tab.id}`
     let cacheResult = this.cache.get(cacheName)
     if (cacheResult) {
-      return cacheResult
+      return this._convertTabItems({
+        league,
+        tab,
+        items: cacheResult
+      })
     }
 
     let apiResult = await Api.GetLeagueStashTab(this.accountSessionId, {
       accountName: this.accountName,
       league,
-      tabIndex: tab,
+      tabIndex: tab.index,
       tabs: 0
     })
 
@@ -141,12 +213,16 @@ class ApiClient {
     if (!apiResult.data || !apiResult.data.items)
       return items
 
-    items  = apiResult.data.items
+    items = apiResult.data.items
 
     this.cache.set(cacheName, items, 60 * 4)
     this.cache.save()
 
-    return items
+    return this._convertTabItems({
+      league,
+      tab,
+      items
+    })
   }
 
   async getTabsList ({ league }) {

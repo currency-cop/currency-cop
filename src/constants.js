@@ -21,9 +21,9 @@ module.exports = {
   NINJA_FRAGMENT_OVERVIEW_URL:          'http://api.poe.ninja/api/Data/GetFragmentOverview',
   NINJA_ESSENCE_OVERVIEW_URL:           'http://api.poe.ninja/api/Data/GetEssenceOverview',
 
+  NINJA_MAP_OVERVIEW_URL:               'http://api.poe.ninja/api/Data/GetMapOverview',
   NINJA_UNIQUE_MAP_OVERVIEW_URL:        'http://api.poe.ninja/api/Data/GetUniqueMapOverview',
   NINJA_DIV_CARDS_OVERVIEW_URL:         'http://api.poe.ninja/api/Data/GetDivinationCardsOverview',
-  NINJA_MAP_OVERVIEW_URL:               'http://api.poe.ninja/api/Data/GetMapOverview',
 
   NINJA_UNIQUE_JEWEL_OVERVIEW_URL:      'http://api.poe.ninja/api/Data/GetUniqueJewelOverview',
   NINJA_UNIQUE_FLASK_OVERVIEW_URL:      'http://api.poe.ninja/api/Data/GetUniqueFlaskOverview',

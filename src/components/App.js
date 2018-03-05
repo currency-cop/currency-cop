@@ -37,7 +37,8 @@ import {
   GetDivCardOverview,
   GetMapOverview,
   GetUniqueMapOverview,
-  DoVersionCheck
+  DoVersionCheck,
+  ItemRateTypes
 } from '../api'
 
 
@@ -67,7 +68,8 @@ global.CC = {
   DataFile,
   Ago,
   Requester,
-  Tabs: {}
+  Tabs: {},
+  Prices: {}
 }
 
 
@@ -196,7 +198,8 @@ class App extends React.Component {
       this.setLoadingMessage('Initialize Workers')
       await this.setupWorkers()
 
-      this.setLoadingMessage('Gathering Tabs')
+      this.setLoadingMessage('Gathering Prices & Tabs')
+      await this.getPricesForEachLeague()
       await this.getTabsForEachLeague()
       await this.setupTabsJobs()
 
@@ -239,57 +242,15 @@ class App extends React.Component {
   }
 
 
+  /*
+   * MISC
+   */
+
+
   clearConfig () {
     CC.Config.save({})
     this.setState({
       isLoggedIn: false
-    })
-  }
-
-
-  createPortfolio (settings) {
-    let { portfolios } = this.state
-    let portfolio = new Portfolio(settings)
-
-    console.log(settings)
-
-    portfolio.update()
-    portfolios.push(portfolio)
-    return this.updatePortfolios(portfolios)
-  }
-
-
-  updatePortfolio (settings) {
-    let { portfolios } = this.state
-    let portfolio = new Portfolio(settings)
-
-    portfolios.forEach(item => {
-      if (item.id === portfolio.id) {
-        item = portfolio
-      }
-    })
-  
-    return this.updatePortfolios(portfolios)
-  }
-
-
-  deletePortfolio (portfolio) {
-    let { portfolios } = this.state
-  
-    portfolios.forEach(function (item, index, object) {
-      if (item.id === portfolio.id) {
-        object.splice(index, 1);
-      }
-    })
-  
-    return this.updatePortfolios(portfolios)
-  }
-
-
-  updatePortfolios (portfolios) {
-    CC.Portfolios.save(portfolios)
-    return this.setState({
-      portfolios
     })
   }
 
@@ -324,6 +285,124 @@ class App extends React.Component {
   }
 
 
+  /*
+   * PORTFOLIOS
+   *
+   */
+
+
+  setupPortfolios () {
+    if (!this.state.isLoggedIn) {
+      console.log('not logged in')
+      return
+    }
+
+    let {portfolios} = this.state
+    for (const portfolio of portfolios) {
+      this.setupPortfolioWorkerTasks(portfolio)
+    }
+  }
+
+
+  setupPortfolioWorkerTasks (portfolio) {
+    let {tabs} = portfolio
+    let {league} = portfolio
+    let {timeout} = portfolio
+    let {portfolios} = this.state
+
+    for (const tab of tabs) {
+      let listenerId = this.setupTabJob(league, tab, items => {
+        let updated = portfolio.update(tab, items)
+        if (updated) {
+          this.updatePortfolios(portfolios)
+        }
+      }, timeout)
+
+      if (listenerId !== false) {
+        portfolio.listeners.push(['tab', listenerId])
+      }
+
+      if (listenerId === false) {
+        portfolio.isOld = true
+      }
+    }
+  }
+
+
+  teardownPortfolioWorkerTasks (portfolio) {
+    let workers = this.state.workers
+    let {listeners} = portfolio
+
+    for (const [worker, id] of listeners) {
+      workers[worker].off(id)
+    }
+  }
+
+
+  createPortfolio (settings) {
+    let { portfolios } = this.state
+    let portfolio = new Portfolio(settings)
+    portfolios.push(portfolio)
+    this.setupPortfolioWorkerTasks(portfolio)
+    return this.updatePortfolios(portfolios)
+  }
+
+
+  updatePortfolio (settings) {
+    let { portfolios } = this.state
+    let portfolio = new Portfolio(settings)
+
+    portfolios.forEach(item => {
+      if (item.id === portfolio.id) {
+        item = portfolio
+      }
+    })
+
+    this.teardownPortfolioWorkerTasks(portfolio)
+    this.setupPortfolioWorkerTasks(portfolio)
+  
+    return this.updatePortfolios(portfolios)
+  }
+
+
+  deletePortfolio (portfolio) {
+    let { portfolios } = this.state
+  
+    portfolios.forEach(function (item, index, object) {
+      if (item.id === portfolio.id) {
+        object.splice(index, 1);
+      }
+    })
+  
+    return this.updatePortfolios(portfolios)
+  }
+
+
+  updatePortfolios (portfolios) {
+    CC.Portfolios.save(portfolios)
+    return this.setState({
+      portfolios
+    })
+  }
+
+  /*
+   * EACH LEAGUE
+   *
+   */
+
+  async getPricesForEachLeague () {
+    const { leagues } = this.state
+    for (const { id: league } of leagues) {
+      const prices = await Promise.all(Object.keys(ItemRateTypes).map(type => {
+        return CC.Api.getItemRates(type, league)
+      }))
+
+      CC.Prices[league] = [].concat.apply([], prices)
+      this.setupPriceJob(league)
+    }
+  }
+
+
   async getTabsForEachLeague () {
     const { leagues } = this.state
     for (const league of leagues) {
@@ -351,9 +430,23 @@ class App extends React.Component {
   }
 
 
+  /*
+   * WORKERS
+   *
+   */
+
+
   setupWorkers () {
     let tabs = new Requester()
     let tab = new Requester()
+    let prices = new Requester()
+
+    // Setup prices worker
+    tabs.evenlySpaced = true
+    prices.setRateLimitByString('6:3600:60')
+    prices.setCacheExpiry(0)
+    prices.start()
+    prices.cache = {}
 
     // Setup tabs worker (fetches league tabs lists)
     tabs.evenlySpaced = true
@@ -369,6 +462,7 @@ class App extends React.Component {
 
     this.setState({
       workers: {
+        prices,
         tabs,
         tab
       }
@@ -399,7 +493,11 @@ class App extends React.Component {
   setupTabJob (league, tab, callable, timeout) {
     let worker = this.state.workers.tab
     let name = `${league}-${tab.value}`
+
     let tabs = this.state.tabs[league]
+    if (!tabs) {
+      return false
+    }
     
     // Find tab
     tab = tabs.find(t => t.id === tab.value)
@@ -409,9 +507,8 @@ class App extends React.Component {
         name,
         method: () => {
           return CC.Api.getTab({
-            league: league,
-            tab: tab.index,
-            tabId: tab.id
+            league,
+            tab
           })
         }
       })
@@ -422,30 +519,35 @@ class App extends React.Component {
     }
 
     if (typeof callable === 'function') {
-      worker.on(name, callable, timeout || 0)
+      return worker.on(name, callable, timeout || 0)
     }
   }
 
 
-  setupPortfolios () {
-    if (!this.state.isLoggedIn) {
-      console.log('not logged in')
-      return
-    }
+  setupPriceJob (league, callable, timeout) {
+    let worker = this.state.workers.prices
+    let name = `${league}-prices`
+    if (!worker.has(name)) {
+      worker.add({
+        name,
+        method: () => {
+          return Promise.all(Object.keys(ItemRateTypes).map(type => {
+            return CC.Api.getItemRates(type, league)
+          }))
+        }
+      })
 
-    let {portfolios} = this.state
-    for (const portfolio of portfolios) {
-      let {tabs} = portfolio
-      let {league} = portfolio
-      let {timeout} = portfolio
-
-      for (const tab of tabs) {
-        this.setupTabJob(league, tab, items => {
-          portfolio.update(tab, items)
-        }, timeout)
-      }
+      worker.on(name, prices => {
+        CC.Prices[league] = [].concat.apply([], prices)
+      }, 300)
     }
   }
+
+
+  /*
+   * COMPONENT METHODS
+   *
+   */
 
 
   componentWillMount () {
@@ -622,11 +724,9 @@ class AppSidebar extends React.Component {
   }
 
   render () {
-    console.log(this.props.portfolios)
     return (
       <div className="layout-item sidebar">
         <button onClick={this.openPortfolioCreateScreen}>Add Portfolio</button>
-
         <AppSidebarPortfolioList
           portfolios={this.props.portfolios} />
       </div>
@@ -663,7 +763,14 @@ class AppSidebarPortfolioListItem extends React.Component {
   }
 
   componentWillMount () {
-    console.log(this.props)
+    this.setState({
+      change: this.props.portfolio.getChange(),
+      holdings: this.props.portfolio.getHoldings(),
+      lastUpdated: this.props.portfolio.getLastUpdateTime()
+    })
+  }
+
+  componentWillReceiveProps () {
     this.setState({
       change: this.props.portfolio.getChange(),
       holdings: this.props.portfolio.getHoldings(),
@@ -680,6 +787,21 @@ class AppSidebarPortfolioListItem extends React.Component {
   }
 
   render () {
+    if (this.props.portfolio.isOld) {
+      return (
+        <div className="portfolio-item not-draggable" onClick={ this.openPortfolio(this.props.index) }>
+          <div className="info">
+            <div className="title">
+              { this.props.portfolio.name }
+            </div>
+            <div className="last-updated">
+              This league is over, please remove.
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="portfolio-item not-draggable" onClick={ this.openPortfolio(this.props.index) }>
         <div className="info">
@@ -712,41 +834,18 @@ class AppPortfolio extends React.Component {
 
   componentWillMount () {
     this.setState({
-      change: this.getPortfolioChange(this.props.portfolio),
-      holdings: this.getPortfolioHoldings(this.props.portfolio),
-      lastUpdated: this.getPortfolioLastUpdate(this.props.portfolio)
+      change: this.props.portfolio.getChange(),
+      holdings: this.props.portfolio.getHoldings(),
+      lastUpdated: this.props.portfolio.getLastUpdateTime()
     })
   }
 
-  getPortfolioLastUpdate (portfolio) {
-    let { history } = portfolio
-    return history.length ? Ago(history[0].refreshedAt) : null
-  }
-
-  getPortfolioHoldings (portfolio) {
-    let { history } = portfolio
-    return {
-      value: history.length ? history[0].reportTotal : 0,
-      valueFormatted: formatNumber(history.length ? history[0].reportTotal : 0),
-      currency: 'C'
-    }
-  }
-
-  getPortfolioChange (portfolio) {
-    let { history } = portfolio
-    let previousHoldings = history.length ? history[1].reportTotal : 0
-    let currentHoldings = history.length ? history[0].reportTotal : 0
-    let percentageChange = getPercentageChange(previousHoldings, currentHoldings)
-
-    return {
-      direction: percentageChange.direction,
-      directionIndicator: percentageChange.direction === 'up' ? '+' : '-',
-      directionClassName: percentageChange.direction ? 'direction-' + percentageChange.direction : '',
-      value: Math.abs(previousHoldings - currentHoldings),
-      valueFormatted: formatNumber(Math.abs(previousHoldings - currentHoldings)),
-      percentage: percentageChange,
-      currency: 'C'
-    }
+  componentWillReceiveProps () {
+    this.setState({
+      change: this.props.portfolio.getChange(),
+      holdings: this.props.portfolio.getHoldings(),
+      lastUpdated: this.props.portfolio.getLastUpdateTime()
+    })
   }
 
   render () {
@@ -759,6 +858,29 @@ class AppPortfolio extends React.Component {
           lastUpdated={this.state.lastUpdated}
           holdings={this.state.holdings}
           change={this.state.change} />
+
+        <div className="items">
+          <table className="not-draggable">
+            <thead>
+              <tr>
+                <th><div>Item Name</div></th>
+                <th><div>Quantity</div></th>
+                <th><div>Value</div></th>
+              </tr>
+            </thead>
+            <tbody>
+            {this.props.portfolio.latestReport().items.map(entry => {
+              return entry.item.fullName ? (
+                <tr>
+                  <td>{entry.item.fullName}</td>
+                  <td>{entry.stackSize}</td>
+                  <td>{entry.chaosValue.toFixed(2)} C</td>
+                </tr>
+              ) : null
+            })}
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }

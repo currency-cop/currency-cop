@@ -69,7 +69,6 @@ class Requester {
       
       // Ignore request when no requests
       if (!requests) {
-        console.log('ignoring timer request')
         clearTimeout(this.queueTimer)
         this.queueTimer = setTimeout(thread.bind(this), reqWindow.interval)
         return
@@ -77,7 +76,6 @@ class Requester {
 
       // Adjust timer when called too early or no requests exist
       if (now < threshold) {
-        console.log('ignoring timer request, under threshold')
         clearTimeout(this.queueTimer)
         this.queueTimer = setTimeout(thread.bind(this), threshold - now)
         return
@@ -107,7 +105,7 @@ class Requester {
       
       // Invoke
       for (const index in this.queue) {
-        console.log('handling queue', index, this.queue[index])
+        // console.log('handling queue', index, this.queue[index])
         let request = this.queue[index]
         let entry = this.getCacheEntry(request.name)
         if (entry) {
@@ -118,7 +116,7 @@ class Requester {
           continue
         }
 
-        console.log('firing request', reqWindow.maxRequestsPerInterval, reqWindow.interval)
+        // console.log('firing request', reqWindow.maxRequestsPerInterval, reqWindow.interval)
         let response = await request.method()
         this.cache[request.name] = {
           response,
@@ -135,11 +133,11 @@ class Requester {
       // Finish thread
       this.lastCalled = Date.now()
       this.queueTimer = setTimeout(thread.bind(this), reqWindow.interval)
-      console.log('finishing timer')
+      // console.log('finishing timer')
     }
 
     
-    console.log('creating timer', reqWindow.interval)
+    // console.log('creating timer', reqWindow.interval)
     this.queueTimer = setTimeout(thread.bind(this), reqWindow.interval)
   }
 
