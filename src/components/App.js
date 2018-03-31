@@ -572,6 +572,7 @@ class ReportBuilder {
     item.chaosValue = data.lineItem.chaosEquivalent || data.lineItem.chaosValue
     item.orderId = data.details.poeTradeId || data.lineItem.id
     item.type = data.type
+    item.variant = data.lineItem.variant || null
 
     if (data.lineItem.stackSize) {
       item.maxStackSize = data.lineItem.stackSize
@@ -879,9 +880,9 @@ class ReportBuilder {
     return new Promise((resolve, reject) => {
       let rates = this.data.rates || []
 
-      let rateExists = (itemName, links) => {
+      let rateExists = (itemName, links, variant) => {
         let litemName = itemName.toLowerCase()
-        return rates.find(value => value.lname === litemName && value.links === links)
+        return rates.find(value => value.lname === litemName && value.links === links && (variant == null || (value.variant === variant)))
       }
 
       let getCurrencyDetailsItem = (itemName) => {
@@ -900,7 +901,7 @@ class ReportBuilder {
 
       if (data.lines && data.lines.forEach) {
         data.lines.forEach(lineItem => {
-          let exists = rateExists(getLineItemName(lineItem), getLineItemLinks(lineItem))
+          let exists = rateExists(getLineItemName(lineItem), getLineItemLinks(lineItem), lineItem.variant)
 
           // Entry already exists
           if (exists) {
@@ -930,10 +931,10 @@ class ReportBuilder {
     let items = clone(this.data.rates)
 
     // Helpers
-    let getItemObject = (itemName, links) => {
+    let getItemObject = (itemName, links, variant) => {
       let litemName = itemName.toLowerCase()
       return items.find(value => {
-        return value.lname === litemName && value.links === links
+        return value.lname === litemName && value.links === links && (variant == null || (value.variant === variant))
       })
     }
 
@@ -977,11 +978,22 @@ class ReportBuilder {
 
         if (tab && tab.items && tab.items.forEach) {
           tab.items.forEach(item => {
-            let reportItem = getItemObject(item.typeLine, 0)
+            
+            var variant = null
+            // it's a map according to POE stash api, determine the correct version of the map to prevent erroneously showing prices for older versions of the map
+            // NOTE: the variant strings must match the poe.ninja variant strings!
+            if (item.category['maps'] != null) { 
+              if (item.icon.indexOf('/Maps/Atlas2Maps/') !== -1) variant = 'Atlas2'
+              else if (item.icon.indexOf('/Maps/AtlasMaps/') !== -1) variant = 'Atlas'
+              else if (item.icon.indexOf('/Maps/act4maps/') !== -1) variant = "Pre 2.0"
+              else if (item.icon.indexOf('/Maps/') !== -1) variant = 'Pre 2.4'
+            }
+
+            let reportItem = getItemObject(item.typeLine, 0, variant)
 
             // Check for "Superior" in item name
             if (!reportItem && item.typeLine.indexOf('Superior') > -1) {
-              reportItem = getItemObject(item.typeLine.replace('Superior ', ''), 0)
+              reportItem = getItemObject(item.typeLine.replace('Superior ', ''), 0, variant)
             }
 
             // Chaos orb doesn't exist by default so we must create them.
@@ -1005,7 +1017,7 @@ class ReportBuilder {
 
             // Unique items look up by name, and link count
             if (!reportItem && item.frameType == 3) {
-              reportItem = getItemObject(item.name.replace('<<set:MS>><<set:M>><<set:S>>', ''), getItemLinks(item))
+              reportItem = getItemObject(item.name.replace('<<set:MS>><<set:M>><<set:S>>', ''), getItemLinks(item), variant)
             }
 
             // Skip anything else
