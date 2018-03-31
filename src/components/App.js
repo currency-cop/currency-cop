@@ -758,6 +758,16 @@ class AppSidebarPortfolioList extends React.Component {
 
 
 class AppSidebarPortfolioListItem extends React.Component {
+  componentDidMount() {
+    this.interval = setInterval(() => this.setState({ 
+      time: Date.now() 
+    }), 60000)
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval)
+  }
+
   openPortfolio (portfolioId) {
     return (e) => {
       CC.Events.emit('/screen/portfolio', {
@@ -811,6 +821,16 @@ class AppSidebarPortfolioListItem extends React.Component {
 }
 
 class AppPortfolio extends React.Component {
+  componentDidMount() {
+    this.interval = setInterval(() => this.setState({ 
+      time: Date.now() 
+    }), 60000)
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval)
+  }
+
   render () {
     return (
       <div className="layout-content portfolio">
@@ -826,6 +846,7 @@ class AppPortfolio extends React.Component {
           <table className="not-draggable">
             <thead>
               <tr>
+                <th><div>Icon</div></th>
                 <th><div>Item Name</div></th>
                 <th><div>Quantity</div></th>
                 <th><div>Value</div></th>
@@ -835,6 +856,14 @@ class AppPortfolio extends React.Component {
             {this.props.portfolio.latestReport().items.map(entry => {
               return entry.item.fullName ? (
                 <tr>
+                  <td>
+                    <img 
+                      src={entry.item.icon}
+                      width={32}
+                      style={{ verticalAlign: 'middle' }}
+                      title={entry.item.fullName}
+                    />
+                  </td>
                   <td>{entry.item.fullName}</td>
                   <td>{entry.stackSize}</td>
                   <td>{entry.chaosValue.toFixed(2)} C</td>
@@ -874,10 +903,10 @@ class AppPortfolioLargeStats extends React.Component {
           <h2>Last Gain / Loss</h2>
         </div>
 
-        <div>
+        {/* <div>
           <h3>{this.props.dayProfit} {this.props.currency}</h3>
           <h2>24H Gain / Loss</h2>
-        </div>
+        </div> */}
       </div>
     )
   }
