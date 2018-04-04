@@ -959,6 +959,18 @@ class ReportBuilder {
       })
     }
 
+    // Chaos orb doesn't exist by default so we must create them.
+    items.unshift({
+      name: 'Chaos Orb',
+      lname: 'Chaos Orb'.toLowerCase(),
+      icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1',
+      orderId: 1,
+      type: 'currency',
+      chaosValue: 1,
+      links: 0
+    })
+
+            
     // Iterate over each tab, then each tabs items
     if (tabs && tabs.forEach) {
       tabs.forEach((tab, i) => {
@@ -982,25 +994,6 @@ class ReportBuilder {
             // Check for "Superior" in item name
             if (!reportItem && item.typeLine.indexOf('Superior') > -1) {
               reportItem = getItemObject(item.typeLine.replace('Superior ', ''), 0)
-            }
-
-            // Chaos orb doesn't exist by default so we must create them.
-            if (!reportItem && item.typeLine === 'Chaos Orb') {
-              items.unshift({
-                name: item.typeLine,
-                lname: item.typeLine.toLowerCase(),
-                icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1',
-                orderId: 1,
-                type: 'currency',
-                chaosValue: 1,
-                stackSize: item.stackSize,
-                stacks: [{
-                  tab: tab.n,
-                  stackSize: item.stackSize,
-                  x: item.x,
-                  y: item.y
-                }]
-              })
             }
 
             // Unique items look up by name, and link count
