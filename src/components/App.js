@@ -669,7 +669,7 @@ class App extends React.Component {
   render() {
     if (this.state.isLoading) {
       return (
-        <div className="app-viewport draggable">
+        <div className="app-viewport">
           <AppControlBar 
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate}
@@ -684,7 +684,7 @@ class App extends React.Component {
 
     if (!CC.Api.accountSessionId) {
       return (
-        <div className="app-viewport draggable">
+        <div className="app-viewport">
           <AppControlBar 
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate} 
@@ -697,7 +697,7 @@ class App extends React.Component {
     }
 
     return (
-      <div className="app-viewport draggable">
+      <div className="app-viewport">
         <div className="application">
           <AppHeader 
             newVersion={this.state.newVersion}

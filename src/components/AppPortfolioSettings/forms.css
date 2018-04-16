@@ -1,42 +1,48 @@
 .form-group {
-  margin: 0;
-  padding: 15px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin: 30px 0 30px 0;
+  padding: 0;
 }
 
 .form-group:last-of-type {
   border-bottom: none;
 }
 
+.Select.is-focused .Select-control {
+  box-shadow: none !important;
+  outline: none;
+}
+
 .form-group input[type="text"],
 .Select-control,
 .Select.has-value .Select-control {
-  border: 1px solid rgba(0,0,0,0.3);
-  background: rgba(0,0,0,0.08);
+  background: #101010;
+  border: 1px solid #101010;
   border-radius: 3px;
   padding: 5px 8px;
   color: white;
   font-size: 16px;
   letter-spacing: 0.6px;
-  margin-bottom: 15px;
   position: relative;
   transition: .2s;
   outline: none;
+  margin-right: 10px;
 }
 
 .form-group input[type="text"]:hover,
 .Select-control:hover,
 .Select.is-focused .Select-control,
 .Select.is-focused:not(.is-open) > .Select-control {
-  border: 1px solid rgba(0,0,0,0.6);
-  background: rgba(0,0,0,0.08);
+  color: #888;
+  background: #101010;
+  border: 1px solid #101010;
 }
 
 .form-group input[type="text"]:focus,
 .Select:hover > .Select-control,
 .Select.is-focused > .Select-control {
-  border: 1px solid rgba(0,0,0,0.6);
-  background: rgba(0,0,0,0.08);
+  color: #fff;
+  background: #101010;
+  border: 1px solid #101010;
 }
 
 .Select-value,
@@ -49,40 +55,45 @@
 }
 
 .Select-input > input {
-  color: white !important;
+  outline: none;
+  color: #888 !important;
 }
 
 .Select.has-value.Select--single > .Select-control .Select-value .Select-value-label, 
 .Select.has-value.is-pseudo-focused.Select--single > .Select-control .Select-value .Select-value-label {
-  color: white !important;
+  color: #fff !important;
 }
 
 .Select-menu-outer,
 .Select-option {
-  background-color: #151515 !important;
-  color: white;
+  background-color: #101010 !important;
+  color: #888;
 }
 
 .Select-menu-outer {
-  border-color: rgba(0,0,0,0.5) !important;
+  border: none !important;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
 
 .Select-option.is-selected {
+  color: white;
   background-color: rgba(0,0,0,0.3) !important;
 }
 
 .Select-option:hover {
+  color: white;
   background-color: rgba(255,255,255,0.02) !important;
 }
 
 .Select--multi .Select-value {
+  margin-top: 4px;
   padding-top: 0;
-  border: 1px solid rgba(255,255,255,0.05);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.02);
 }
 
 .Select--multi .Select-value-icon {
-  border-right-color: rgba(255,255,255,0.05);
+  border-right-color: rgba(255,255,255,0.03);
   color: #555;
 }
 

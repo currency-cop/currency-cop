@@ -9,11 +9,11 @@ class PortfolioHeader extends React.Component {
   render () {
     return (
       <div className="portfolio-header">
+        <h1>{this.props.name}</h1>
+
         <HeaderMeta
           league={this.props.league}
           lastUpdated={this.props.lastUpdated} />
-
-        <h1>{this.props.name}</h1>
 
         <HeaderLargeStats
           holdings={this.props.holdings}

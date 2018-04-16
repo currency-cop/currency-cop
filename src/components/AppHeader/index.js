@@ -5,7 +5,7 @@ import AccountActions from '../AccountActions'
 class AppHeader extends React.Component {
   render () {
     return (
-      <div className="layout-item header">
+      <div className="layout-item header draggable">
         <div className="header-logo">
           <img className="header-image" src={ require('../../assets/logo.png') } />
           <span className="header-text">Currency Cop</span>
@@ -21,4 +21,4 @@ class AppHeader extends React.Component {
   }
 }
 
-module.exports = AppHeader
+export default AppHeader

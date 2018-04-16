@@ -4,7 +4,7 @@
   color: #888;
   background: #222;
   border-radius: 4px;
-  padding: 8px 32px;
+  padding: 8px 32px 6px;
   cursor: pointer;
   transition: all .3s;
   outline: none;

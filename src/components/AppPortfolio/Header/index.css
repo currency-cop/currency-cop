@@ -1,9 +1,11 @@
 
 .portfolio-header {
-  background-image: linear-gradient(to bottom, #1e3c72 0%, #1e3c72 1%, #0D1821 100%);
+  /* background-image: linear-gradient(to bottom, #1e3c72 0%, #1e3c72 1%, #0D1821 100%); */
+  background: #171717;
   color: #fff;
   padding: 15px;
   min-height: 200px;
+  border-radius: 3px 0 0 0;
 }
 
 .portfolio-header {
@@ -25,19 +27,13 @@
   padding: 0;
 }
 
+.portfolio-header h1 {
+  margin-bottom: 5px;
+}
+
 .portfolio-header h3 {
   font-size: 24px;
   font-family: 'Roboto Mono', monospace;
-}
-
-.portfolio-header h2 {
-  font-weight: 500;
-  color: hsla(210, 100%, 90%, 0.5);
-  font-size: 12px;
-  margin-top: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  line-height: 16px;
 }
 
 .portfolio-header #portfolio_chart {

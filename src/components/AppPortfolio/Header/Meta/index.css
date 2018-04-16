@@ -1,10 +1,11 @@
 .portfolio-meta {
   display: flex;
-  color: hsla(210, 100%, 90%, 0.2);
+  color: #787A81;
+  font-weight: 600;
   font-size: 11px;
   margin-bottom: 5px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .portfolio-meta div {
