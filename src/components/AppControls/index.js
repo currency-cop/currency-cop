@@ -1,6 +1,8 @@
 import { remote } from 'electron'
 import React, { PropTypes } from 'react'
 
+import styles from './index.css'
+
 class AppControls extends React.Component {
   componentWillMount () {
     this.setState({
@@ -55,13 +57,13 @@ class AppControls extends React.Component {
           {updateIndicatorElement}
         </div>
         <div className="minimize-control" onClick={this.handleMinimizeButtonClick}>
-          &#xE738;
+          &#xE921;
         </div>
         <div className="fullscreen-control" onClick={this.handleFullscreenButtonClick}>
-          &#xE71A;
+          &#xE922;
         </div>
         <div className="close-control" onClick={this.handleCloseButtonClick}>
-          &#xE711;
+          &#xE8BB;
         </div>
       </div>
     )

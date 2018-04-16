@@ -1,0 +1,26 @@
+.layout-item.sidebar {
+  width: 300px;
+  background: #101010;
+}
+
+.layout-item.sidebar button,
+.layout-item.sidebar .btn {
+  margin: 15px;
+  width: calc(100% - 30px);
+  box-sizing: border-box;
+  padding: 10px 15px;
+  border: none;
+  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.05);
+  font-weight: 500;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: 0.2s all;
+  text-align: left;
+  letter-spacing: 0.1px;
+}
+
+.layout-item.sidebar button:hover {
+  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.05);
+}

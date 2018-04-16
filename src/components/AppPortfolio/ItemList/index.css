@@ -1,0 +1,45 @@
+.items {
+  overflow-y: auto;
+  height: calc(100vh - 200px - 37px - 30px);
+  top: 237px;
+  position: relative;
+  background: #202020;
+}
+table {
+  border-spacing: 0;
+  width:100%;
+  position: relative;
+}
+td + td {
+  border-left:1px solid #202020;
+}
+td, th {
+  border-bottom:1px solid #202020;
+  background: #252525;
+  color: #666;
+  padding: 10px 25px;
+}
+th {
+  height: 0;
+  line-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  color: transparent;
+  border: none;
+  white-space: nowrap;
+  background: #888;
+}
+th div {
+  position: fixed;
+  background: transparent;
+  color: #aaa;
+  font-weight: 400;
+  padding: 9px 25px;
+  margin-left: -25px;
+  line-height: normal;
+  border-left: 1px solid #222;
+  margin-top: -37px
+}
+th:first-child div{
+  border: none;
+}

@@ -1,0 +1,23 @@
+.portfolio-settings {
+  padding: 15px;
+}
+
+.portfolio-settings h1 {
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  font-size: 16px;
+  margin: 15px 0 0 0;
+  padding: 0;
+  line-height: 16px;
+}
+
+.portfolio-settings h2 {
+  margin-bottom: 8px;
+  line-height: 1.6em;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-size: 12px;
+  font-weight: 500;
+}

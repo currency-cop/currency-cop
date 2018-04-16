@@ -1,0 +1,12 @@
+.portfolio-meta {
+  display: flex;
+  color: hsla(210, 100%, 90%, 0.2);
+  font-size: 11px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.portfolio-meta div {
+  margin-right: 15px;
+}

@@ -1,0 +1,27 @@
+.app-controls [class*="-control"] {
+  display: inline-block;
+  font-family: 'SegoeMDL2';
+  font-size: 12px;
+  padding: 0px 10px;
+  color: #aaa;
+}
+
+.app-controls [class*="-control"]:hover {
+  cursor: pointer;
+}
+
+.app-controls .app-update {
+  position: absolute;
+  top: -12px;
+  left: -48px;
+}
+
+.app-controls .close-control:hover {
+  background: #ef5350;
+  color: white;
+}
+
+.app-controls .minimize-control:hover,
+.app-controls .fullscreen-control:hover {
+  background: rgba(255,255,255,0.1);
+}

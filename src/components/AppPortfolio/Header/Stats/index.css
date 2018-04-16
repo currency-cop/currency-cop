@@ -1,0 +1,22 @@
+.portfolio-large-stats {
+  margin-top: 30px;
+  margin-bottom: 30px;
+
+  display: flex;
+  justify-content: flex-start;
+}
+
+.portfolio-large-stats > div {
+  padding-right: 30px;
+  border-right: 1px solid hsla(210, 100%, 90%, 0.1);
+  margin-left: 30px;
+}
+
+.portfolio-large-stats > div:first-child {
+  margin-left: 0;
+}
+
+.portfolio-large-stats > div:last-child {
+  border-right: none;
+  padding-right: 0;
+}

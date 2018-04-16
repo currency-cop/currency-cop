@@ -64,10 +64,10 @@ function createWindow () {
   });
 
   ipcMain.on('HTTP_REQUEST', (event, arg) => {
-    console.log(arg.method, arg.url, arg.options)
+    // console.log(arg.method, arg.url, arg.options)
     axios[arg.method](arg.url, arg.options)
       .then(response => {
-        console.log(arg.url, response.data)
+        // console.log(arg.url, response.data)
         event.sender.send(arg.onSuccess, response)
       })
       .catch(error => {

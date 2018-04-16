@@ -1,0 +1,40 @@
+.portfolio-item {
+  display: flex;
+  justify-content: space-between;
+  margin: 0px 10px 5px;
+  padding: 10px 10px;
+  border-bottom: 1px solid #202020;
+  font-weight: 500;
+}
+
+.portfolio-item:hover {
+  background: #222;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.portfolio-item.open {
+  background: #222;
+  border-radius: 3px;
+}
+
+.portfolio-item .info .title {
+  color: #fff;
+}
+
+.portfolio-item .info .last-updated {
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.portfolio-item .value {
+  color: #fff;
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.portfolio-item .value .change {
+  color: #F13F42;
+}

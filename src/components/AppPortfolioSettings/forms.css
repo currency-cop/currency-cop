@@ -1,0 +1,126 @@
+.form-group {
+  margin: 0;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.form-group:last-of-type {
+  border-bottom: none;
+}
+
+.form-group input[type="text"],
+.Select-control,
+.Select.has-value .Select-control {
+  border: 1px solid rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.08);
+  border-radius: 3px;
+  padding: 5px 8px;
+  color: white;
+  font-size: 16px;
+  letter-spacing: 0.6px;
+  margin-bottom: 15px;
+  position: relative;
+  transition: .2s;
+  outline: none;
+}
+
+.form-group input[type="text"]:hover,
+.Select-control:hover,
+.Select.is-focused .Select-control,
+.Select.is-focused:not(.is-open) > .Select-control {
+  border: 1px solid rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.08);
+}
+
+.form-group input[type="text"]:focus,
+.Select:hover > .Select-control,
+.Select.is-focused > .Select-control {
+  border: 1px solid rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.08);
+}
+
+.Select-value,
+.Select-placeholder {
+  padding-top: 5px;
+}
+
+.Select-input {
+  padding: 0 !important;
+}
+
+.Select-input > input {
+  color: white !important;
+}
+
+.Select.has-value.Select--single > .Select-control .Select-value .Select-value-label, 
+.Select.has-value.is-pseudo-focused.Select--single > .Select-control .Select-value .Select-value-label {
+  color: white !important;
+}
+
+.Select-menu-outer,
+.Select-option {
+  background-color: #151515 !important;
+  color: white;
+}
+
+.Select-menu-outer {
+  border-color: rgba(0,0,0,0.5) !important;
+}
+
+.Select-option.is-selected {
+  background-color: rgba(0,0,0,0.3) !important;
+}
+
+.Select-option:hover {
+  background-color: rgba(255,255,255,0.02) !important;
+}
+
+.Select--multi .Select-value {
+  padding-top: 0;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.05);
+}
+
+.Select--multi .Select-value-icon {
+  border-right-color: rgba(255,255,255,0.05);
+  color: #555;
+}
+
+.Select--multi .Select-value-label {
+  padding: 2px 8px;
+}
+
+/* Tab List */
+.tab-selector {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.tab-selector,
+.tab-item {
+  list-style: none;
+}
+
+.tab-item:hover {
+  cursor: pointer;
+}
+
+.tab-item {
+  flex-grow: 1;
+  display: inline-block;
+  border: 1px solid rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.08);
+  padding: 2px 24px 1px;
+  border-radius: 30px;
+  opacity: 0.5;
+  margin: 5px;
+  text-align: center;
+}
+
+.tab-item.selected {
+  background: rgba(0,0,0,0.2);
+  opacity: 1;
+}
