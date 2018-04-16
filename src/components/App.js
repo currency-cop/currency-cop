@@ -559,6 +559,7 @@ class App extends React.Component {
     CC.Events.on('/screen/dashboard', () => {
       this.setState({
         screenAction: '/screen/dashboard',
+        portfolioId: null,
         screen: null
       })
     })
@@ -567,6 +568,7 @@ class App extends React.Component {
       CC.EventLog.info(`Viewing Portfolio ${ portfolioId }`)
       this.setState({
         screenAction: '/screen/portfolio',
+        portfolioId: this.state.portfolios[portfolioId].id,
         screen: (
           <AppPortfolio
             portfolio={ this.state.portfolios[portfolioId] } />
@@ -578,6 +580,7 @@ class App extends React.Component {
       CC.EventLog.info(`Creating Portfolio`)
       this.setState({
         screenAction: '/screen/portfolio/create',
+        portfolioId: null,
         screen: (
           <AppPortfolioSettings
             tabs={ this.state.tabs }
@@ -590,6 +593,7 @@ class App extends React.Component {
       CC.EventLog.info(`Updating Portfolio ${ portfolioId }`)
       this.setState({
         screenAction: '/screen/portfolio/update',
+        portfolioId: this.state.portfolios[portfolioId].id,
         screen: (
           <AppPortfolioSettings
             tabs={ this.state.tabs }
@@ -670,7 +674,7 @@ class App extends React.Component {
     if (this.state.isLoading) {
       return (
         <div className="app-viewport">
-          <AppControlBar 
+          <AppHeader 
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate}
           />
@@ -685,9 +689,9 @@ class App extends React.Component {
     if (!CC.Api.accountSessionId) {
       return (
         <div className="app-viewport">
-          <AppControlBar 
+          <AppHeader 
             newVersion={this.state.newVersion}
-            upToDate={this.state.upToDate} 
+            upToDate={this.state.upToDate}
           />
           <LoginScreen 
             onLogin={this.handleLogin.bind(this)} 
@@ -708,8 +712,7 @@ class App extends React.Component {
             config={this.state.config}
             leagues={this.state.leagues}
             portfolios={this.state.portfolios}
-            portfolio={this.state.isViewingReport}
-            portfolioId={this.state.isViewingReportId}
+            portfolioId={this.state.portfolioId}
           />
 
           <AppContent

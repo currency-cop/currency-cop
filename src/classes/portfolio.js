@@ -50,11 +50,20 @@ class Portfolio {
   update (tab, tabItems) {
     this.isUpdating = true
 
+    const HOUR = 1000 * 60 * 60
     let tabItemsHash = this.tabItems[tab.value]
     let currentTabItemsHash = encode(tabItems)
     if (tabItemsHash && tabItemsHash === currentTabItemsHash) {
-      this.isUpdating = false
-      return false
+      let lastUpdated = this.lastUpdatedAt()
+      if (!lastUpdated) {
+        this.isUpdating = false
+        return false
+      }
+
+      if (lastUpdated && (Date.now() - lastUpdated) < HOUR) {
+        this.isUpdating = false
+        return false
+      }
     }
 
     this.tabItems[tab.value] = encode(tabItems)
@@ -191,7 +200,7 @@ class Portfolio {
 
     return {
       direction: percentageChange.direction,
-      directionIndicator: percentageChange.direction === 'up' ? '+' : '-',
+      directionIndicator: !percentageChange.direction ? '' : percentageChange.direction === 'up' ? '+' : '-',
       directionClassName: percentageChange.direction ? percentageChange.direction : '',
       value: Math.abs(previousHoldings - currentHoldings),
       valueFormatted: formatNumber(Math.abs(previousHoldings - currentHoldings)),

@@ -6,19 +6,22 @@ class AppSidebarPortfolioList extends React.Component {
   render () {
     return (
       <ul className="portfolio-list">
-        { 
-          this.props.portfolios.map((portfolio, index) => {
-            return (
-              <li key={ portfolio.name }>
-                <AppSidebarPortfolioListItem
-                  index={index}
-                  portfolio={portfolio} />
-              </li>
-            )
-          })
-        }
+        { this.renderList() }
       </ul>
     )
+  }
+
+  renderList () {
+    return this.props.portfolios.map((portfolio, index) => {
+      return (
+        <li key={ portfolio.name }>
+          <AppSidebarPortfolioListItem
+            index={index}
+            viewing={this.props.portfolioId}
+            portfolio={portfolio} />
+        </li>
+      )
+    })
   }
 }
 

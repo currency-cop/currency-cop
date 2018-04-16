@@ -10,20 +10,35 @@ class AppSidebarPortfolioListItem extends React.Component {
     }
   }
 
-  render () {
-    if (this.props.portfolio.isOld) {
-      return (
-        <div className="portfolio-item not-draggable" onClick={ this.openPortfolio(this.props.index) }>
-          <div className="info">
-            <div className="title">
-              { this.props.portfolio.name }
-            </div>
-            <div className="last-updated">
-              This league is over, please remove.
-            </div>
+  getClassName () {
+    let {viewing, portfolio} = this.props
+    let defaultClassName = `portfolio-item`
+
+    if (portfolio.id !== viewing) {
+      return defaultClassName
+    }
+
+    return `${defaultClassName} active`
+  }
+
+  renderDeadLeague () {
+    return (
+      <div className={this.getClassName()} onClick={ this.openPortfolio(this.props.index) }>
+        <div className="info">
+          <div className="title">
+            { this.props.portfolio.name }
+          </div>
+          <div className="last-updated">
+            This league is over, please remove.
           </div>
         </div>
-      )
+      </div>
+    )
+  }
+
+  render () {
+    if (this.props.portfolio.isOld) {
+      return this.renderDeadLeague()
     }
 
     let change = this.props.portfolio.getChange()
@@ -31,7 +46,7 @@ class AppSidebarPortfolioListItem extends React.Component {
     let lastUpdated = this.props.portfolio.getLastUpdateTime()
 
     return (
-      <div className="portfolio-item not-draggable" onClick={ this.openPortfolio(this.props.index) }>
+      <div className={this.getClassName()} onClick={ this.openPortfolio(this.props.index) }>
         <div className="info">
           <div className="title">
             { this.props.portfolio.name }

@@ -12,6 +12,7 @@ class AppSidebar extends React.Component {
         </button>
 
         <AppSidebarPortfolioList
+          portfolioId={this.props.portfolioId}
           portfolios={this.props.portfolios} />
       </div>
     )
