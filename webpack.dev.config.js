@@ -47,6 +47,12 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify('development')
     })
   ],
+  resolve: {
+    alias: {
+      '@': path.join(__dirname, '/src')
+    },
+    extensions: ['.js', '.json', '.css']
+  },
   devtool: 'cheap-source-map',
   devServer: {
     contentBase: OUTPUT_DIR,

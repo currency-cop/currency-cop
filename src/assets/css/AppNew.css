@@ -33,7 +33,7 @@
     "header header"
     "sidebar content";
   color: #444;
-  background: #161616;
+  background: #0A0A0B;
   height: 100vh;
   width: 100vw;
 }
@@ -89,7 +89,7 @@
   width: 100%;
   border-radius: 5px 0 0 0;
   overflow: auto;
-  background: #171717;
+  background: #202020;
 }
 
 /* Portfolio */

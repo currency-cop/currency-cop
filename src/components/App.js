@@ -555,6 +555,12 @@ class App extends React.Component {
 
 
   componentWillMount () {
+    this.interval = setInterval(() => {
+      this.setState({ 
+        time: Date.now() 
+      })
+    }, 60000)
+
     // View
     CC.Events.on('/screen/dashboard', () => {
       this.setState({
@@ -658,6 +664,8 @@ class App extends React.Component {
 
 
   componentWillUnmount () {
+    clearInterval(this.interval)
+
     CC.Events.off('/screen/portfolio/update')
     CC.Events.off('/screen/portfolio/create')
     CC.Events.off('/screen/portfolio')

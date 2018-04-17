@@ -145,6 +145,10 @@ class Portfolio {
     }
 
     this.history.push(report)
+
+    while (this.history.length > 24) {
+      this.history.shift()
+    }
   }
 
   latestReport () {

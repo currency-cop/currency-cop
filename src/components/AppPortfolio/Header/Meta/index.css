@@ -8,6 +8,103 @@
   text-transform: uppercase;
 }
 
-.portfolio-meta div {
+.portfolio-meta > div {
   margin-right: 15px;
+}
+
+/* Dropdown */
+
+.dropdown-container .material-icons {
+  line-height: 0;
+  position: relative;
+  top: 7px;
+}
+
+.dropdown-container.show > .dropdown-list {
+  transform: scale(1, 1);
+  -ms-transform: scale(1, 1);
+  -webkit-transform: scale(1, 1);
+  -o-transform: scale(1, 1);
+  -moz-transform: scale(1, 1);
+}
+.dropdown-container > .dropdown-list {
+  float: left;
+  position: relative;
+  width: calc(100% + 15px);
+  transform: scale(1, 0);
+  transition: transform ease .2s;
+  left: -15px;
+}
+.dropdown-container > .dropdown-list > div {
+  position: absolute;
+  width: 100%;
+  z-index: 2;
+  cursor: pointer;
+  background: #252525;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 15px 40px rgba(0,0,0,0.6);
+  border-radius: 3px;
+}
+
+.dropdown-container > .dropdown-list > div > div {
+  float: left;
+  width: 100%;
+  padding: 8px 5px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  border-bottom: solid 1px #202020;
+  border-top: none;
+  line-height: 16px;
+  text-shadow: 0 1px rgba(0,0,0,0.05);
+}
+
+.dropdown-container > .dropdown-list > div > div:hover {
+  background: #202020;
+}
+
+.dropdown-container > .dropdown-list > div > div.selected {
+  background: #292929;
+}
+
+.dropdown-container > .dropdown-list > div > div.selected .total {
+  color: white;
+}
+
+.dropdown-container > .dropdown-list > div > div.selected .time {
+  color: #aaa;
+}
+
+.dropdown-container > .dropdown-list > div > div:first-of-type {
+  border-radius: 3px 3px 0 0;
+}
+
+.dropdown-container > .dropdown-list > div > div:last-of-type {
+  border-radius: 0 0 3px 3px;
+  border-bottom: none;
+}
+
+.dropdown-container > .dropdown-list > div > div > * {
+  display: inline-block;
+}
+
+.dropdown-container > .dropdown-list > div > div > span {
+  float: left;
+  width: 100%;
+}
+
+.dropdown-item {
+  text-align: right;
+  width: 100%;
+}
+
+.dropdown-item .total {
+  color: #888;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dropdown-item .time {
+  font-size: 10px;
+  font-weight: 500;
+  color: #666;
 }

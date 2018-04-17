@@ -52,6 +52,12 @@ module.exports = {
     }),
     new BabiliPlugin()
   ],
+  resolve: {
+    alias: {
+      '@': path.join(__dirname, '/src')
+    },
+    extensions: ['.js', '.json', '.css']
+  },
   stats: {
     colors: true,
     children: false,

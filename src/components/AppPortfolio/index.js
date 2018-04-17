@@ -11,12 +11,13 @@ class AppPortfolio extends React.Component {
         <PortfolioHeader
           league={this.props.portfolio.league}
           name={this.props.portfolio.name}
-          data={this.props.portfolio.history}
+          data={this.getHistory()}
           lastUpdated={this.props.portfolio.getLastUpdateTime()}
           holdings={this.props.portfolio.getHoldings()}
           change={this.props.portfolio.getChange()} />
 
         <PortfolioItemList
+          id={this.props.portfolio.id}
           items={this.props.portfolio.latestReport().items} />
       </div>
     )
@@ -25,13 +26,19 @@ class AppPortfolio extends React.Component {
   constructor (props) {
     super(props)
 
-    this.interval = setInterval(() => this.setState({ 
-      time: Date.now() 
-    }), 60000)
+    this.interval = setInterval(() => {
+      this.setState({ 
+        time: Date.now() 
+      })
+    }, 60000)
   }
 
   componentWillUnmount () {
     clearInterval(this.interval)
+  }
+
+  getHistory () {
+    return this.props.portfolio.history
   }
 }
 

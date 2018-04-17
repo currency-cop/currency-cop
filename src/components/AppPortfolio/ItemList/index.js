@@ -25,7 +25,13 @@ class PortfolioItemList extends React.Component {
   }
 
   renderItems () {
-    return this.props.items.map(details => <Item details={details} />)
+    return this.props.items.map((details, index) => {
+      return (
+        <Item 
+          key={`${this.props.id}-${index}-${details.item.fullName}`}
+          details={details} />
+      )
+    })
   }
 }
 
