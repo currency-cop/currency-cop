@@ -468,6 +468,21 @@ function GetUniqueFlaskOverview (league, date) {
   })
 }
 
+function GetUniqueWeaponOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_UNIQUE_WEAPON_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'UNIQUE_WEAPON_RESPONSE',
+    onError: 'UNIQUE_WEAPON_ERROR'
+  })
+}
+
 function GetUniqueArmourOverview (league, date) {
   return DoServerRequest({
     method: 'get',
@@ -800,7 +815,7 @@ class ReportBuilder {
 
     return (queue || new Queue(1))
       .unshift(() => new Promise((resolve, reject) => {
-        return GetUniqueJewelOverview(league, getNinjaDate())
+        return GetUniqueWeaponOverview(league, getNinjaDate())
           .then(response => {
             return response.status !== 200
               ? this.fetchUniqueWeaponRates(queue)
@@ -832,7 +847,7 @@ class ReportBuilder {
 
     return (queue || new Queue(1))
       .unshift(() => new Promise((resolve, reject) => {
-        return GetUniqueArmourOverview(league, getNinjaDate())
+        return GetUniqueAccessoryOverview(league, getNinjaDate())
           .then(response => {
             return response.status !== 200
               ? this.fetchUniqueAccessoryRates(queue)
