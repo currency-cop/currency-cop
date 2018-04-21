@@ -5,3 +5,4 @@ dist/
 builds/
 release/
 yarn-error.log
+*.pfx
