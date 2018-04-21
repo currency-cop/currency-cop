@@ -7,7 +7,7 @@ class PortfolioItemList extends React.Component {
   render () {
     return (
       <div className="items">
-        <table className="not-draggable">
+        <table>
           <thead>
             <tr>
               <th><div>Icon</div></th>

@@ -10,7 +10,7 @@
 
 .portfolio-header {
   position: fixed;
-  width: 100%;
+  width: calc(100vw - 300px);
   z-index: 1;
 }
 
@@ -29,6 +29,11 @@
 
 .portfolio-header h1 {
   margin-bottom: 5px;
+}
+
+.portfolio-header h1 i {
+  float: right;
+  color: #666;
 }
 
 .portfolio-header h3 {

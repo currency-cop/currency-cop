@@ -9,6 +9,7 @@ class AppPortfolio extends React.Component {
     return (
       <div className="layout-content portfolio">
         <PortfolioHeader
+          id={this.props.portfolio.id}
           league={this.props.portfolio.league}
           name={this.props.portfolio.name}
           data={this.getHistory()}

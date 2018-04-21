@@ -9,7 +9,11 @@ class PortfolioHeader extends React.Component {
   render () {
     return (
       <div className="portfolio-header">
-        <h1>{this.props.name}</h1>
+        <h1>
+          {this.props.name}
+
+          <i onClick={(e) => this.edit(e)} className="material-icons">&#xE8B8;</i>
+        </h1>
 
         <HeaderMeta
           history={this.props.data}
@@ -24,6 +28,12 @@ class PortfolioHeader extends React.Component {
           data={this.props.data} />
       </div>
     )
+  }
+
+  edit () {
+    CC.Events.emit('/screen/portfolio/update', {
+      portfolioId: this.props.id
+    })
   }
 }
 

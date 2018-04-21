@@ -66,10 +66,11 @@ class AppPortfolioSettings extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this)
     this.generateName = this.generateName.bind(this)
 
+    let { portfolio } = this.props
+
     // Setup state
-    let {portfolio} = this.props
     this.state = {
-      settings: portfolio ? portfolio.settings : {
+      settings: portfolio ? {...portfolio} : {
         name: this.generateName(),
         league: this.props.leagues[0].id,
         tracking: []
@@ -100,6 +101,7 @@ class AppPortfolioSettings extends React.Component {
 
     this.setState({
       settings: {
+        ...this.state.settings,
         [name]: value
       }
     })
@@ -139,7 +141,7 @@ class AppPortfolioSettings extends React.Component {
     e.preventDefault()
 
     if (this.props.portfolio) {
-      return this.handleUpdate
+      return this.handleUpdate()
     }
 
     return this.handleCreate()
@@ -158,7 +160,19 @@ class AppPortfolioSettings extends React.Component {
   }
 
   handleUpdate () {
+    try {
+      console.log(this.state.settings)
 
+      CC.Events.emit('/portfolio/update', {
+        portfolio: this.state.settings
+      })
+
+      CC.Events.emit('/screen/portfolio', {
+        portfolioId: this.state.settings.id
+      })
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   getLeagueList () {

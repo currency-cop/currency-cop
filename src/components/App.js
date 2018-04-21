@@ -342,6 +342,33 @@ class App extends React.Component {
     }
   }
 
+  
+  getPortfolioById (id) {
+    let portfolio = null
+    let {portfolios} = this.state
+
+    portfolios.forEach(p => {
+      if (p.id === id) {
+        portfolio = p
+      }
+    })
+
+    return portfolio
+  }
+
+
+  updatePortfolioById (portfolio) {
+    let {portfolios} = this.state
+
+    portfolios.forEach((p, i) => {
+      if (p.id === portfolio.id) {
+        portfolios[i] = portfolio
+      }
+    })
+
+    return this.updatePortfolios(portfolios)
+  }
+
 
   createPortfolio (settings) {
     let { portfolios } = this.state
@@ -353,19 +380,11 @@ class App extends React.Component {
 
 
   updatePortfolio (settings) {
-    let { portfolios } = this.state
     let portfolio = new Portfolio(settings)
 
-    portfolios.forEach(item => {
-      if (item.id === portfolio.id) {
-        item = portfolio
-      }
-    })
-
     this.teardownPortfolioWorkerTasks(portfolio)
+    this.updatePortfolioById(portfolio)
     this.setupPortfolioWorkerTasks(portfolio)
-  
-    return this.updatePortfolios(portfolios)
   }
 
 
@@ -572,12 +591,24 @@ class App extends React.Component {
 
     CC.Events.on('/screen/portfolio', ({ portfolioId }) => {
       CC.EventLog.info(`Viewing Portfolio ${ portfolioId }`)
+
+      let {portfolios} = this.state
+      let portfolio = this.getPortfolioById(portfolioId)
+      if (!portfolio && portfolios[portfolioId]) {
+        portfolio = portfolios[portfolioId]
+      }
+
+      if (!portfolio) {
+        CC.EventLog.error(`Unable to find ${ portfolioId }`)
+        return
+      }
+
       this.setState({
         screenAction: '/screen/portfolio',
-        portfolioId: this.state.portfolios[portfolioId].id,
+        portfolioId: portfolio.id,
         screen: (
           <AppPortfolio
-            portfolio={ this.state.portfolios[portfolioId] } />
+            portfolio={ portfolio } />
         )
       })
     })
@@ -597,14 +628,21 @@ class App extends React.Component {
 
     CC.Events.on('/screen/portfolio/update', ({ portfolioId }) => {
       CC.EventLog.info(`Updating Portfolio ${ portfolioId }`)
+
+      let portfolio = this.getPortfolioById(portfolioId)
+      if (!portfolio) {
+        CC.EventLog.error(`Unable to find ${ portfolioId }`)
+        return
+      }
+
       this.setState({
         screenAction: '/screen/portfolio/update',
-        portfolioId: this.state.portfolios[portfolioId].id,
+        portfolioId: portfolio.id,
         screen: (
           <AppPortfolioSettings
             tabs={ this.state.tabs }
             leagues={ this.state.leagues }
-            portfolio={ this.state.portfolios[portfolioId] } />
+            portfolio={ portfolio } />
         )
       })
     })

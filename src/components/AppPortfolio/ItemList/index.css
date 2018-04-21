@@ -8,7 +8,6 @@
 table {
   border-spacing: 0;
   width:100%;
-  position: relative;
 }
 td + td {
   border-left:1px solid #202020;

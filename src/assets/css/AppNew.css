@@ -46,12 +46,15 @@
   line-height: 30px;
   background-color: #0A0A0B;
   display: flex;
+  position: relative;
+  z-index: 2;
 }
 
 .layout-item.header .header-logo {
   font-weight: 600;
   color: rgb(201, 201, 201);
   flex: 1;
+  -webkit-app-region: drag;
 }
 
 .layout-item.header .header-logo .header-image {
