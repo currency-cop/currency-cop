@@ -637,7 +637,7 @@ class App extends React.Component {
 
       this.setState({
         screenAction: '/screen/portfolio/update',
-        portfolioId: portfolio.id,
+        portfolioId: null,
         screen: (
           <AppPortfolioSettings
             tabs={ this.state.tabs }

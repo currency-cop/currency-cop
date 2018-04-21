@@ -13,7 +13,7 @@ class AppPortfolioSettings extends React.Component {
   render () {
     return (
       <div className="portfolio-settings">
-        <h1>Portfolio Settings</h1>
+        <h1>{this.getFormTitle()}</h1>
 
         <div className="form-group">
           <h2>Portfolio Name</h2>
@@ -60,11 +60,11 @@ class AppPortfolioSettings extends React.Component {
     super(props)
 
     // Bindings
+    this.handleNameGenerate = this.handleNameGenerate.bind(this)
     this.handleLeagueChange = this.handleLeagueChange.bind(this)
     this.handleTabChange = this.handleTabChange.bind(this)
     this.handleChange = this.handleChange.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
-    this.generateName = this.generateName.bind(this)
 
     let { portfolio } = this.props
 
@@ -87,6 +87,14 @@ class AppPortfolioSettings extends React.Component {
     let prefix = this.getRandomElement(NAME_PREFIXES)
     let suffix = this.getRandomElement(NAME_SUFFIXES)
     return `${prefix} ${suffix}`
+  }
+
+  getFormTitle () {
+    if (this.props.portfolio) {
+      return 'Updating Portfolio'
+    }
+
+    return 'Create Portfolio'
   }
 
   handleChange (e) {
