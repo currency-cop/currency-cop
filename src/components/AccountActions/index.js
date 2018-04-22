@@ -11,12 +11,14 @@ class AccountActions extends React.Component {
     if (username) {
       return (
         <div className="account-actions">
-          <Button onClick={ this.props.onClick }>
+          <Button onClick={() => this.handleLogoutClick()}>
             { username } (logout)
           </Button>
         </div>
       )
     }
+
+    return (<div />)
   }
 }
 
