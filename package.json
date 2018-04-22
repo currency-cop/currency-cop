@@ -1,6 +1,6 @@
 {
   "name": "currency-cop",
-  "version": "2.0.0",
+  "version": "2.0.0-beta.2",
   "description": "Calculate Net Worth in Path of Exile",
   "author": "Nijiko Yonskai",
   "license": "MIT",
@@ -13,10 +13,11 @@
     "prod": "webpack --config webpack.build.config.js && electron --noDevServer .",
     "dev": "webpack-dev-server --hot --host 0.0.0.0 --config=./webpack.dev.config.js",
     "build": "webpack --config webpack.build.config.js",
+    "builder": "electron-builder --publish=never",
     "package:all": "cross-env NODE_ENV=production npm-run-all package:windows package:mac package:linux",
-    "package:windows": "cross-env NODE_ENV=production npm-run-all build && electron-builder --win --x64 --ia32 --publish=never",
+    "package:windows": "cross-env NODE_ENV=production npm-run-all build && electron-builder --win --x64 --publish=never",
     "package:mac": "cross-env NODE_ENV=production npm-run-all build && electron-builder --mac --publish=never",
-    "package:linux": "cross-env NODE_ENV=production npm-run-all build && electron-builder --linux --x64 --ia32 --publish=never"
+    "package:linux": "cross-env NODE_ENV=production npm-run-all build && electron-builder --linux --x64 --publish=never"
   },
   "devDependencies": {
     "babel-core": "6.26.0",
