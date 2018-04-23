@@ -1,6 +1,8 @@
 import { remote } from 'electron'
 import React, { PropTypes } from 'react'
 
+import Button from '@/components/Button'
+import { GoToUrl } from '@/helpers'
 import styles from './index.css'
 
 class AppControls extends React.Component {
@@ -45,9 +47,9 @@ class AppControls extends React.Component {
 
     if (!this.props.upToDate && this.props.newVersion) {
       updateIndicatorElement = (
-        <a href={ CC.Constants.RELEASES_URL } onClick={ GoToUrl }>
-          Update Available
-        </a>
+        <Button onClick={(e) => GoToUrl(this.props.newVersion.html_url, e) }>
+          💕 New Release
+        </Button>
       )
     }
 

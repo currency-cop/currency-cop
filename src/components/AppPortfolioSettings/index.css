@@ -1,5 +1,5 @@
 .portfolio-settings {
-  padding: 15px;
+  padding: 32px;
 }
 
 .portfolio-settings h1 {
@@ -15,7 +15,7 @@
 .portfolio-settings h2 {
   margin-bottom: 5px;
   line-height: 1.6em;
-  color: #797B82;
+  color: #666;
   font-size: 14px;
   font-weight: 500;
 }

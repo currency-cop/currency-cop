@@ -1,15 +1,12 @@
 .btn-primary {
   color: white;
-  background: hsl(156, 64%, 35%);
+  background: #2083FE;
 }
 
 .btn-primary:hover {
-  background: hsl(156, 56%, 23%);
+  background: #2083FE;
 }
 
 .btn-primary:active {
   box-shadow: none;
-  color: #444;
-  border-color: #222;
-  background: #222;
 }

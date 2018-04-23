@@ -4,9 +4,11 @@ import styles from './index.css'
 class AppSidebarPortfolioListItem extends React.Component {
   openPortfolio (portfolioId) {
     return (e) => {
-      CC.Events.emit('/screen/portfolio', {
-        portfolioId
-      })
+      if (this.props.portfolio.latestReport()) {
+        CC.Events.emit('/screen/portfolio', {
+          portfolioId
+        })
+      }
     }
   }
 

@@ -1,12 +1,12 @@
 .sidebar {
   width: 300px;
   background: #0A0A0B;
+  padding: 24px;
 }
 
 .sidebar button,
 .sidebar .btn {
-  margin: 15px;
-  width: calc(100% - 30px);
+  width: 100%;
   box-sizing: border-box;
   padding: 10px 15px;
   border: none;

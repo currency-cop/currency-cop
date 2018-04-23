@@ -126,6 +126,7 @@ import AppControlBar from './AppControlBar'
 import AppHeader from './AppHeader'
 import AppContent from './AppContent'
 import AppSidebar from './AppSidebar'
+import AppDashboard from './AppDashboard'
 import AppPortfolio from './AppPortfolio'
 import AppPortfolioSettings from './AppPortfolioSettings'
 
@@ -226,15 +227,19 @@ class App extends React.Component {
       // Remove Loading Message
       setTimeout(() => {
         this.setLoadingMessage(false)
+        CC.Events.emit('/screen/dashboard')
       }, 200)
 
       // Check Application Version
       let versionCheck = await DoVersionCheck()
-      if (versionCheck.data.version !== CC.AppVersion) {
-        this.setState({
-          upToDate: false,
-          newVersion: versionCheck.data.version
-        })
+      if (versionCheck && versionCheck.data) {
+        let latestVersion = versionCheck.data[0]
+        if (latestVersion.name !== CC.AppVersion) {
+          this.setState({
+            upToDate: false,
+            newVersion: latestVersion
+          })
+        }
       }
     } catch (error) {
       this.setLoadingMessage('Houston, we have a problem.')
@@ -385,6 +390,9 @@ class App extends React.Component {
     this.teardownPortfolioWorkerTasks(portfolio)
     this.updatePortfolioById(portfolio)
     this.setupPortfolioWorkerTasks(portfolio)
+
+    // Force update
+    portfolio.onUpdate()
   }
 
 
@@ -585,7 +593,10 @@ class App extends React.Component {
       this.setState({
         screenAction: '/screen/dashboard',
         portfolioId: null,
-        screen: null
+        screen: (
+          <AppDashboard
+            portfolios={this.state.portfolios} />
+        )
       })
     })
 

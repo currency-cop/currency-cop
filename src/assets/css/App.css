@@ -173,43 +173,6 @@ select,
   margin-right: -0.5rem;
 }
 
-/* App control */
-.app-control {
-  position: fixed;
-  z-index: 99999;
-  top: 0;
-  right: 0;
-  left: 0;
-  text-align: right;
-  background: rgba(0,0,0,0.4)
-}
-
-.app-controls [class*="-control"] {
-  display: inline-block;
-  font-family: 'SegoeMDL2';
-  font-size: 12px;
-  padding: 8px 14px;
-}
-
-.app-controls [class*="-control"]:hover {
-  cursor: pointer;
-}
-
-.app-controls .app-update {
-  position: absolute;
-  top: -12px;
-  left: -48px;
-}
-
-.app-controls .close-control:hover {
-  background: #ef5350
-}
-
-.app-controls .minimize-control:hover,
-.app-controls .fullscreen-control:hover {
-  background: rgba(255,255,255,0.1);
-}
-
 /* Main Viewport */
 .viewport {
   height: 100vh
@@ -432,7 +395,7 @@ span[class*="MuiSwitch-checked"] {
 /* Scrollbars */
 
 ::-webkit-scrollbar-track {
-	background-color: rgba(0,0,0,0.1);
+	background-color: rgba(0,0,0,0.3);
 }
 
 ::-webkit-scrollbar {
@@ -441,6 +404,11 @@ span[class*="MuiSwitch-checked"] {
 }
 
 ::-webkit-scrollbar-thumb {
-	background-color: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.15);
+	box-shadow: 0 0 2px rgba(0,0,0,0.3);
+  transition: all .4s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(255,255,255,0.2);
 }

@@ -1,8 +1,8 @@
 .btn {
   position: relative;
   border: none;
-  color: #888;
-  background: #222;
+  color: #fff;
+  background: #383838;
   border-radius: 4px;
   padding: 8px 32px 6px;
   cursor: pointer;
@@ -11,11 +11,9 @@
 }
 
 .btn:hover {
-  color: white;
-  box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+  background: #424242;
 }
 
 .btn:active {
-  box-shadow: none;
-  color: #444;
+  background: #303030;
 }

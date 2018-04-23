@@ -12,7 +12,7 @@ class Item extends React.Component {
       <tr>
         <td>
           <img 
-            src={details.item.icon}
+            src={details.price.icon || details.item.icon}
             width={32}
             style={{ verticalAlign: 'middle' }}
             title={details.item.fullName}

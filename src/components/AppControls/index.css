@@ -11,9 +11,11 @@
 }
 
 .app-controls .app-update {
-  position: absolute;
-  top: -12px;
-  left: -48px;
+  display: inline-block;
+  font-size: 12px;
+  padding: 0px 10px;
+  position: relative;
+  top: -1px;
 }
 
 .app-controls .close-control:hover {

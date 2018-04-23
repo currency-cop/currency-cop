@@ -12,15 +12,23 @@
   outline: none;
 }
 
+.form-group input + button {
+  margin-left: -12px;
+  padding: 12px 32px !important;
+  border-radius: 0 3px 3px 0 !important;
+  top: -1px;
+}
+ 
 .form-group input[type="text"],
 .Select-control,
 .Select.has-value .Select-control {
-  background: #101010;
-  border: 1px solid #101010;
+  background: transparent;
+  border: 2px solid #323232;
   border-radius: 3px;
-  padding: 5px 8px;
+  padding: 8px 12px;
   color: white;
   font-size: 16px;
+  font-weight: 400;
   letter-spacing: 0.6px;
   position: relative;
   transition: .2s;
@@ -32,22 +40,20 @@
 .Select-control:hover,
 .Select.is-focused .Select-control,
 .Select.is-focused:not(.is-open) > .Select-control {
-  color: #888;
-  background: #101010;
-  border: 1px solid #101010;
+  background: transparent;
+  border: 2px solid #323232;
 }
 
 .form-group input[type="text"]:focus,
 .Select:hover > .Select-control,
 .Select.is-focused > .Select-control {
-  color: #fff;
-  background: #101010;
-  border: 1px solid #101010;
+  background: #323232;
+  border: 2px solid #323232;
 }
 
 .Select-value,
 .Select-placeholder {
-  padding-top: 5px;
+  padding-top: 8px;
 }
 
 .Select-input {
@@ -72,17 +78,17 @@
 
 .Select-menu-outer {
   border: none !important;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-}
-
-.Select-option.is-selected {
-  color: white;
-  background-color: rgba(0,0,0,0.3) !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
 
 .Select-option:hover {
   color: white;
   background-color: rgba(255,255,255,0.02) !important;
+}
+
+.Select-option.is-selected {
+  color: white;
+  background-color: #323232 !important;
 }
 
 .Select--multi .Select-value {

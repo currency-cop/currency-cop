@@ -308,7 +308,7 @@ function GetUniqueAccessoryOverview (league, date) {
 function DoVersionCheck () {
   return DoServerRequest({
     method: 'get',
-    url: `https://poe.technology/latest`,
+    url: `https://api.github.com/repos/currency-cop/currency-cop/releases`,
     onSuccess: 'VERSION_CHECK_RESPONSE',
     onError: 'VERSION_CHECK_ERROR'
   })

@@ -87,7 +87,8 @@ class HeaderMeta extends React.Component {
 
   getHistoryList () {
     let list = this.props.history.map(item => item)
-    return list.map((item, index) => {
+
+    return list.reverse().splice(0, 5).map((item, index) => {
       return {
         index,
         createdAt: item.createdAt,
@@ -111,7 +112,7 @@ class HeaderMeta extends React.Component {
           </div>
         )
       }
-    }).reverse()
+    })
   }
 }
 
