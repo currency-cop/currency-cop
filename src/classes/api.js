@@ -140,7 +140,7 @@ class ApiClient {
           item.count = 1000
         }
 
-        if (type === 'unique_jewel') {
+        if (type === 'gem') {
           item.gemLevel = entry.gemLevel
           item.gemQuality = entry.gemQuality
           item.corrupted = entry.corrupted

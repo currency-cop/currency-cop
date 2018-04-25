@@ -305,6 +305,21 @@ function GetUniqueAccessoryOverview (league, date) {
   })
 }
 
+function GetSkillGemOverview (league, date) {
+  return DoServerRequest({
+    method: 'get',
+    url: Constants.NINJA_SKILL_GEM_OVERVIEW_URL,
+    options: {
+      params: {
+        league,
+        date
+      }
+    },
+    onSuccess: 'SKILL_GEM_RESPONSE',
+    onError: 'SKILL_GEM_ERROR'
+  })
+}
+
 function DoVersionCheck () {
   return DoServerRequest({
     method: 'get',
@@ -342,6 +357,7 @@ exports.ItemRateTypes = {
   fragment: GetFragmentOverview,
   card: GetDivCardOverview,
   map: GetMapOverview,
+  gem: GetSkillGemOverview,
   unique_map: GetUniqueMapOverview,
   unique_jewel: GetUniqueJewelOverview,
   unique_flask: GetUniqueFlaskOverview,

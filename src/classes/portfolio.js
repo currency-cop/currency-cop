@@ -88,16 +88,21 @@ class Portfolio {
         let price = prices.find(v => {
           let match = v.fullName === item.fullName
           if (match) {
+            // Low Confidence Filter
             if (v.count && v.count < 1) {
               return false
             }
 
+            // Relic check
             if (v.icon.indexOf('relic=1') > -1 && item.icon.indexOf('relic=1') < 0) {
               return false
             }
 
+            // Price check fallthroughs
             if (v.links) {
               return v.links === item.links
+            } else if (v.gemQuality && v.gemLevel) {
+              return v.gemQuality === item.quality && v.gemLevel === item.level
             } else if (v.quality && v.level) {
               return v.quality === item.quality && v.level === item.level
             } else if (v.quality) {
@@ -122,7 +127,7 @@ class Portfolio {
           return entry.item.fullName === item.fullName
         })
 
-        if (!clusterItem || clusterItem.stackSize != null) {
+        if (!clusterItem || clusterItem.stackSize == null) {
           clusterItem = {}
           clusterItem.item = item
           clusterItem.price = price

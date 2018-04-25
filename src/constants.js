@@ -20,6 +20,7 @@ module.exports = {
   NINJA_CURRENCY_OVERVIEW_URL:          'http://api.poe.ninja/api/Data/GetCurrencyOverview',
   NINJA_FRAGMENT_OVERVIEW_URL:          'http://api.poe.ninja/api/Data/GetFragmentOverview',
   NINJA_ESSENCE_OVERVIEW_URL:           'http://api.poe.ninja/api/Data/GetEssenceOverview',
+  NINJA_SKILL_GEM_OVERVIEW_URL:         'http://api.poe.ninja/api/Data/GetSkillGemOverview',
 
   NINJA_MAP_OVERVIEW_URL:               'http://api.poe.ninja/api/Data/GetMapOverview',
   NINJA_UNIQUE_MAP_OVERVIEW_URL:        'http://api.poe.ninja/api/Data/GetUniqueMapOverview',

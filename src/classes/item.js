@@ -87,10 +87,24 @@ class Item {
   }
 
   get level () {
-    let property = this.property('Level')
-    return this._level || (this._level = property
-      ? parseInt(property.values[0][0], 10)
-      : 0)
+    if (this._level) {
+      return this._level
+    }
+
+    let property = this.property('Level') || 0
+    if (property) {
+      property = parseInt(property.values[0][0])
+    }
+
+    if (this.source.frameType === 4 && property > 4 && property < 19) {
+      property = 1
+    }
+
+    if (this.source.frameType === 4 && property === 19) {
+      property = 20
+    }
+
+    return (this._level = property)
   }
 
   get links () {
