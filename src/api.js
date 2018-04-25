@@ -16,7 +16,7 @@ function DoServerRequest (options) {
 
   return new Promise((resolve, reject) => {
     ipcRenderer.once(options.onSuccess, (event, response) => {
-      if (response.status > 200) {
+      if (response && response.status > 200) {
         // The request was made and the server responded with a status code
         // that is not 200
         CC.ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
@@ -29,7 +29,7 @@ function DoServerRequest (options) {
       if (error.response) {
         // The request was made and the server responded with a status code 
         // that falls out of the range of 2xx
-        CC.ApiLog.warn(`${response.status} status response for [${options.url}]: ${JSON.stringify(response.data)}`)
+        CC.ApiLog.warn(`${error.response.status} status response for [${options.url}]: ${JSON.stringify(error.response.data)}`)
       } else if (error.request) {
         // The request was made but no response was received 
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of 

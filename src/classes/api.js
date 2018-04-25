@@ -82,8 +82,6 @@ class ApiClient {
     if (!list) {
       let date = Helpers.getNinjaDate()
       let response = await Api.ItemRateTypes[type](league, date)
-
-      // Only retry at maximum, once.
       if (response && response.status !== 200) {
         response = await Api.ItemRateTypes[type](league, date)
       }
@@ -105,7 +103,15 @@ class ApiClient {
     if (list && list.lines && list.lines.length) {
       for (const entry of list.lines) {
         let name = entry.currencyTypeName || entry.name
-        let fullName = name && entry.baseType ? `${name} ${entry.baseType}` : name ? name : entry.baseType
+        let fullName = name
+        
+        if (name && entry.baseType && name.indexOf(entry.baseType) < 0) {
+          fullName = `${name} ${entry.baseType}`
+        }
+
+        if (!fullName) {
+          name = entry.baseType
+        }
 
         let details = {}
         if (list.currencyDetails) {
