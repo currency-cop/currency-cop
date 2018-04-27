@@ -104,8 +104,9 @@ class Portfolio {
               let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, v.gemLevel)*0.25));
               let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, v.gemQuality) * 0.2));
 
-              if (item.lname === 'enhance' || item.lname === 'empower' || item.lname === 'enlighten')
+              if (item.fullName.indexOf('Enhance Support') !== -1 || item.fullName.indexOf('Empower Support') !== -1 || item.fullName.indexOf('Enlighten Support') !== -1) {
                 levelTolerance = 0;
+              }
 
               let levelsClose = Math.abs(v.gemLevel - item.level) <= levelTolerance;
               let qualityClose = Math.abs(v.gemQuality - item.quality) <= qualityTolerance;
