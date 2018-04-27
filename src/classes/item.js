@@ -36,12 +36,33 @@ class Item {
       .replace('Superior ', ''))
   }
 
+  // Determine the 'variant' of items, e.g. some special propery that differentiates
+  // items with multiple versions with otherwise identical names
+  // the variant (if we know it) must match with the poe.ninja item variant.
   get variant () {
     if (this._variant != undefined) {
       return this._variant
     }
 
-    let {explicitMods} = this.source
+    const {explicitMods, icon, category} = this.source
+    if (category && 'maps' in category) {
+      if (this.name === 'The Beachhead') {
+        if (icon.indexOf('HarbingerRed') !== -1)
+          return this._variant = 'T15'
+        else if (icon.indexOf('HarbingerYellow') !== -1)
+          return this._variant = 'T10'
+        else if (icon.indexOf('HarbingerWhite') !== -1)
+          return this._variant = 'T5'
+      }
+
+      if (icon.indexOf('/Maps/Atlas2Maps/') !== -1) return this._variant = 'Atlas2'     // war of the atlas (notched round maps)
+      else if (icon.indexOf('/Maps/AtlasMaps/') !== -1) return this._variant = 'Atlas'  // atlas of worlds (round maps)
+      else if (icon.indexOf('/Maps/act4maps/') !== -1) return this._variant = 'Pre 2.0' // release
+      else if (icon.indexOf('/Maps/') !== -1) return this._variant = 'Pre 2.4'          // awakening (square maps) 
+
+      return this._variant = null
+    }
+
     if (explicitMods && explicitMods.length) {
       if (explicitMods.indexOf('Has 1 Abyssal Socket') > -1) {
         return this._variant = '1 Jewel'
@@ -58,14 +79,6 @@ class Item {
   get fullName () {
     if (this._fullName != undefined) {
       return this._fullName
-    }
-
-    if (this.variant && this.name) {
-      return this._fullName = `${this.variant} ${this.name} ${this.type}`
-    }
-
-    if (this.variant && this.type) {
-      return this._fullName = `${this.variant} ${this.type}`
     }
 
     if (this.name && this.type) {
