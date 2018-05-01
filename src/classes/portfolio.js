@@ -86,10 +86,9 @@ class Portfolio {
         item = Item.toItem(item)
   
         let price = prices.find(v => {
-          let match = v.fullName === item.fullName
-          if (match) {
+          if (v.fullName === item.fullName) {
             // Low Confidence Filter
-            if (v.count && v.count < 1) {
+            if ('count' in v && v.count < 1) {
               return false
             }
 
@@ -101,19 +100,29 @@ class Portfolio {
             // Price check fallthroughs
             if (v.links) {
               return v.links === item.links
-            } else if (v.gemQuality && v.gemLevel) {
-              return v.gemQuality === item.quality && v.gemLevel === item.level
+            } else if (v.gemQuality || v.gemLevel) {
+              let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, v.gemLevel)*0.25));
+              let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, v.gemQuality) * 0.2));
+
+              if (item.fullName.indexOf('Enhance Support') !== -1 || item.fullName.indexOf('Empower Support') !== -1 || item.fullName.indexOf('Enlighten Support') !== -1) {
+                levelTolerance = 0;
+              }
+
+              let levelsClose = Math.abs(v.gemLevel - item.level) <= levelTolerance;
+              let qualityClose = Math.abs(v.gemQuality - item.quality) <= qualityTolerance;
+
+              return levelsClose && qualityClose;
             } else if (v.quality && v.level) {
               return v.quality === item.quality && v.level === item.level
             } else if (v.quality) {
               return v.quality === item.quality
             } else if (v.level) {
               return v.level === item.level
-            } else if (v.variant) {
+            } else if (v.variant && item.variant) { // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
               return v.variant === item.variant
+            } else {
+              return true
             }
-
-            return true
           }
 
           return false
