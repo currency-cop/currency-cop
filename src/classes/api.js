@@ -67,13 +67,32 @@ class ApiClient {
   }
 
   async getItemRates (type, league) {
-    if (league.indexOf('SSF ') > -1) {
-      league = league.replace('SSF ', '')
+    let isEvent = league.indexOf(' Event') > -1
+    let isSSF = league.indexOf('SSF ') > -1
+    let isHC = league.match(/\s?HC\s?/)
 
-      if (league.indexOf(' HC') > -1) {
-        league = league.replace(' HC', '')
-        league = `Hardcore ${league}`
+    // Patch for leagues like:
+    // SSF Flashback Event (BRE003) -> 001 (Standard)
+    // HC SSF Flashback Event (BRE004) -> 002 (Hardcore)
+    if (isEvent && isSSF) {
+      if (isHC) {
+        league = league.replace(/\d{3}/, '002')
+      } else {
+        league = league.replace(/\d{3}/, '001')
       }
+    }
+
+    // Patch for leagues like:
+    // SSF Bestiary HC -> Hardcore Bestiary
+    if (!isEvent && isSSF && isHC) {
+      league = league.replace(' HC', '')
+      league = `Hardcore ${league}`
+    }
+
+    // Patch for leagues like:
+    // SSF Bestiary -> Bestiary
+    if (isSSF) {
+      league = league.replace('SSF ', '')
     }
 
     let itemRatesCacheName = `${this.accountName}-rates-${type}-${league}`
