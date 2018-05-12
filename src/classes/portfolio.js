@@ -101,24 +101,28 @@ class Portfolio {
             if (v.links) {
               return v.links === item.links
             } else if (v.gemQuality || v.gemLevel) {
-              let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, v.gemLevel)*0.25));
-              let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, v.gemQuality) * 0.2));
+              // Todo: move gem logic to item processing
+              let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, v.gemLevel) * 0.25))
+              let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, v.gemQuality) * 0.2))
+              let isSpecialSupport = item.fullName.indexOf('Enhance Support') > -1 
+                || item.fullName.indexOf('Empower Support') > -1 
+                || item.fullName.indexOf('Enlighten Support') > -1
 
-              if (item.fullName.indexOf('Enhance Support') !== -1 || item.fullName.indexOf('Empower Support') !== -1 || item.fullName.indexOf('Enlighten Support') !== -1) {
+              if (isSpecialSupport) {
                 levelTolerance = 0;
               }
 
-              let levelsClose = Math.abs(v.gemLevel - item.level) <= levelTolerance;
-              let qualityClose = Math.abs(v.gemQuality - item.quality) <= qualityTolerance;
-
-              return levelsClose && qualityClose;
+              let levelsClose = Math.abs(v.gemLevel - item.level) <= levelTolerance
+              let qualityClose = Math.abs(v.gemQuality - item.quality) <= qualityTolerance
+              return levelsClose && qualityClose
             } else if (v.quality && v.level) {
               return v.quality === item.quality && v.level === item.level
             } else if (v.quality) {
               return v.quality === item.quality
             } else if (v.level) {
               return v.level === item.level
-            } else if (v.variant && item.variant) { // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
+            } else if (v.variant && item.variant) { 
+              // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
               return v.variant === item.variant
             } else {
               return true

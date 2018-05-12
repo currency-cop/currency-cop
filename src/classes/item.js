@@ -44,21 +44,43 @@ class Item {
       return this._variant
     }
 
-    const {explicitMods, icon, category} = this.source
+    const { explicitMods, icon, category } = this.source
+
     if (category && 'maps' in category) {
+      // beachhead maps
       if (this.name === 'The Beachhead') {
-        if (icon.indexOf('HarbingerRed') !== -1)
+        if (icon.indexOf('HarbingerRed') > -1) {
           return this._variant = 'T15'
-        else if (icon.indexOf('HarbingerYellow') !== -1)
+        }
+        
+        if (icon.indexOf('HarbingerYellow') > -1) {
           return this._variant = 'T10'
-        else if (icon.indexOf('HarbingerWhite') !== -1)
+        }
+        
+        if (icon.indexOf('HarbingerWhite') > -1) {
           return this._variant = 'T5'
+        }
       }
 
-      if (icon.indexOf('/Maps/Atlas2Maps/') !== -1) return this._variant = 'Atlas2'     // war of the atlas (notched round maps)
-      else if (icon.indexOf('/Maps/AtlasMaps/') !== -1) return this._variant = 'Atlas'  // atlas of worlds (round maps)
-      else if (icon.indexOf('/Maps/act4maps/') !== -1) return this._variant = 'Pre 2.0' // release
-      else if (icon.indexOf('/Maps/') !== -1) return this._variant = 'Pre 2.4'          // awakening (square maps) 
+      // war of the atlas (notched round maps)
+      if (icon.indexOf('/Maps/Atlas2Maps/') > -1) {
+        return this._variant = 'Atlas2'
+      }
+
+      // atlas of worlds (round maps)
+      if (icon.indexOf('/Maps/AtlasMaps/') > -1) {
+        return this._variant = 'Atlas'
+      }
+
+      // release maps
+      if (icon.indexOf('/Maps/act4maps/') > -1) {
+        return this._variant = 'Pre 2.0'
+      }
+
+      // awakening (square maps)
+      if (icon.indexOf('/Maps/') > -1) {
+        return this._variant = 'Pre 2.4'
+      }
 
       return this._variant = null
     }
