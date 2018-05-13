@@ -1,6 +1,6 @@
-var fs = require('fs'); 
-var util = require('util');
-var path = require('path');
+import { appendFileSync, appendFile, readdir, stat as _stat, unlink, readFileSync, statSync, mkdirSync } from 'fs'; 
+import { format } from 'util';
+import { join } from 'path';
 
 /**
  * options: { 
@@ -50,8 +50,8 @@ function Logger (options) {
   
   var _tofile = (_destination==='both' || _destination==='file') 
                 ? ( _sync===true 
-                     ? function(f,d,cb){ fs.appendFileSync(f,d); }
-                     : fs.appendFile
+                     ? function(f,d,cb){ appendFileSync(f,d); }
+                     : appendFile
                   ) 
                 : noop;
   var _console = (_destination==='both' || _destination==='console') 
@@ -126,25 +126,25 @@ function Logger (options) {
      rst = _withtime ? ('[' + _timeStr() + '] ') : ''
      rst += '[' + type.toUpperCase() + '] '
      rst += '[' + name + '] '
-     rst += util.format.apply(null,inputs);
+     rst += format.apply(null,inputs);
      return rst;
   }
 
   function _removeExpiredLogs(){
-    fs.readdir(_logdir,function(err,files){
+    readdir(_logdir,function(err,files){
       if (err) return console.error(err);
       files.forEach(function(file,idx,arr){
          if ( !file.match(_logFilter) )
             return;
-         var completePath = path.join(_logdir,file);
-         fs.stat(completePath,function(err,stats){
+         var completePath = join(_logdir,file);
+         _stat(completePath,function(err,stats){
             if (err) return console.error(err);
             var lastModTime = new Date(stats.mtime);
             if ( 
                   _shouldBeRemovedForExpiration(completePath,stats) ||
                   _shouldBeRemovedForRotation(completePath)
                ){
-               fs.unlink(completePath,function(err){
+               unlink(completePath,function(err){
                   if (err) return console.error(err);   
                });
             }
@@ -178,9 +178,9 @@ function Logger (options) {
 
   this.getCurrentLogsFile = function () {
     var this_period = _dateStr();
-    return fs.readFileSync((_dateform) 
-      ? path.join(_logdir,'log-'+this_period+'.'+_cnt) 
-      : path.join(_logdir,_logname+'.'+_cnt))
+    return readFileSync((_dateform) 
+      ? join(_logdir,'log-'+this_period+'.'+_cnt) 
+      : join(_logdir,_logname+'.'+_cnt))
   }
 
   function _log_name_status(new_size){ 
@@ -189,12 +189,12 @@ function Logger (options) {
     if (this_period!==_prev_log_period) {
       _cnt++; // do this first
       _prev_log_period = this_period;
-      fn = (_dateform) ? path.join(_logdir,'log-'+this_period+'.'+_cnt) 
-                      : path.join(_logdir,_logname+'.'+_cnt);
+      fn = (_dateform) ? join(_logdir,'log-'+this_period+'.'+_cnt) 
+                      : join(_logdir,_logname+'.'+_cnt);
       _log_status[fn] = [_cnt,new_size]
     } else {
-      fn = (_dateform) ? path.join(_logdir,'log-'+this_period+'.'+_cnt) 
-                      : path.join(_logdir,_logname+'.'+_cnt);
+      fn = (_dateform) ? join(_logdir,'log-'+this_period+'.'+_cnt) 
+                      : join(_logdir,_logname+'.'+_cnt);
       _log_status[fn][1] += new_size;
     }
     return fn; 
@@ -241,13 +241,13 @@ function Logger (options) {
 
   function _mkdirpSync(dir){
     try{ 
-      var stats = fs.statSync(dir);
+      var stats = statSync(dir);
     }catch (err){
       if (err && err.code==='ENOENT')
-        fs.mkdirSync(dir);   
+        mkdirSync(dir);   
       else console.error(err);
     }
   }
 }
 
-module.exports = Logger
+export default Logger

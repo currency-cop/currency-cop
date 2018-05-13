@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react'
-import Helpers from '@/helpers'
+import * as Helpers from '@/helpers'
 import Ago from '@/classes/ago'
 
 import './index.css'

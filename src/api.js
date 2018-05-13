@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron'
-import Constants from './constants'
+import * as Constants from './constants'
 import { UUID } from './helpers'
 
 

@@ -1,28 +1,36 @@
 .login-viewport {
   background-size: cover;
-  background-image: url('../background.png')
+  background-image: url('../../assets/incursion-background.jpg');
+  background-position: center;
+}
+
+.login-viewport .error {
+  position: absolute;
+  z-index: 101;
+  top: 17px;
+  left: 0;
+  right: 0;
+  background: #5f3431;
+  text-align: center;
+  font-size: 13px;
+  line-height: 2.5;
+  overflow: hidden; 
+  -webkit-box-shadow: 0 5px 10px black;
+  -moz-box-shadow:    0 5px 10px black;
+  box-shadow:         0 5px 10px black;
 }
 
 .login-viewport .viewport {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .login-container {
   width: 300px;
   /* background: #222; */
   border-radius: 3px;
-  padding: 20px;
+  padding: 0 20px 20px;
   /* box-shadow: 0 10px 10px rgba(0,0,0,0.5); */
   /* color: #222; */
-}
-
-.login-container .error {
-  font-size: 12px;
-  padding: 8px 12px;
-  background: hsla(0, 100%, 24%, 0.5);
-  border-radius: 8px;
-  border: 1px solid hsla(0, 80%, 9%, 0.8);
-  box-shadow: inset 0 0 1px hsla(0, 100%, 100%, 0.6), 0 0 10px rgba(0,0,0,0.3);
 }
 
 .login-container label {
@@ -58,4 +66,12 @@
   margin: 7px auto 32px;
   display: block;
   /* padding: 12px 8px; */
+}
+
+.login-container .btn-primary:hover {
+  opacity: 0.6;
+}
+
+.login-container .btn-primary:active {
+  opacity: 0.9;
 }

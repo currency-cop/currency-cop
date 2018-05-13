@@ -1,9 +1,9 @@
 import fs from 'fs'
 
 class DataFile {
-  constructor (type, filename) {
+  constructor (type, filename, logger) {
     this.filename = filename
-    this.log = CC.Logger.topic(type)
+    this.log = (logger ? logger.topic : CC.Logger.topic)(type)
   }
 
   get (key) {
@@ -39,4 +39,4 @@ class DataFile {
   }
 }
 
-module.exports = DataFile
+export default DataFile

@@ -3,6 +3,8 @@ import { GoToUrl } from '../../helpers'
 import Input from '../Input'
 import PrimaryButton from '../PrimaryButton'
 
+import './index.css'
+
 class LoginScreen extends React.Component {
   state = {
     value: '',
@@ -38,19 +40,20 @@ class LoginScreen extends React.Component {
     let {value} = this.state
     if (!value) {
       return this.setState({
-        error: 'POESESSIONID is required!'
+        error: 'Session ID is required!'
       })
     }
 
     if (!CC.Constants.POE_COOKIE_REGEXP.test(value)) {
       return this.setState({
-        error: `POESESSIONID must be a 32 character hexadecimal string!`
+        error: `Session ID must be a 32 character hexadecimal string!`
       })
     }
 
     // Attempt login
-    let error = await this.props.onLogin(value)
-    if (error) {
+    try {
+      await this.props.onLogin(value)
+    } catch (error) {
       return this.setState({
         error: error.message
       })
@@ -63,7 +66,7 @@ class LoginScreen extends React.Component {
     let errorMessageElement
     if (this.state.error) {
       errorMessageElement = (
-        <p className="error" style={{ fontSize: 12 }}>⚠️ {this.state.error}</p>
+        <p className="error">✋ {this.state.error}</p>
       )
     }
 
@@ -83,12 +86,14 @@ class LoginScreen extends React.Component {
 
     return (
       <div className="login-viewport viewport">
+
+        {errorMessageElement}
+
         <div className="viewport row middle-xs center-xs">
           <div className="login-container">
             <div className="draggable row">
               <div className="col-xs-12">
                 <div className="box">
-                  {errorMessageElement}
                   <h2>Login</h2>
                 </div>
               </div>
@@ -99,7 +104,9 @@ class LoginScreen extends React.Component {
                 <div className="not-draggable box">
                   <div>
                     <label>Session ID</label>
+
                     {sessionIdInputElement}
+
                     <p>
                       👮 Need help finding your session id?&nbsp;
                       <a href={CC.Constants.SESSION_URL} onClick={GoToUrl.bind(this)}>Click here!</a>

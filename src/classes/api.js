@@ -1,13 +1,13 @@
 import Api from '../api'
 import Item from './item'
-import Helpers from '../helpers'
+import * as Helpers from '../helpers'
 import CacheFile from './cachefile'
-import Constants from '../constants'
+import * as Constants from '../constants'
 
 class ApiClient {
   constructor (options = {}) {
-    this.log = CC.Logger.topic('ApiClient')
-    this.cache = new CacheFile('ApiClientCache', options.cacheFileLocation)
+    this.log = (options.logger ? options.logger : CC.Logger).topic('ApiClient')
+    this.cache = new CacheFile('ApiClientCache', options.cacheFileLocation, options.logger || CC.Logger)
     this.accountName = options.accountName
     this.accountSessionId = options.accountSessionId
   }
@@ -27,7 +27,7 @@ class ApiClient {
       this.log.warn(`[AUTHORIZE]: Empty response from server on name check`)
       throw ({
         code: 500,
-        message: `Invalid response from server, try refreshing your session id.`
+        message: `Unable to fetch profile with that Session Id. Try refreshing your session id.`
       })
     }
 
@@ -275,4 +275,4 @@ class ApiClient {
   }
 }
 
-module.exports = ApiClient
+export default ApiClient

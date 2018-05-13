@@ -29,4 +29,4 @@ class CacheFile extends DataFile {
   }
 }
 
-module.exports = CacheFile
+export default CacheFile
