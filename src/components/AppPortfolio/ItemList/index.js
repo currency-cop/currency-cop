@@ -6,21 +6,20 @@ import Item from './Item'
 class PortfolioItemList extends React.Component {
   render () {
     return (
-      <div className="items">
-        <table>
-          <thead>
-            <tr>
-              <th><div>Icon</div></th>
-              <th><div>Item Name</div></th>
-              <th><div>Quantity</div></th>
-              <th><div>Value</div></th>
-            </tr>
-          </thead>
-          <tbody>
-            { this.renderItems() }
-          </tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Icon</th>
+            <th>Item Name</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          { this.renderItems() }
+        </tbody>
+      </table>
     )
   }
 

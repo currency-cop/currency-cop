@@ -8,7 +8,7 @@
 
 .portfolio-large-stats > div {
   padding-right: 30px;
-  border-right: 1px solid hsla(210, 100%, 90%, 0.1);
+  border-right: 1px solid #353535;
   margin-left: 30px;
 }
 
@@ -22,10 +22,9 @@
 }
 
 .portfolio-large-stats h2 {
-  /* font-weight: 500; */
-  color: hsla(0, 100%, 100%, 0.2);
+  color: #777;
+  font-weight: 500;
   font-size: 12px;
   margin-top: 2px;
-  letter-spacing: 0.8px;
   line-height: 16px;
 }

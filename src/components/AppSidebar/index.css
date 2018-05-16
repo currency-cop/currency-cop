@@ -11,7 +11,7 @@
   padding: 10px 15px;
   border: none;
   color: white;
-  background: hsl(156, 64%, 35%);
+  background: #6863CE;
   font-weight: 500;
   border-radius: 3px;
   cursor: pointer;
@@ -23,12 +23,9 @@
 }
 
 .sidebar button:hover {
-  background: hsl(156, 56%, 23%);
+  background: rgb(66, 63, 126);
 }
 
 .sidebar button:active {
-  box-shadow: none;
-  color: #444;
-  border-color: #222;
-  background: #222;
+  background: #6863CE;
 }

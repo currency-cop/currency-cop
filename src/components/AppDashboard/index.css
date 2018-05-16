@@ -1,18 +1,21 @@
 .dashboard {
-  padding: 32px;
+  margin: 24px;
+  padding: 50px 32px;
 }
 
 .dashboard h1 {
   color: #fff;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 400;
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 0px;
 }
 
 .dashboard h2 {
-  color: #888;
+  color: #777;
   font-size: 20px;
   font-weight: 400;
   text-align: center;
+  margin: 0;
+  line-height: 1.6em;
 }

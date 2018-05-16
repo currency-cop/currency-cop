@@ -1,6 +1,6 @@
 .portfolio-meta {
   display: flex;
-  color: #787A81;
+  color: #777;
   font-weight: 600;
   font-size: 11px;
   margin-bottom: 5px;
@@ -40,9 +40,10 @@
   width: 100%;
   z-index: 2;
   cursor: pointer;
-  background: #252525;
+  background: #282828;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 15px 40px rgba(0,0,0,0.6);
   border-radius: 3px;
+  /* padding: 10px; */
 }
 
 .dropdown-container > .dropdown-list > div > div {
@@ -51,18 +52,19 @@
   padding: 8px 5px;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
-  border-bottom: solid 1px #202020;
+  border-bottom: solid 1px #303030;
   border-top: none;
   line-height: 16px;
   text-shadow: 0 1px rgba(0,0,0,0.05);
 }
 
 .dropdown-container > .dropdown-list > div > div:hover {
-  background: #202020;
+  /* background: #202020; */
 }
 
 .dropdown-container > .dropdown-list > div > div.selected {
-  background: #292929;
+  background: #3A3A3A;
+  border-bottom-color: #3A3A3A;
 }
 
 .dropdown-container > .dropdown-list > div > div.selected .total {
@@ -70,7 +72,7 @@
 }
 
 .dropdown-container > .dropdown-list > div > div.selected .time {
-  color: #aaa;
+  color: #777;
 }
 
 .dropdown-container > .dropdown-list > div > div:first-of-type {

@@ -1,6 +1,5 @@
 import {
   UUID,
-  clone,
   formatNumber,
   getPercentageChange
 } from '../helpers'
@@ -264,4 +263,4 @@ Portfolio.Shorthands = {
   'Transmuation Orb': 'Trans'
 }
 
-module.exports = Portfolio
+export default Portfolio

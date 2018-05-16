@@ -152,7 +152,7 @@ class Item {
       return this._links = 0
     }
 
-    let groupCount = []
+    let groupCount = [0, 0]
     for (var i = 0; i < sockets.length; i++) {
       groupCount[sockets[i].group]++
     }

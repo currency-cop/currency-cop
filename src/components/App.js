@@ -88,20 +88,15 @@ class CC {
 
   static event = async (type, action, label, value) => {
     await CC.Analytics.send('event', {
-      eventCategory: type,
-      eventAction: action,
-      eventLabel: label,
-      eventValue: value
+      ec: type,
+      ea: action,
+      el: label,
+      ev: value
     }, CC.cid)
   }
 
-  static exception = async (message, fatal) => {
-    await CC.Analytics.send('event', {
-      eventCategory: 'exception',
-      eventAction: 'error',
-      eventLabel: fatal ? 'Fatal Error' : 'Error',
-      eventValue: message
-    }, CC.cid)
+  static exception = async (fname, e, fatal) => {
+    await CC.event('exception', `${fname}: ${e.message}`, `${e.filename}: ${e.lineno}`, fatal || 0)
   }
 }
 
@@ -111,8 +106,13 @@ global.CC = CC
 // Random Identifier for Analytics to avoid erratic reporting
 CC.cid = UUID()
 
+// UA for Mac issues
+CC.Analytics.set('ua', String(window.navigator.userAgent)
+  .replace(new RegExp(`${CC.AppName}\\/\\d+\\.\\d+\\.\\d+ `), '')
+  .replace(/Electron\/\d+\.\d+\.\d+ /, ''))
+
 // We don't care about personal information only errors
-CC.Analytics.set('aip', true)
+CC.Analytics.set('aip', 1)
 
 // Datasource
 CC.Analytics.set('ds', 'app')
@@ -251,12 +251,12 @@ class App extends React.Component {
       if (error.message) {
         this.setState({ error: error.message })
         this.setLoadingMessage(`🔥 This is fine: ${error.message}`)
-        exception(`App.load(): ${error.message}`, 1)
+        exception(`App.load`, error, 1)
         error(`[App] Fatal exception:`, error.message, error.stack)
       } else {
         this.setState({ error: error })
         this.setLoadingMessage(`💩 Well shit. Something is wrong: ${error}`)
-        exception(`App.load(): ${error}`, 1)
+        exception(`App.load`, error, 1)
         error(`[App] Fatal exception:`, error)
       }
     }
@@ -288,7 +288,7 @@ class App extends React.Component {
 
     if (!sessionId) {
       CC.Events.emit('/config/clear')
-      CC.exception('App.handleLogin(): missing session id', 0)
+      CC.exception('App.handleLogin', new Error('missing session id'), 0)
 
       throw {
         message: 'Session identifier is required.'
@@ -302,7 +302,7 @@ class App extends React.Component {
       CC.event()
     } catch (error) {
       CC.Events.emit('/config/clear')
-      CC.exception(`App.handleLogin(): ${error.message}`, 1)
+      CC.exception(`App.handleLogin`, error, 1)
       throw error
     }
 
@@ -442,6 +442,7 @@ class App extends React.Component {
     const { leagues } = this.state
     for (const { id: league } of leagues) {
       const prices = await Promise.all(Object.keys(ItemRateTypes).map(type => {
+        this.setLoadingMessage(`Gathering Prices & Tabs (${league} - ${type})`)
         return CC.Api.getItemRates(type, league)
       }))
 
@@ -456,10 +457,12 @@ class App extends React.Component {
     const { leagues } = this.state
     for (const league of leagues) {
       try {
+        this.setLoadingMessage(`Gathering Prices & Tabs (${league.id} - tabs)`)
         let tabs = await CC.Api.getTabsList({ league: league.id })
         this.handleTabsList(league.id, tabs)
       } catch (e) {
         CC.ApiLog.error(`Failed to fetch ${league.id} tabs - ${e.message}`)
+        CC.exception(`App.getTabsForEachLeague`, error, 1)
       }
     }
   }
@@ -500,7 +503,7 @@ class App extends React.Component {
     // Setup tabs worker (fetches league tabs lists)
     tabs.evenlySpaced = true
     tabs.setRateLimitByString('4:1500:240')
-    tabs.setCacheExpiry(3000)
+    tabs.setCacheExpiry(1000)
     tabs.start()
 
     // Setup tab worker (fetches individual tabs)
@@ -550,7 +553,6 @@ class App extends React.Component {
     
     // Find tab
     tab = tabs.find(t => t.id === tab.value)
-
     if (!worker.has(name)) {
       worker.add({
         name,
@@ -640,7 +642,7 @@ class App extends React.Component {
 
       if (!portfolio) {
         CC.EventLog.error(`Unable to find portfolio by id: ${ portfolioId }`)
-        CC.exception(`Unable to find portfolio by id: ${ portfolioId }`)
+        CC.exception(`CC.Events.on('/screen/portfolio')`, new Error(`Unable to find portfolio by id: ${ portfolioId }`))
         return
       }
 
@@ -673,12 +675,12 @@ class App extends React.Component {
       let portfolio = this.getPortfolioById(portfolioId)
       if (!portfolio) {
         CC.EventLog.error(`Unable to find portfolio by id: ${ portfolioId }`)
-        CC.exception(`Unable to find portfolio by id: ${ portfolioId }`)
+        CC.exception(`CC.Events.on('/screen/portfolio/update')`, new Error(`Unable to find portfolio by id: ${ portfolioId }`))
         return
       }
 
       CC.Events.emit('/screen', {
-        screenAction: `/screen/portfolio//${slug(portfolio.name, {lower: true})}/update`,
+        screenAction: `/screen/portfolio/${slug(portfolio.name, {lower: true})}/update`,
         portfolioId: null,
         screen: (
           <AppPortfolioSettings
@@ -810,6 +812,7 @@ class App extends React.Component {
 
           <AppContent
             screen={ this.state.screen }
+            screenAction={ this.state.screenAction }
           />
         </div>
       </div>
@@ -820,7 +823,7 @@ class App extends React.Component {
 // Capture uncaught errors
 process.on('uncaughtException', function (error) {
   CC.Log.critical(`Uncaught error: ${error.message} - ${error.stack}`)
-  CC.exception(`App.uncaughtException(): ${error.message}`, 1)
+  CC.exception(`App.uncaughtException`, error, 1)
 })
 
 

@@ -5,7 +5,7 @@ class AppDashboard extends React.Component {
   render () {
     if (this.props.portfolios.length) {
       return (
-        <div className="layout-content portfolio dashboard">
+        <div className="layout-content dashboard">
           <h1>Welcome Back 👋</h1>
           <h2>Select a Portfolio in the sidebar to get started!</h2>
         </div>
@@ -13,7 +13,7 @@ class AppDashboard extends React.Component {
     }
 
     return (
-      <div className="layout-content portfolio dashboard">
+      <div className="layout-content dashboard">
         <h1>Welcome to Currency Cop 👮</h1>
         <h2>Click "Add Portfolio" to get started!</h2>
       </div>

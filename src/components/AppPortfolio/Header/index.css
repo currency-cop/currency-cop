@@ -1,17 +1,12 @@
 
 .portfolio-header {
   /* background-image: linear-gradient(to bottom, #1e3c72 0%, #1e3c72 1%, #0D1821 100%); */
-  background: #171717;
+  background: #282828;
   color: #fff;
-  padding: 15px;
-  min-height: 200px;
-  border-radius: 3px 0 0 0;
-}
-
-.portfolio-header {
-  position: fixed;
-  width: calc(100vw - 300px);
-  z-index: 1;
+  padding: 24px;
+  /* min-height: 200px; */
+  border-radius: 3px;
+  margin-bottom: 24px;
 }
 
 .portfolio-title {
@@ -28,12 +23,19 @@
 }
 
 .portfolio-header h1 {
-  margin-bottom: 5px;
+  font-size: 26px;
+  font-weight: 500;
+  margin-bottom: 0;
 }
 
 .portfolio-header h1 i {
   float: right;
-  color: #666;
+  color: #777;
+  cursor: pointer;
+}
+
+.portfolio-header h1 i:hover {
+  color: #6863CE;
 }
 
 .portfolio-header h3 {

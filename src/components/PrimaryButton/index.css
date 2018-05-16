@@ -1,12 +1,12 @@
 .btn-primary {
   color: white;
-  background: #2083FE;
+  background: #6863CE;
 }
 
 .btn-primary:hover {
-  background: #2083FE;
+  background: rgb(76, 72, 143);
 }
 
 .btn-primary:active {
-  box-shadow: none;
+  background: #6863CE;
 }

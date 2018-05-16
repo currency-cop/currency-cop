@@ -1,5 +1,7 @@
-import React, { PropTypes } from 'react'
+import React from 'react'
 import './index.css'
+
+import { formatNumber } from '@/helpers'
 
 class Item extends React.Component {
   render () {
@@ -10,7 +12,7 @@ class Item extends React.Component {
 
     return (
       <tr>
-        <td>
+        <td className="item-icon">
           <img 
             src={details.price.icon || details.item.icon}
             width={32}
@@ -18,9 +20,10 @@ class Item extends React.Component {
             title={details.item.fullName}
           />
         </td>
-        <td>{details.item.fullName}</td>
-        <td>{details.stackSize}</td>
-        <td>{details.chaosValue.toFixed(2)} C</td>
+        <td className="item-name">{details.item.fullName}</td>
+        <td className="item-quantity">{formatNumber(details.stackSize, 0)}</td>
+        <td className="item-price">{formatNumber(details.price.chaosValue)} C</td>
+        <td className="item-total">{formatNumber(details.chaosValue)} C</td>
       </tr>
     )
   }

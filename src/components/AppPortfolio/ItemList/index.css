@@ -1,44 +1,52 @@
-.items {
-  overflow-y: auto;
-  height: calc(100vh - 200px - 37px - 30px);
-  top: 237px;
-  position: relative;
-  background: #202020;
-}
-table {
+.portfolio table {
   border-spacing: 0;
-  width:100%;
+  width: 100%;
+  font-size: 13px;
+  border-radius: 0 0 3px 3px;
 }
-td + td {
-  border-left:1px solid #202020;
+
+.portfolio td + td {
+  /* border-left:1px solid #3A3A3A; */
 }
-td, th {
-  border-bottom:1px solid #202020;
-  background: #252525;
-  color: #666;
+
+.portfolio td, 
+.portfolio th {
+  border-bottom: 1px solid #2F2F2F;
+  background: #282828;
   padding: 10px 25px;
 }
-th {
-  height: 0;
-  line-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  color: transparent;
-  border: none;
-  white-space: nowrap;
-  background: #888;
+
+.portfolio tr th:first-child {
+  border-radius: 3px 0 0 0;
 }
-th div {
-  position: fixed;
-  background: transparent;
-  color: #aaa;
+
+.portfolio tr th:last-child {
+  border-radius: 0 3px 0 0;
+}
+
+.portfolio tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.portfolio tbody tr:last-child td:first-child {
+  border-radius: 0 0 0 3px;
+}
+
+.portfolio tbody tr:last-child td:last-child {
+  border-radius: 0 0 3px 0;
+}
+
+.portfolio th {
+  background: #3A3A3A;
+  color: white;
   font-weight: 400;
-  padding: 9px 25px;
-  margin-left: -25px;
-  line-height: normal;
-  border-left: 1px solid #181818;
-  margin-top: -37px
 }
-th:first-child div{
-  border: none;
+
+.portfolio th + th {
+  border-left: 1px solid #3A3A3A;
+}
+
+.portfolio tr img {
+  max-height: 32px;
+  width: auto;
 }

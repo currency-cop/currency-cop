@@ -1,0 +1,28 @@
+.item-quantity,
+.item-name {
+  color: #cacaca;
+}
+
+.item-icon {
+  text-align: center;
+}
+
+.item-quantity,
+.item-price,
+.item-total {
+  text-align: right;
+}
+
+.item-price,
+.item-total {
+  font-family: 'Roboto Mono', monospace;
+}
+
+.item-price {
+  color: #aaa;
+}
+
+.item-total {
+  color: #4CC053;
+  font-family: 'Roboto Mono', monospace;
+}

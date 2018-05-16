@@ -395,7 +395,7 @@ span[class*="MuiSwitch-checked"] {
 /* Scrollbars */
 
 ::-webkit-scrollbar-track {
-	background-color: rgba(0,0,0,0.3);
+	background-color: #0a0a0b;
 }
 
 ::-webkit-scrollbar {

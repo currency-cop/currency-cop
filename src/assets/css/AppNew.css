@@ -52,7 +52,7 @@
 
 .layout-item.header .header-logo {
   font-weight: 600;
-  color: rgb(201, 201, 201);
+  color: #ebebeb;
   flex: 1;
   -webkit-app-region: drag;
 }
@@ -91,7 +91,6 @@
   width: 100%;
   border-radius: 5px 0 0 0;
   overflow: auto;
-  background: #202020;
 }
 
 /* Portfolio */
@@ -115,12 +114,4 @@
 .portfolio-breakdown h4 {
   color: #aaa;
   font-family: 'Roboto Mono', monospace;
-}
-
-/* Item Table */
-
-.portfolio-header {
-  position: fixed;
-  width: 100%;
-  z-index: 1;
 }
