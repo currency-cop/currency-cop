@@ -40,6 +40,13 @@
   background: #3A3A3A;
   color: white;
   font-weight: 400;
+  cursor: pointer;
+}
+
+.portfolio th i {
+  line-height: 0;
+  top: 7px;
+  position: relative;
 }
 
 .portfolio th + th {
