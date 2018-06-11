@@ -1,0 +1,165 @@
+@font-face {
+  font-family: 'SegoeMDL2';
+  src: url("../fonts/segmdl2-webfont.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --main-color: #06c;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: subpixel-antialiased;
+  text-rendering: optimizeSpeed;
+}
+
+body, html {
+  background: hsl(0, 0%, 10%);
+  color: white;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+}
+
+/* Typography */
+html, body, input, button {
+  font-family: 'Roboto';
+  line-height: 1.6;
+}
+
+ul,
+ol {
+  margin-bottom: 1.53rem;
+}
+
+h1 {
+  font-size: 2.4414rem;
+  line-height: 2.7rem;
+  margin-bottom: 1.53rem;
+}
+
+h2 {
+  font-size: 1.9531rem;
+  line-height: 2.7rem;
+  margin-bottom: 1.53rem;
+}
+
+h3 {
+  font-size: 1.5625rem;
+  line-height: 1.8rem;
+  margin-bottom: 1.53rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+  line-height: 1.8rem;
+  margin-bottom: 1.53rem;
+}
+
+h5 {
+  font-size: 1rem;
+  line-height: 1.8rem;
+  margin-bottom: 1.53rem;
+}
+
+h6 {
+  font-size: 1rem;
+  line-height: 1.8rem;
+  margin-bottom: 1.53rem;
+}
+
+body {
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+p,
+ol,
+ul,
+pre {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 1.53rem;
+}
+
+h1 {
+  font-family: 'Roboto';
+  font-weight: 500;
+}
+
+a {
+  color: rgba(83, 211, 154, 1.0);
+  text-decoration: none;
+}
+
+a:hover {
+  color: #FFF
+}
+
+/* Helpers */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.right {
+  float: right;
+}
+
+/* Header */
+.nav-bar,
+.draggable {
+  -webkit-app-region: drag
+}
+
+a,
+button,
+input,
+select,
+[class*="Select"],
+.tab-selector,
+.app-control *,
+.account-actions *,
+.not-draggable,
+.not-draggable * {
+  -webkit-app-region: no-drag
+}
+
+/* Main Viewport */
+.viewport {
+  height: 100vh
+}
+
+/* Scrollbars */
+
+::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+
+::-webkit-scrollbar {
+	width: 8px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  transition: all .4s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.2);
+}

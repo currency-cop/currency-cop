@@ -1,22 +1,22 @@
 // Core
-import * as Constants from '../constants'
-import Logger from '../classes/logger'
-import ApiClient from '../classes/api'
-import DataFile from '../classes/datafile'
-import Ago from '../classes/ago'
-import pkg from '../../package.json'
-import Requester from '../classes/requester'
-import Portfolio from '../classes/portfolio'
+import * as Constants from '@/constants'
+import pkg from '~/package.json'
+import Ago from '@/classes/ago'
+import Logger from '@/classes/logger'
+import ApiClient from '@/classes/api.client'
+import DataFile from '@/classes/datafile'
+import Requester from '@/classes/requester'
+import Portfolio from '@/classes/portfolio'
 
 
+// IPC Api
 import {
   DoVersionCheck,
   ItemRateTypes
-} from '../api'
+} from '@/classes/api.ipc'
 
 
 // Third Party
-import { remote, clipboard } from 'electron'
 import Analytics from 'electron-google-analytics'
 import React from 'react'
 import Emitter from 'tiny-emitter'
@@ -24,11 +24,16 @@ import path from 'path'
 import slug from 'slug'
 
 
+// Electron
+const electron = window.require('electron')
+const { remote, clipboard } = electron
+
+
 // Stylesheets
 import 'react-select/dist/react-select.css'
-import '../assets/css/grid.css'
-import '../assets/css/app.css'
-import '../assets/css/appnew.css'
+import '@/assets/css/grid.css'
+import '@/assets/css/common.css'
+import '@/assets/css/app.css'
 
 
 // Application folder location
@@ -58,8 +63,7 @@ class CC {
   static AppInstallerId = pkg.build.appId
 
   static Logger = new Logger({
-    logdir: logsDataPath,
-    level: 1
+    directory: logsDataPath
   })
 
   static Log = CC.Logger.topic('Core')
@@ -71,7 +75,7 @@ class CC {
 
   // Datafiles
   static Config = new DataFile('Config', configFilename, CC.Logger)
-  static Portfolios = new DataFile('Portfolio', portfolioFilename, CC.Logger)
+  static Portfolios = new DataFile('Portfolio', portfolioFilename, CC.Logger, [])
 
   // API
   static Api = new ApiClient({
@@ -96,7 +100,12 @@ class CC {
   }
 
   static exception = async (fname, e, fatal) => {
-    await CC.event('exception', `${fname}: ${e.message}`, `${e.filename}: ${e.lineno}`, fatal || 0)
+    await CC.event(
+      'exception', 
+      `${fname}: ${e.message}`, 
+      e.stack, 
+      fatal || 0
+    )
   }
 }
 
@@ -171,9 +180,8 @@ class App extends React.Component {
 
   async load (skipAuthorization) {
     let {exception} = CC
-    let {info, error} = CC.Log
 
-    info(`Loading Currency Cop v${CC.AppVersion}`)
+    CC.Log.launch(`Loading Currency Cop v${CC.AppVersion}`)
 
     try {
       if (!skipAuthorization) {
@@ -187,7 +195,7 @@ class App extends React.Component {
         if (accountSessionId) {
           try {
             await this.handleLogin(accountSessionId, true)
-          } catch (error) {
+          } catch (err) {
             return this.setLoadingMessage(false)
           }
         } else {
@@ -210,15 +218,17 @@ class App extends React.Component {
       await this.setupWorkers()
 
       this.setLoadingMessage('Gathering Prices & Tabs')
-      await this.getPricesForEachLeague()
+      this.getPricesForEachLeague()
       await this.getTabsForEachLeague()
-      await this.setupTabsJobs()
+      this.setupTabsJobs()
 
       this.setLoadingMessage('Loading Portfolios')
       let portfolios = await CC.Portfolios.load([])
-      await this.setState({
-        portfolios: portfolios.data.map(settings => new Portfolio(settings))
-      })
+      if (portfolios && portfolios.data) {
+        await this.setState({
+          portfolios: portfolios.data.map(settings => new Portfolio(settings))
+        })
+      }
 
       this.setLoadingMessage('Configuring Events')
       await this.setupPortfolios()
@@ -247,17 +257,17 @@ class App extends React.Component {
           })
         }
       }
-    } catch (error) {
-      if (error.message) {
-        this.setState({ error: error.message })
-        this.setLoadingMessage(`🔥 This is fine: ${error.message}`)
-        exception(`App.load`, error, 1)
-        error(`[App] Fatal exception:`, error.message, error.stack)
+    } catch (err) {
+      if (err.message) {
+        this.setState({ error: err.message })
+        this.setLoadingMessage(`🔥 This is fine: ${err.message}`)
+        exception(`App.load`, err, 1)
+        CC.Log.terminal(`Fatal exception`, err)
       } else {
-        this.setState({ error: error })
-        this.setLoadingMessage(`💩 Well shit. Something is wrong: ${error}`)
-        exception(`App.load`, error, 1)
-        error(`[App] Fatal exception:`, error)
+        this.setState({ error: err })
+        this.setLoadingMessage(`💩 Well shit. Something is wrong: ${err}`)
+        exception(`App.load`, err, 1)
+        CC.Log.terminal(`Fatal exception`, err)
       }
     }
   }
@@ -299,7 +309,6 @@ class App extends React.Component {
       CC.Api = await CC.Api.authorize({ sessionId })
       CC.Config.set(CONFIG_USERNAME, CC.Api.accountName)
       CC.Config.set(CONFIG_COOKIE, CC.Api.accountSessionId)
-      CC.event()
     } catch (error) {
       CC.Events.emit('/config/clear')
       CC.exception(`App.handleLogin`, error, 1)
@@ -461,7 +470,7 @@ class App extends React.Component {
         let tabs = await CC.Api.getTabsList({ league: league.id })
         this.handleTabsList(league.id, tabs)
       } catch (e) {
-        CC.ApiLog.error(`Failed to fetch ${league.id} tabs - ${e.message}`)
+        CC.ApiLog.error(`Failed to fetch tabs`, { league: league.id, reason: e.message })
         CC.exception(`App.getTabsForEachLeague`, error, 1)
       }
     }
@@ -626,13 +635,16 @@ class App extends React.Component {
         portfolioId: null,
         screen: (
           <AppDashboard
+            portfolioId={this.state.portfolioId}
+            config={this.state.config}
+            leagues={this.state.leagues}
             portfolios={this.state.portfolios} />
         )
       })
     })
 
     CC.Events.on('/screen/portfolio', ({ portfolioId }) => {
-      CC.EventLog.info(`Viewing Portfolio ${ portfolioId }`)
+      CC.EventLog.spawn(`Viewing Screen`, { screen: '/portfolio', portfolioId })
 
       let {portfolios} = this.state
       let portfolio = this.getPortfolioById(portfolioId)
@@ -641,7 +653,7 @@ class App extends React.Component {
       }
 
       if (!portfolio) {
-        CC.EventLog.error(`Unable to find portfolio by id: ${ portfolioId }`)
+        CC.EventLog.error(`Unable to find portfolio by Id`, { portfolioId })
         CC.exception(`CC.Events.on('/screen/portfolio')`, new Error(`Unable to find portfolio by id: ${ portfolioId }`))
         return
       }
@@ -657,7 +669,8 @@ class App extends React.Component {
     })
 
     CC.Events.on('/screen/portfolio/create', () => {
-      CC.EventLog.info(`Creating Portfolio`)
+      CC.EventLog.spawn(`Viewing Screen`, { screen: '/portfolio/create' })
+
       CC.Events.emit('/screen', {
         screenAction: '/screen/portfolio/create',
         portfolioId: null,
@@ -670,11 +683,11 @@ class App extends React.Component {
     })
 
     CC.Events.on('/screen/portfolio/update', ({ portfolioId }) => {
-      CC.EventLog.info(`Updating Portfolio ${ portfolioId }`)
+      CC.EventLog.spawn(`Viewing Screen`, { screen: '/portfolio/update', portfolioId })
 
       let portfolio = this.getPortfolioById(portfolioId)
       if (!portfolio) {
-        CC.EventLog.error(`Unable to find portfolio by id: ${ portfolioId }`)
+        CC.EventLog.error(`Unable to find portfolio by Id`, { portfolioId })
         CC.exception(`CC.Events.on('/screen/portfolio/update')`, new Error(`Unable to find portfolio by id: ${ portfolioId }`))
         return
       }
@@ -712,31 +725,11 @@ class App extends React.Component {
 
     // Configuration
     CC.Events.on('/config/update', event => {
-      CC.EventLog.info('Updating configuration')
       this.updateConfig(event.key, event.value)
     })
 
     CC.Events.on('/config/clear', event => {
-      CC.EventLog.info('Clearing configuration')
       this.clearConfig()
-    })
-
-
-    // Notifications
-    CC.Events.on('/notify', event => {
-      CC.EventLog.info('Global notification occurred', event.message)
-
-      this.setState({
-        globalSnackMessage: event.message,
-        globalSnackAction: event.action || null
-      })
-
-      setTimeout(() => {
-        this.setState({
-          globalSnackMessage: null,
-          globalSnackAction: null
-        })
-      }, 5000)
     })
 
 
@@ -749,6 +742,7 @@ class App extends React.Component {
     clearInterval(this.interval)
 
     CC.Events.off('/screen')
+    CC.Events.off('/screen/dashboard')
     CC.Events.off('/screen/portfolio/update')
     CC.Events.off('/screen/portfolio/create')
     CC.Events.off('/screen/portfolio')
@@ -757,7 +751,6 @@ class App extends React.Component {
     CC.Events.off('/portfolio/delete')
     CC.Events.off('/config/update')
     CC.Events.off('/config/clear')
-    CC.Events.off('/notify')
   }
 
 
@@ -780,7 +773,7 @@ class App extends React.Component {
     }
 
     if (this.state.isLoading) {
-      screen('/screen/loading')
+      // screen('/screen/loading')
       return (
         <div className="app-viewport">
           <AppHeader 
@@ -803,13 +796,6 @@ class App extends React.Component {
             upToDate={this.state.upToDate}
           />
 
-          <AppSidebar
-            config={this.state.config}
-            leagues={this.state.leagues}
-            portfolios={this.state.portfolios}
-            portfolioId={this.state.portfolioId}
-          />
-
           <AppContent
             screen={ this.state.screen }
             screenAction={ this.state.screenAction }
@@ -822,10 +808,15 @@ class App extends React.Component {
 
 // Capture uncaught errors
 process.on('uncaughtException', function (error) {
-  CC.Log.critical(`Uncaught error: ${error.message} - ${error.stack}`)
+  CC.Log.terminal(`Uncaught error`, error)
   CC.exception(`App.uncaughtException`, error, 1)
 })
 
+window.onerror = (...args) => {
+  console.log(...args)
+}
 
 // Export Application
-export default App
+
+import { hot } from 'react-hot-loader'
+export default hot(module)(App)

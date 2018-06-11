@@ -22,4 +22,4 @@ class AccountActions extends React.Component {
   }
 }
 
-module.exports = AccountActions
+export default AccountActions

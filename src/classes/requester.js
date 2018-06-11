@@ -25,7 +25,7 @@ class Requester {
     if (!this.rateLimit) {
       return console.warn('[Requester] set a rate limit window before calling start()')
     }
-    
+
     if (this.queueTimer) {
       clearTimeout(this.queueTimer)
     }
@@ -267,4 +267,4 @@ request.on(tabs[6], (response) => {
 })
 */
 
-module.exports = Requester
+export default Requester

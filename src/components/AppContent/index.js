@@ -1,4 +1,5 @@
 import React from 'react'
+import './index.css'
 
 class AppContent extends React.Component {
   componentDidMount() {
@@ -23,4 +24,5 @@ class AppContent extends React.Component {
   }
 }
 
-export default AppContent
+import { hot } from 'react-hot-loader'
+export default hot(module)(AppContent)

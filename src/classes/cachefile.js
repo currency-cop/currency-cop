@@ -1,4 +1,4 @@
-import DataFile from './datafile'
+import DataFile from '@/classes/datafile'
 
 class CacheFile extends DataFile {
   set (key, value, ttl) {
@@ -22,12 +22,14 @@ class CacheFile extends DataFile {
 
   get (key) {
     let entry = this.data[key]
+
     if (entry && entry.expiresAt >= Date.now()) {
       return entry.value
-    } else if (entry) {
+    }
+
+    if (entry) {
       delete this.data[key]
       this.save()
-      return
     }
   }
 

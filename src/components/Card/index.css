@@ -1,0 +1,31 @@
+.Card {
+  box-sizing: border-box;
+  padding: 24px;
+  margin-bottom: 20px;
+  background-color: #fff;
+  width: 100%;
+  border: 1px solid #ebebeb;
+  position: relative;
+}
+
+.Card .CardHeader {
+  border-bottom: 1px solid #ebebeb;
+  padding-bottom: 12px;
+  min-height: 25px;
+  position: relative;
+}
+
+.Card .CardHeader .CardAction {
+  width: 25px;
+  height: 25px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin-top: -5px;
+}
+
+.Card .CardContent {
+  margin-top: 30px;
+  min-height: 30px;
+  position: relative;
+}

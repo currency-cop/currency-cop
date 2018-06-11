@@ -128,4 +128,4 @@ class LoginScreen extends React.Component {
   }
 }
 
-module.exports = LoginScreen
+export default LoginScreen

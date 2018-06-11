@@ -1,7 +1,8 @@
-import { ipcRenderer } from 'electron'
-import * as Constants from './constants'
-import { UUID } from './helpers'
+import * as Constants from '@/constants'
+import { UUID } from '@/helpers'
 
+const electron = window.require('electron')
+const ipcRenderer  = electron.ipcRenderer
 
 function DoServerRequest (options) {
   // Prevent collision
@@ -331,27 +332,29 @@ function DoVersionCheck () {
 
 
 // Exports
-exports.DoServerRequest = DoServerRequest
-exports.LoginWithCookie = LoginWithCookie
-exports.GetAccountName = GetAccountName
-exports.GetLeagues = GetLeagues
-exports.GetCharacters = GetCharacters
-exports.GetStashTabs = GetStashTabs
-exports.GetLeagueStashTab = GetLeagueStashTab
-exports.GetCurrencyOverview = GetCurrencyOverview
-exports.GetEssenceOverview = GetEssenceOverview
-exports.GetFragmentOverview = GetFragmentOverview
-exports.GetDivCardOverview = GetDivCardOverview
-exports.GetMapOverview = GetMapOverview
-exports.GetUniqueMapOverview = GetUniqueMapOverview
-exports.GetUniqueJewelOverview = GetUniqueJewelOverview
-exports.GetUniqueAccessoryOverview = GetUniqueJewelOverview
-exports.GetUniqueArmourOverview = GetUniqueArmourOverview
-exports.GetUniqueFlaskOverview = GetUniqueFlaskOverview
-exports.DoVersionCheck = DoVersionCheck
+export {
+  DoServerRequest,
+  LoginWithCookie,
+  GetAccountName,
+  GetLeagues,
+  GetCharacters,
+  GetStashTabs,
+  GetLeagueStashTab,
+  GetCurrencyOverview,
+  GetEssenceOverview,
+  GetFragmentOverview,
+  GetDivCardOverview,
+  GetMapOverview,
+  GetUniqueMapOverview,
+  GetUniqueJewelOverview,
+  GetUniqueAccessoryOverview,
+  GetUniqueArmourOverview,
+  GetUniqueFlaskOverview,
+  DoVersionCheck,
+}
 
 // Enums
-exports.ItemRateTypes = {
+export const ItemRateTypes = {
   currency: GetCurrencyOverview,
   essence: GetEssenceOverview,
   fragment: GetFragmentOverview,

@@ -164,6 +164,40 @@ class Item {
   get stackSize () {
     return this.source.stackSize || 1
   }
+
+  get isRelic () {
+    if (this._isRelic != undefined) {
+      return this._isRelic
+    }
+
+    return (this._isRelic = Item.isRelic(this))
+  }
+}
+
+Item.isRelic = function isRelic ({ icon }) {
+  if (!icon) {
+    return false
+  }
+
+  if (icon.indexOf(',,') > -1 && icon.indexOf('/gen/image') > -1) {
+    let ib64s = atob(icon
+      .split(',,')[0]
+      .replace('http://web.poecdn.com/gen/image/', '')
+      .replace('https://web.poecdn.com/gen/image/', '') // just in case
+      .replace(/\//g, ''))
+
+    if (ib64s.indexOf('rlc') > -1) {
+      return true
+    }
+
+    return false
+  }
+
+  if (icon.indexOf('relic=1') > -1) {
+    return true
+  }
+
+  return false
 }
 
 Item.toItem = function ({ source, tab }) {

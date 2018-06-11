@@ -1,8 +1,9 @@
-import Api from '../api'
-import Item from './item'
-import * as Helpers from '../helpers'
-import CacheFile from './cachefile'
-import * as Constants from '../constants'
+import * as Api from '@/classes/api.ipc'
+import * as Helpers from '@/helpers'
+import * as Constants from '@/constants'
+
+import Item from '@/classes/item'
+import CacheFile from '@/classes/cachefile'
 
 class ApiClient {
   constructor (options = {}) {

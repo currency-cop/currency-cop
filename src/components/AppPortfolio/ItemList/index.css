@@ -2,7 +2,8 @@
   border-spacing: 0;
   width: 100%;
   font-size: 13px;
-  border-radius: 0 0 3px 3px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
 }
 
 .portfolio td + td {
@@ -11,8 +12,7 @@
 
 .portfolio td, 
 .portfolio th {
-  border-bottom: 1px solid #2F2F2F;
-  background: #282828;
+  border-bottom: 1px solid #F0f0f0;
   padding: 10px 25px;
 }
 
@@ -37,8 +37,8 @@
 }
 
 .portfolio th {
-  background: #3A3A3A;
-  color: white;
+  background: #F0f0f0;
+  color: #333;
   font-weight: 400;
   cursor: pointer;
 }
@@ -50,10 +50,10 @@
 }
 
 .portfolio th + th {
-  border-left: 1px solid #3A3A3A;
+  border-left: 1px solid #Fff;
 }
 
 .portfolio tr img {
-  max-height: 32px;
+  max-height: 48px;
   width: auto;
 }

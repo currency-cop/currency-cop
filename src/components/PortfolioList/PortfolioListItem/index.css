@@ -6,28 +6,28 @@
   /* border-bottom: 1px solid #202020; */
   font-weight: 500;
   border: 1px solid transparent;
+  background: #f7f7f7;
 }
 
 .portfolio-item:hover {
-  background: #121212;
-  border-radius: 3px;
+  background: #f7f7f7;
   cursor: pointer;
 }
 
 .portfolio-item .info .title {
-  color: #777;
-  font-weight: 400;
+  color: #333;
+  font-weight: 500;
 }
 
 .portfolio-item .info .last-updated {
   font-weight: 400;
-  color: #333;
+  color: #aaa;
   font-size: 12px;
   margin-top: 3px;
 }
 
 .portfolio-item .value {
-  color: #777;
+  color: #000;
   text-align: right;
   font-family: 'Roboto Mono', monospace;
   font-size: 14px;
@@ -35,7 +35,7 @@
 }
 
 .portfolio-item .value .change {
-  color: #333;
+  color: #aaa;
   margin-top: 2px;
 }
 

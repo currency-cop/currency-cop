@@ -1,6 +1,7 @@
 import React, { PropTypes } from 'react'
-import AppSidebarPortfolioListItem from '../AppSidebarPortfolioListItem'
-import styles from './index.css'
+import AppSidebarPortfolioListItem from './PortfolioListItem'
+
+import './index.css'
 
 class AppSidebarPortfolioList extends React.Component {
   render () {

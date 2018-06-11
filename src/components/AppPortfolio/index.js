@@ -43,4 +43,5 @@ class AppPortfolio extends React.Component {
   }
 }
 
-export default AppPortfolio
+import { hot } from 'react-hot-loader'
+export default hot(module)(AppPortfolio)

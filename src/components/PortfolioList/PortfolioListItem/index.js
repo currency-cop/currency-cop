@@ -1,11 +1,15 @@
 import React, { PropTypes } from 'react'
-import styles from './index.css'
+import './index.css'
 
 class AppSidebarPortfolioListItem extends React.Component {
   openPortfolio (portfolioId) {
     return (e) => {
       if (this.props.portfolio.latestReport()) {
         CC.Events.emit('/screen/portfolio', {
+          portfolioId
+        })
+      } else {
+        CC.Events.emit('/screen/portfolio/update', {
           portfolioId
         })
       }

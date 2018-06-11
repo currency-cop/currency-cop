@@ -1,9 +1,12 @@
-import fs from 'fs'
+const fs = window.require('fs')
 
 class DataFile {
-  constructor (type, filename, logger) {
+  constructor (type, filename, logger, defaultObj) {
     this.filename = filename
     this.log = (logger ? logger.topic : CC.Logger.topic)(type)
+    this.wait = 300
+    this.timeout = null
+    this.load(defaultObj || {})
   }
 
   get (key) {
@@ -16,25 +19,47 @@ class DataFile {
     return this
   }
 
-  load (defaults) {
+  load (defaultObj) {
     try {
-      this.log.info(`Loading file from: ${this.filename}`)
+      this.log.launch(`Loading file`, { name: this.filename })
       this.data = JSON.parse(fs.readFileSync(this.filename))
     } catch(error) {
-      this.log.warn(`File could not be loaded: ${error.message}`)
-      this.data = defaults
+      this.log.error(`unable to load file`, { name: this.filename, reason: error.message })
+      this.data = defaultObj
     }
+
+    return this
+  }
+
+  _write () {
+    try {
+      this.log.receive(`Save file request`, { name: this.filename })
+      fs.writeFileSync(this.filename, JSON.stringify(this.data))
+    } catch (error) {
+      this.log.error(`unable to save file`, { name: this.filename, reason: error.message })
+    }
+
     return this
   }
 
   save (data) {
     try {
-      this.log.info(`Saving file: ${this.filename}`)
-      this.data = data
-      fs.writeFileSync(this.filename, JSON.stringify(this.data))
-    } catch (error) {
-      this.log.critical(`Could not save file: ${error.message}`)
+      if (this.timeout) {
+        clearTimeout(this.timeout)
+        this.timeout = null
+      }
+
+      if (!this.timeout) {
+        this.timeout = setTimeout(() => {
+          this._write()
+        }, this.wait)
+      }
+    } catch (e) {
+      this.log.error('???', e)
     }
+
+    this.data = data
+
     return this
   }
 }

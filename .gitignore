@@ -7,3 +7,4 @@ release/
 yarn-error.log
 *.pfx
 *.bat
+.cache/

@@ -1,0 +1,9 @@
+.layout-item.content {
+  grid-area: content;
+}
+
+.layout-item.content {
+  width: 100%;
+  border-radius: 5px 0 0 0;
+  overflow: auto;
+}

@@ -21,4 +21,4 @@ class LoadingScreen extends React.Component {
   }
 }
 
-module.exports = LoadingScreen
+export default LoadingScreen

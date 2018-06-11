@@ -1,9 +1,13 @@
-import { remote } from 'electron'
+// import { remote } from 'electron'
 import React, { PropTypes } from 'react'
 
 import Button from '@/components/Button'
 import { GoToUrl } from '@/helpers'
-import styles from './index.css'
+
+const electron = window.require('electron')
+const remote = electron.remote
+
+import './index.css'
 
 class AppControls extends React.Component {
   componentWillMount () {
@@ -72,4 +76,4 @@ class AppControls extends React.Component {
   }
 }
 
-module.exports = AppControls
+export default AppControls

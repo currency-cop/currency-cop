@@ -2,6 +2,8 @@ import React, { PropTypes } from 'react'
 import AppControls from '../AppControls'
 import AccountActions from '../AccountActions'
 
+import './index.css'
+
 class AppHeader extends React.Component {
   render () {
     return (

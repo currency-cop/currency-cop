@@ -1,0 +1,48 @@
+.layout-item.header {
+  grid-area: header;
+}
+
+.layout-item.header {
+  padding: 0 0 0 15px;
+  height: 30px;
+  line-height: 30px;
+  background-color: #0A0A0B;
+  display: flex;
+  position: relative;
+  z-index: 2;
+  min-width: 360px;
+}
+
+.layout-item.header .header-logo {
+  font-weight: 600;
+  color: #ebebeb;
+  flex: 1;
+  -webkit-app-region: drag;
+}
+
+.layout-item.header .header-logo .header-image {
+  width: 18px;
+  margin-right: 4px;
+  position: relative;
+  top: 2px;
+  display: inline-block;
+}
+
+.layout-item.header .header-logo .header-text {
+  top: -1px;
+  position: relative;
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.layout-item.header .btn {
+  background: none;
+  padding: 0 5px;
+}
+
+.layout-item.header .btn:hover {
+  box-shadow: none;
+  background: rgba(255,255,255,0.1)
+}

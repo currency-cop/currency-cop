@@ -1,12 +1,16 @@
 
+:root {
+  --c-text: #333;
+  --c-text-light: #777;
+  --c-border: #ccc;
+}
+
 .portfolio-header {
-  /* background-image: linear-gradient(to bottom, #1e3c72 0%, #1e3c72 1%, #0D1821 100%); */
-  background: #282828;
-  color: #fff;
+  color: var(--c-text);
   padding: 24px;
-  /* min-height: 200px; */
   border-radius: 3px;
   margin-bottom: 24px;
+  border: 1px solid var(--c-border);
 }
 
 .portfolio-title {
@@ -30,7 +34,7 @@
 
 .portfolio-header h1 i {
   float: right;
-  color: #777;
+  color: var(--c-text-light);
   cursor: pointer;
 }
 

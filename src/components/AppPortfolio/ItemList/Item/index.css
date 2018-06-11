@@ -1,6 +1,6 @@
 .item-quantity,
 .item-name {
-  color: #cacaca;
+  color: #333;
 }
 
 .item-icon {
@@ -19,10 +19,10 @@
 }
 
 .item-price {
-  color: #aaa;
+  color: #888;
 }
 
 .item-total {
-  color: #4CC053;
+  color: #279D17;
   font-family: 'Roboto Mono', monospace;
 }

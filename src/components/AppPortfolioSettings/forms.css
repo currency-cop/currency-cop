@@ -15,17 +15,17 @@
 .form-group input + button {
   padding: 12px 32px !important;
   top: -1px;
-  background: #1E1E1E;
+  background: #CCC;
 }
  
 .form-group input[type="text"],
 .Select-control,
 .Select.has-value .Select-control {
-  background: #3A3A3A;
-  border: 2px solid #3A3A3A;
+  background: #FFF;
+  border: 1px solid #CCC;
   border-radius: 3px;
   padding: 8px 12px;
-  color: white;
+  color: #333;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: 0.6px;
@@ -44,16 +44,16 @@
 .Select-control:hover,
 .Select.is-focused .Select-control,
 .Select.is-focused:not(.is-open) > .Select-control {
-  background: #464646;
-  border: 2px solid #464646;
+  background: #FFF;
+  border: 1px solid #464646;
 }
 
 .form-group input[type="text"]:focus,
 .Select:hover > .Select-control,
 .Select.is-focused > .Select-control {
-  color: #fff;
-  background: #464646;
-  border: 2px solid #464646;
+  color: #000;
+  background: #FFF;
+  border: 1px solid #464646;
 }
 
 .Select-value,
@@ -67,33 +67,38 @@
 
 .Select-input > input {
   outline: none;
-  color: #fff !important;
+  color: #333 !important;
 }
 
 .Select.has-value.Select--single > .Select-control .Select-value .Select-value-label, 
 .Select.has-value.is-pseudo-focused.Select--single > .Select-control .Select-value .Select-value-label {
-  color: #fff !important;
+  color: #333 !important;
 }
 
 .Select-menu-outer,
 .Select-option {
-  background-color: #202020 !important;
+  background-color: transparent !important;
   color: #777777;
 }
 
 .Select-menu-outer {
   border: none !important;
+  background: white !important;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 15px 40px rgba(0,0,0,0.6);
+  overflow: hidden;
+  margin-top: -2px;
 }
 
 .Select-option:hover {
-  color: #ccc !important;
-  background-color: #282828 !important;
+  color: #000 !important;
+  background-color: #EFEFEF !important;
+  border-radius: 0 0 3px 3px;
 }
 
 .Select-option.is-selected {
-  color: white !important;
-  background-color: #202020 !important;
+  color: #000 !important;
+  font-weight: bold;
+  background-color: transparent !important;
 }
 
 .Select--multi .Select-value {
