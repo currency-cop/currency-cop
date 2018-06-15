@@ -8,6 +8,7 @@ import Switch from 'react-flexible-switch'
 
 import Button from '../Button'
 import PrimaryButton from '../PrimaryButton'
+import WarningButton from '../WarningButton'
 
 class AppPortfolioSettings extends React.Component {
   render () {
@@ -42,7 +43,9 @@ class AppPortfolioSettings extends React.Component {
         </div>
 
         <PrimaryButton onClick={this.handleSubmit}>Save</PrimaryButton>
-      </div>
+        <WarningButton onClick={this.handleDelete}>Delete</WarningButton>
+        
+    </div>
     )
   }
 
@@ -65,6 +68,7 @@ class AppPortfolioSettings extends React.Component {
     this.handleTabChange = this.handleTabChange.bind(this)
     this.handleChange = this.handleChange.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
+    this.handleDelete = this.handleDelete.bind(this)
 
     let { portfolio } = this.props
 
@@ -153,6 +157,18 @@ class AppPortfolioSettings extends React.Component {
     }
 
     return this.handleCreate()
+  }
+
+  handleDelete (e) {
+    try {
+      CC.Events.emit('/portfolio/delete', {
+        portfolio: this.state.settings
+      })
+
+      CC.Events.emit('/screen/dashboard')
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   handleCreate () {

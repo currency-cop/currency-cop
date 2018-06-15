@@ -1,0 +1,13 @@
+.btn-warning {
+  color: white;
+  background: rgb(179, 9, 9);
+  margin-left: 30px;
+}
+
+.btn-primary:hover {
+  background: rgb(105, 2, 2);
+}
+
+.btn-primary:active {
+  background: #6863CE;
+}
