@@ -1,11 +1,13 @@
 @import url("https://fonts.googleapis.com/css?family=Roboto+Mono:400,500,700|Roboto:400,500,700");
 
-.direction-up {
-  color: rgba(143, 211, 49, 1.0);
+.direction-up,
+.change.up {
+  color: rgba(143, 211, 49, 1.0) !important;
 }
 
-.direction-down {
-  color: #F13F42
+.direction-down,
+.change.down {
+  color: #F13F42 !important;
 }
 
 /* Grid Areas */

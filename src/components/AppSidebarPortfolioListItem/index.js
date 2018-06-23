@@ -8,6 +8,10 @@ class AppSidebarPortfolioListItem extends React.Component {
         CC.Events.emit('/screen/portfolio', {
           portfolioId
         })
+      } else {
+        CC.Events.emit('/screen/portfolio/update', {
+          portfolioId: this.props.portfolio.id
+        })
       }
     }
   }

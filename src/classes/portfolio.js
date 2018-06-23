@@ -72,68 +72,82 @@ class Portfolio {
     return true
   }
 
+  getItemPrice (item, priceItem) {
+    if (priceItem.fullName !== item.fullName) {
+      return false
+    }
+
+    // Low Confidence Filter
+    console.log(priceItem)
+    if ('count' in priceItem && priceItem.count < 1) {
+      return false
+    }
+
+    // higher order relic check
+    if (Item.isRelic(priceItem) && !item.isRelic) {
+      return false
+    }
+
+    // Price check fallthroughs
+    if (priceItem.links != null) {
+      return priceItem.links === item.links
+    }
+
+    if (priceItem.gemQuality || priceItem.gemLevel) {
+      // Todo: move gem logic to item processing
+      let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, priceItem.gemLevel) * 0.25))
+      let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, priceItem.gemQuality) * 0.2))
+      let isSpecialSupport = item.fullName.indexOf('Enhance Support') > -1 
+        || item.fullName.indexOf('Empower Support') > -1 
+        || item.fullName.indexOf('Enlighten Support') > -1
+
+      if (isSpecialSupport) {
+        levelTolerance = 0;
+      }
+
+      let levelsClose = Math.abs(priceItem.gemLevel - item.level) <= levelTolerance
+      let qualityClose = Math.abs(priceItem.gemQuality - item.quality) <= qualityTolerance
+      return levelsClose && qualityClose
+    }
+
+    if (priceItem.quality && priceItem.level) {
+      return priceItem.quality === item.quality 
+          && priceItem.level === item.level
+    }
+
+    if (priceItem.quality) {
+      return priceItem.quality === item.quality
+    }
+
+    if (priceItem.level) {
+      return priceItem.level === item.level
+    }
+
+    if (priceItem.variant && item.variant) { 
+      // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
+      return priceItem.variant === item.variant
+    }
+
+    return true
+  }
+
   onUpdate () {
     let {tabItems, history, league} = this
-    let tabs = Object.keys(tabItems)
     let prices = CC.Prices[league]
     let cluster = []
 
-    tabs.forEach(tabId => {
+    Object.keys(tabItems).forEach(tabId => {
       let items = decode(tabItems[tabId])
+
 
       items.forEach(item => {
         item = Item.toItem(item)
-  
-        let price = prices.find(v => {
-          if (v.fullName === item.fullName) {
-            // Low Confidence Filter
-            if ('count' in v && v.count < 1) {
-              return false
-            }
 
-            // Relic check
-            if (v.icon.indexOf('relic=1') > -1 && item.icon.indexOf('relic=1') < 0) {
-              return false
-            }
-
-            // Price check fallthroughs
-            if (v.links) {
-              return v.links === item.links
-            } else if (v.gemQuality || v.gemLevel) {
-              // Todo: move gem logic to item processing
-              let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, v.gemLevel) * 0.25))
-              let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, v.gemQuality) * 0.2))
-              let isSpecialSupport = item.fullName.indexOf('Enhance Support') > -1 
-                || item.fullName.indexOf('Empower Support') > -1 
-                || item.fullName.indexOf('Enlighten Support') > -1
-
-              if (isSpecialSupport) {
-                levelTolerance = 0;
-              }
-
-              let levelsClose = Math.abs(v.gemLevel - item.level) <= levelTolerance
-              let qualityClose = Math.abs(v.gemQuality - item.quality) <= qualityTolerance
-              return levelsClose && qualityClose
-            } else if (v.quality && v.level) {
-              return v.quality === item.quality && v.level === item.level
-            } else if (v.quality) {
-              return v.quality === item.quality
-            } else if (v.level) {
-              return v.level === item.level
-            } else if (v.variant && item.variant) { 
-              // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
-              return v.variant === item.variant
-            } else {
-              return true
-            }
-          }
-
-          return false
-        })
-
-        if (price == undefined) {
+        let itemPrice = prices.find(pi => this.getItemPrice(item, pi))
+        if (!itemPrice) {
           return
         }
+
 
         let clusterItem = cluster.find(entry => {
           return entry.item.fullName === item.fullName
@@ -142,24 +156,25 @@ class Portfolio {
         if (!clusterItem || clusterItem.stackSize == null) {
           clusterItem = {}
           clusterItem.item = item
-          clusterItem.price = price
+          clusterItem.price = itemPrice
           clusterItem.stackSize = item.stackSize
-          clusterItem.chaosValue = item.stackSize * price.chaosValue
+          clusterItem.chaosValue = item.stackSize * itemPrice.chaosValue
           clusterItem.children = []
+
           return cluster.push(clusterItem)
         }
 
         if (clusterItem) {
           clusterItem.stackSize += item.stackSize
-          clusterItem.chaosValue += item.stackSize * price.chaosValue
+          clusterItem.chaosValue += item.stackSize * itemPrice.chaosValue
           clusterItem.children.push(item)
         }
       })
     })
 
     let report = {
-      total: cluster.reduce((p, c) => p + c.chaosValue, 0),
       createdAt: Date.now(),
+      total: cluster.reduce((p, c) => p + c.chaosValue, 0),
       items: cluster.sort((a, b) => {
         return b.chaosValue - a.chaosValue
       })

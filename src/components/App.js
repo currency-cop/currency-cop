@@ -71,7 +71,7 @@ class CC {
 
   // Datafiles
   static Config = new DataFile('Config', configFilename, CC.Logger)
-  static Portfolios = new DataFile('Portfolio', portfolioFilename, CC.Logger)
+  static Portfolios = new DataFile('Portfolio', portfolioFilename, CC.Logger, [])
 
   // API
   static Api = new ApiClient({
@@ -187,7 +187,7 @@ class App extends React.Component {
         if (accountSessionId) {
           try {
             await this.handleLogin(accountSessionId, true)
-          } catch (error) {
+          } catch (err) {
             return this.setLoadingMessage(false)
           }
         } else {
@@ -247,17 +247,17 @@ class App extends React.Component {
           })
         }
       }
-    } catch (error) {
-      if (error.message) {
-        this.setState({ error: error.message })
-        this.setLoadingMessage(`🔥 This is fine: ${error.message}`)
-        exception(`App.load`, error, 1)
-        error(`[App] Fatal exception:`, error.message, error.stack)
+    } catch (err) {
+      if (err.message) {
+        this.setState({ error: err.message })
+        this.setLoadingMessage(`🔥 This is fine: ${err.message}`)
+        exception(`App.load`, err, 1)
+        error(`[App] Fatal exception:`, err.message, err.stack)
       } else {
-        this.setState({ error: error })
-        this.setLoadingMessage(`💩 Well shit. Something is wrong: ${error}`)
-        exception(`App.load`, error, 1)
-        error(`[App] Fatal exception:`, error)
+        this.setState({ error: err })
+        this.setLoadingMessage(`💩 Well shit. Something is wrong: ${err}`)
+        exception(`App.load`, err, 1)
+        error(`[App] Fatal exception:`, err)
       }
     }
   }

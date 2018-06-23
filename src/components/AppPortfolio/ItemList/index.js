@@ -74,9 +74,9 @@ class PortfolioItemList extends React.Component {
 
   sortByPrice () {
     this.sortBy('price', (a, b) => {
-      return a.item.chaosValue - b.item.chaosValue
+      return a.price.chaosValue - b.price.chaosValue
     }, (a, b) => {
-      return b.item.chaosValue - a.item.chaosValue
+      return b.price.chaosValue - a.price.chaosValue
     })
   }
 

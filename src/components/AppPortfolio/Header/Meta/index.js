@@ -86,8 +86,11 @@ class HeaderMeta extends React.Component {
   }
 
   getHistoryList () {
-    let list = this.props.history.map(item => item)
+    if (!this.props.history || !this.props.history.length) {
+      return []
+    }
 
+    let list = this.props.history.map(item => item)
     return list.reverse().splice(0, 5).map((item, index) => {
       return {
         index,

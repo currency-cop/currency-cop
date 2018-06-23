@@ -4,8 +4,6 @@ import './index.css'
 import './forms.css'
 
 import Select from 'react-select'
-import Switch from 'react-flexible-switch'
-
 import Button from '../Button'
 import PrimaryButton from '../PrimaryButton'
 
@@ -42,6 +40,11 @@ class AppPortfolioSettings extends React.Component {
         </div>
 
         <PrimaryButton onClick={this.handleSubmit}>Save</PrimaryButton>
+
+
+        <div className="right">
+          <Button onClick={this.handleDelete}>Delete</Button>
+        </div>
       </div>
     )
   }
@@ -63,6 +66,7 @@ class AppPortfolioSettings extends React.Component {
     this.handleNameGenerate = this.handleNameGenerate.bind(this)
     this.handleLeagueChange = this.handleLeagueChange.bind(this)
     this.handleTabChange = this.handleTabChange.bind(this)
+    this.handleDelete = this.handleDelete.bind(this)
     this.handleChange = this.handleChange.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
 
@@ -169,8 +173,6 @@ class AppPortfolioSettings extends React.Component {
 
   handleUpdate () {
     try {
-      console.log(this.state.settings)
-
       CC.Events.emit('/portfolio/update', {
         portfolio: this.state.settings
       })
@@ -178,6 +180,18 @@ class AppPortfolioSettings extends React.Component {
       CC.Events.emit('/screen/portfolio', {
         portfolioId: this.state.settings.id
       })
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  handleDelete () {
+    try {
+      CC.Events.emit('/portfolio/delete', {
+        portfolio: this.state.settings
+      })
+
+      CC.Events.emit('/screen/dashboard')
     } catch (e) {
       console.log(e)
     }
@@ -194,6 +208,8 @@ class AppPortfolioSettings extends React.Component {
 
   getLeagueTabList (league) {
     let tabs = this.props.tabs[league]
+    if (!tabs) return []
+
     return tabs.map((tab, index) => {
       return {
         value: tab.id,
