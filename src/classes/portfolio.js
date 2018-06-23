@@ -8,6 +8,8 @@ import { Base64 } from 'js-base64'
 import Item from '../classes/item'
 import Ago from '../classes/ago'
 
+const HOUR = 1000 * 60 * 60
+
 function encode (obj) {
   return Base64.encode(JSON.stringify(obj))
 }
@@ -46,91 +48,54 @@ class Portfolio {
     })
   }
 
-  update (tab, tabItems) {
-    this.isUpdating = true
+  shouldUpdateTabItems (tabId, hash) {
+    let itemHash = this.tabItems[tabId]
+    if (itemHash == null) {
+      return true
+    }
 
-    const HOUR = 1000 * 60 * 60
-    let tabItemsHash = this.tabItems[tab.value]
-    let currentTabItemsHash = encode(tabItems)
-    if (tabItemsHash && tabItemsHash === currentTabItemsHash) {
+    if (itemHash === hash) {
       let lastUpdated = this.lastUpdatedAt()
-      if (!lastUpdated) {
-        this.isUpdating = false
-        return false
+      if (lastUpdated == null) {
+        return true
       }
 
       if (lastUpdated && (Date.now() - lastUpdated) < HOUR) {
-        this.isUpdating = false
         return false
       }
     }
 
-    this.tabItems[tab.value] = encode(tabItems)
-    this.onUpdate()
-
-    this.isUpdating = false
     return true
   }
 
-  getItemPrice (item, priceItem) {
-    if (priceItem.fullName !== item.fullName) {
-      return false
+  // ran only when a tab is updated
+  update (tab, tabItems) {
+    let tabItemsHash = encode(tabItems)
+    this.isUpdating = this.shouldUpdateTabItems(tab.value, tabItemsHash)
+    if (this.isUpdating) {
+      this.tabItems[tab.value] = tabItemsHash
+      this.onUpdate()
+      return true
     }
 
-    // Low Confidence Filter
-    if ('count' in priceItem && priceItem.count < 1) {
-      return false
-    }
+    return false
+  }
 
-    // higher order relic check
-    if (Item.isRelic(priceItem) && !item.isRelic) {
-      return false
-    }
-
-    // Price check fallthroughs
-    if (priceItem.links != null) {
-      return priceItem.links === item.links
-    }
-
-    if (priceItem.gemQuality || priceItem.gemLevel) {
-      // Todo: move gem logic to item processing
-      let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, priceItem.gemLevel) * 0.25))
-      let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, priceItem.gemQuality) * 0.2))
-      let isSpecialSupport = item.fullName.indexOf('Enhance Support') > -1 
-        || item.fullName.indexOf('Empower Support') > -1 
-        || item.fullName.indexOf('Enlighten Support') > -1
-
-      if (isSpecialSupport) {
-        levelTolerance = 0;
+  // remove old tab item hashes
+  cleanup () {
+    let { tabs, tabItems } = this
+    Object.keys(tabItems).forEach(id => {
+      if (!tabs.find(tab => tab.value === id)) {
+        delete tabItems[id]
       }
-
-      let levelsClose = Math.abs(priceItem.gemLevel - item.level) <= levelTolerance
-      let qualityClose = Math.abs(priceItem.gemQuality - item.quality) <= qualityTolerance
-      return levelsClose && qualityClose
-    }
-
-    if (priceItem.quality && priceItem.level) {
-      return priceItem.quality === item.quality 
-          && priceItem.level === item.level
-    }
-
-    if (priceItem.quality) {
-      return priceItem.quality === item.quality
-    }
-
-    if (priceItem.level) {
-      return priceItem.level === item.level
-    }
-
-    if (priceItem.variant && item.variant) { 
-      // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
-      return priceItem.variant === item.variant
-    }
-
-    return true
+    })
   }
 
   onUpdate () {
+    // Cleanup tab item hashes before updating
+    this.cleanup()
+
+    // Update portfolio items
     let {tabItems, history, league} = this
     let prices = CC.Prices[league]
     let cluster = []
@@ -138,15 +103,13 @@ class Portfolio {
     Object.keys(tabItems).forEach(tabId => {
       let items = decode(tabItems[tabId])
 
-
       items.forEach(item => {
         item = Item.toItem(item)
 
-        let itemPrice = prices.find(pi => this.getItemPrice(item, pi))
+        let itemPrice = prices.find(pi => this.isItemPriceObject(item, pi))
         if (!itemPrice) {
           return
         }
-
 
         let clusterItem = cluster.find(entry => {
           return entry.item.fullName === item.fullName
@@ -184,6 +147,8 @@ class Portfolio {
     while (this.history.length > 24) {
       this.history.shift()
     }
+
+    this.isUpdating = false
   }
 
   latestReport () {
@@ -214,6 +179,65 @@ class Portfolio {
 
   getCurrencyShorthand (currency) {
     return Portfolio.Shorthands[currency || 'Chaos Orb'] || 'C'
+  }
+
+
+  isItemPriceObject (item, priceItem) {
+    if (priceItem.fullName !== item.fullName) {
+      return false
+    }
+
+    // Low Confidence Filter
+    if ('count' in priceItem && priceItem.count < 1) {
+      return false
+    }
+
+    // higher order relic check
+    if (Item.isRelic(priceItem) && !item.isRelic) {
+      return false
+    }
+
+    if (priceItem.gemQuality || priceItem.gemLevel) {
+      // Todo: move gem logic to item processing
+      let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, priceItem.gemLevel) * 0.25))
+      let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, priceItem.gemQuality) * 0.2))
+      let isSpecialSupport = item.fullName.indexOf('Enhance Support') > -1 
+        || item.fullName.indexOf('Empower Support') > -1 
+        || item.fullName.indexOf('Enlighten Support') > -1
+
+      if (isSpecialSupport) {
+        levelTolerance = 0;
+      }
+
+      let levelsClose = Math.abs(priceItem.gemLevel - item.level) <= levelTolerance
+      let qualityClose = Math.abs(priceItem.gemQuality - item.quality) <= qualityTolerance
+      return levelsClose && qualityClose
+    }
+
+    if (priceItem.quality && priceItem.level) {
+      return priceItem.quality === item.quality 
+          && priceItem.level === item.level
+    }
+
+    if (priceItem.quality) {
+      return priceItem.quality === item.quality
+    }
+
+    if (priceItem.level) {
+      return priceItem.level === item.level
+    }
+
+    if (priceItem.variant && item.variant) { 
+      // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
+      return priceItem.variant === item.variant
+    }
+
+    // Price check fallthroughs
+    if (priceItem.links != null) {
+      return priceItem.links === item.links
+    }
+
+    return true
   }
 
   getHoldings (currency) {

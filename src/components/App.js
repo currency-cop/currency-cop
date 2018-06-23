@@ -96,7 +96,7 @@ class CC {
   }
 
   static exception = async (fname, e, fatal) => {
-    await CC.event('exception', `${fname}: ${e.message}`, `${e.filename}: ${e.lineno}`, fatal || 0)
+    await CC.event('exception', `${fname}: ${e.message}`, `${e.stack}`, fatal || 0)
   }
 }
 
@@ -402,14 +402,28 @@ class App extends React.Component {
 
 
   updatePortfolio (settings) {
-    let portfolio = new Portfolio(settings)
+    this.state.portfolios.forEach(portfolio => {
+      if (portfolio.id === settings.id) {
+        this.teardownPortfolioWorkerTasks(portfolio)
+      }
+    })
 
-    this.teardownPortfolioWorkerTasks(portfolio)
+    let portfolio = new Portfolio(settings)
     this.updatePortfolioById(portfolio)
     this.setupPortfolioWorkerTasks(portfolio)
 
-    // Force update
+    // Force clean-up and new report
     portfolio.onUpdate()
+
+    // Update cached tabs
+    let {tabs, league} = portfolio
+    tabs.forEach(tab => {
+      let name = `${league}-${tab.value}`
+      let gtab = CC.Tabs[name]
+      if (gtab) {
+        portfolio.update(tab, gtab)
+      }
+    })
   }
 
 
