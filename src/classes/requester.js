@@ -241,7 +241,7 @@ class Requester {
     if (!this.requests[name]) {
       this.requests[name] = { name, method }
     } else {
-      throw new Error(`Job already exists`)
+      console.warn('Job already exists, ignoring...')
     }
   }
 }

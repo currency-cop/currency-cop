@@ -656,7 +656,10 @@ class App extends React.Component {
 
       if (!portfolio) {
         CC.EventLog.error(`Unable to find portfolio by id: ${ portfolioId }`)
-        CC.exception(`CC.Events.on('/screen/portfolio')`, new Error(`Unable to find portfolio by id: ${ portfolioId }`))
+        CC.exception(
+          `CC.Events.on('/screen/portfolio').from('${this.state.screenAction}')`,
+          new Error(`Unable to find portfolio by id: ${ portfolioId }`)
+        )
         return
       }
 
