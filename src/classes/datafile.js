@@ -4,7 +4,7 @@ class DataFile {
   constructor (type, filename, logger, defaultObj) {
     this.filename = filename
     this.log = (logger ? logger.topic : CC.Logger.topic)(type)
-    this.wait = 300
+    this.wait = 800
     this.timeout = null
     this.load(defaultObj || {})
   }

@@ -78,7 +78,6 @@ class Portfolio {
     }
 
     // Low Confidence Filter
-    console.log(priceItem)
     if ('count' in priceItem && priceItem.count < 1) {
       return false
     }
