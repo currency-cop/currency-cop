@@ -46,6 +46,7 @@ class Item {
 
     const { explicitMods, icon, category } = this.source
 
+    // Maps
     if (category && 'maps' in category) {
       // beachhead maps
       if (this.name === 'The Beachhead') {
@@ -85,6 +86,7 @@ class Item {
       return this._variant = null
     }
 
+    // Abyssal Items
     if (explicitMods && explicitMods.length) {
       if (explicitMods.indexOf('Has 1 Abyssal Socket') > -1) {
         return this._variant = '1 Jewel'
@@ -92,6 +94,24 @@ class Item {
 
       if (explicitMods.indexOf('Has 2 Abyssal Sockets') > -1) {
         return this._variant = '2 Jewels'
+      }
+
+      // Impresence's
+      if (this.name.indexOf('Impresence') > -1) {
+        let variants = [
+          // 0 = modifier, 1 = variant name
+          ['physical damage', 'Physical'],
+          ['lightning damage', 'Lightning'],
+          ['cold damage', 'Cold'],
+          ['fire damage', 'Fire'],
+          ['chaos damage', 'Chaos'],
+        ]
+
+        for (let i = 0; i < variants.length; i++) {
+          if (this.hasExplicitModWith(variants[i][0])) {
+            return this._variant = variants[i][1]
+          }
+        }
       }
     }
 
@@ -172,6 +192,20 @@ class Item {
 
     return (this._isRelic = Item.isRelic(this))
   }
+
+  hasExplicitModWith (text) {
+    let {explicitMods} = this.source
+    if (explicitMods.length < 1) return false
+
+    text = text.toLowerCase()
+    for (let i = 0; i < explicitMods.length; i++) {
+      if (explicitMods[i].toLowerCase().indexOf(text) > -1) {
+        return true
+      }
+    }
+
+    return false
+  }
 }
 
 Item.isRelic = function isRelic ({ icon }) {
@@ -199,7 +233,6 @@ Item.isRelic = function isRelic ({ icon }) {
 
   return false
 }
-
 
 Item.toItem = function ({ source, tab }) {
   return new Item({
