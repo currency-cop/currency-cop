@@ -104,11 +104,14 @@ function GetStashTabs (cookie, options) {
   options.tabIndex = 0
 
   return GetLeagueStashTab(cookie, options).then(response => {
+    if (response.status === 429)
+      return response
+
     if (response.status === 404) 
       return []
 
     if (response.status === 403)
-      throw new Error({ status: 403 })
+      return response
 
     if (!response.data || !response.data.tabs)
       return []

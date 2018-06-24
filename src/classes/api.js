@@ -235,12 +235,21 @@ class ApiClient {
 
     let items = []
 
-    if (apiResult.status === 404 || apiResult.status === 429) 
+    // Rate limited, let's do a backoff
+    if (apiResult.status === 429) {
+      CC.checkRateLimitWindows(apiResult)
+      throw ({ status: 429 })
+    }
+
+    // Not found
+    if (apiResult.status === 404) 
       return items
 
+    // Unauthorized
     if (apiResult.status === 403)
-      throw new Error({ status: 403 })
+      throw ({ status: 403 })
 
+    // Missing Data
     if (!apiResult.data || !apiResult.data.items)
       return items
 
@@ -256,17 +265,33 @@ class ApiClient {
     })
   }
 
-  async getTabsList ({ league }) {
+  async getTabsList ({ league, skipCache }) {
     let cacheName = `${this.accountName}-${league}-tabs`
-    let cacheResult = this.cache.get(cacheName)
-    if (cacheResult) {
-      return cacheResult
+    if (!skipCache) {
+      let cacheResult = this.cache.get(cacheName)
+      if (cacheResult) {
+        return cacheResult
+      }
     }
 
     let apiResult = await Api.GetStashTabs(this.accountSessionId, {
       accountName: this.accountName,
       league
     })
+
+    // Rate limited, let's do a backoff
+    if (apiResult.status === 429) {
+      CC.checkRateLimitWindows(apiResult)
+      throw ({ status: 429 })
+    }
+
+    // Not found...
+    if (apiResult.status === 404) 
+      return {}
+
+    // Unauthorized
+    if (apiResult.status === 403)
+      throw ({ status: 403 })
 
     this.cache.set(cacheName, apiResult, 60 * 15)
     this.cache.save()

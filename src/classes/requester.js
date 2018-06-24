@@ -63,10 +63,17 @@ class Requester {
         return
       }
 
+      // Ignore request when network has outage, reset queue timer for next interval
+      if (!navigator.onLine) {
+        clearTimeout(this.queueTimer)
+        this.queueTimer = setTimeout(thread.bind(this), reqWindow.interval)
+        return
+      }
+
       let requests = Object.keys(this.requests).length
       let threshold = this.lastCalled + reqWindow.interval
       let now = Date.now()
-      
+
       // Ignore request when no requests
       if (!requests) {
         clearTimeout(this.queueTimer)
@@ -117,17 +124,40 @@ class Requester {
         }
 
         // console.log('firing request', reqWindow.maxRequestsPerInterval, reqWindow.interval)
-        let response = await request.method()
-        this.cache[request.name] = {
-          response,
-          createdAt: Date.now()
-        }
+        try {
+          let response = await request.method()
+          this.cache[request.name] = {
+            response,
+            createdAt: Date.now()
+          }
 
-        this.requestsMade++
-        this.fire({
-          name: request.name,
-          response
-        })
+          this.requestsMade++
+          this.fire({
+            name: request.name,
+            response
+          })
+        } catch (e) {
+          if (e && e.status === 403) {
+            CC.exception(`CC.requester.thread(403)`, new Error(request.name))
+          }
+
+          if (e && e.status === 429) {
+            clearTimeout(this.queueTimer)
+            this.queueTimer = setTimeout(thread.bind(this), this.rateLimit.timeoutDuration)
+            return
+          }
+
+          // Unknown Error Occurred, Retry on next interval
+          if (e && e.status) {
+            CC.exception(`CC.requester.thread(${e.status})`, e)
+          } else if (e) {
+            CC.exception(`CC.requester.thread()`, e)
+          }
+
+          clearTimeout(this.queueTimer)
+          this.queueTimer = setTimeout(thread.bind(this), reqWindow.interval)
+          return
+        }
       }
       
       // Finish thread
@@ -143,7 +173,8 @@ class Requester {
 
   // Configuration
   setRateLimitByString (str) {
-    let windowStr = str.split(',')[0]
+    let windows = str.split(',')
+    let windowStr = windows[0]
     let options = windowStr.split(':')
     this.setRateLimit(options[1], options[0], options[2])
   }
@@ -152,13 +183,13 @@ class Requester {
     this.rateLimit = {
       interval: parseInt(interval, 10) * 1000,
       maxRequestsPerInterval: parseInt(maxRequestsPerInterval, 10),
-      timeoutDuration: parseInt(timeoutDuration, 10)
+      timeoutDuration: parseInt(timeoutDuration, 10) * 1000
     }
 
     this.rateLimitEvenlySpaced = {
       interval: this.rateLimit.interval / this.rateLimit.maxRequestsPerInterval,
       maxRequestsPerInterval: 1,
-      timeoutDuration
+      timeoutDuration: parseInt(timeoutDuration, 10) * 1000
     }
   }
 

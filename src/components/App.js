@@ -98,6 +98,53 @@ class CC {
   static exception = async (fname, e, fatal) => {
     await CC.event('exception', `${fname}: ${e.message}`, `${e.stack}`, fatal || 0)
   }
+
+  static checkRateLimitWindows (response) {
+    if (CC.isRateLimited) {
+      return true
+    }
+
+    // handle status checks, and bad requests
+    if (!response || !response.headers) {
+      return false
+    }
+
+    let string = response.headers['x-rate-limit-account-state']
+    if (!string) {
+      return false
+    }
+
+    let period = 0
+    let windows = string.split(',')
+    let smallWindow = windows[0]
+    let largeWindow = windows[1]
+
+    if (smallWindow) {
+      let limits = smallWindow.split(':')
+      if (limits[2] !== "0") {
+        period = limits[2]
+      }
+    }
+
+    if (largeWindow) {
+      let limits = largeWindow.split(':')
+      if (limits[2] !== "0") {
+        period = limits[2]
+      }
+    }
+
+    if (period) {
+      CC.isRateLimited = true
+      CC.rateLimitPeriod = parseInt(period, 10)
+      CC.rateLimitTimer = setTimeout(function () {
+        CC.isRateLimited = false
+        CC.rateLimitPeriod = 0
+        CC.rateLimitTimer = null
+      }, CC.rateLimitPeriod * 1000)
+    }
+
+    return true
+  }
 }
 
 // Make CC Class a Global
@@ -206,12 +253,35 @@ class App extends React.Component {
       let leagues = await CC.Api.getLeagues()
       await this.setState({ leagues })
 
+      // Check rate-limiting
+      try {
+        await CC.Api.getTabsList({ league: leagues[0].id, skipCache: true })
+      } catch (_) {}
+
+      if (CC.checkRateLimitWindows()) {
+        let secondsLeft = CC.rateLimitPeriod + 0
+        let interval = setInterval(() => {
+          this.setLoadingMessage(`GGG has rate limited your account for ${secondsLeft} seconds`)
+          secondsLeft -= 1
+        }, 1000)
+
+        return setTimeout(() => {
+          clearInterval(interval)
+          this.setLoadingMessage(`Rate limit period is over... Restarting.`)
+          window.location.reload()
+        }, CC.rateLimitPeriod * 1000)
+      }
+
       this.setLoadingMessage('Initialize Workers')
       await this.setupWorkers()
 
-      this.setLoadingMessage('Gathering Prices & Tabs')
-      await this.getPricesForEachLeague()
+      this.setLoadingMessage('Gathering Tabs')
       await this.getTabsForEachLeague()
+
+      this.setLoadingMessage('Gathering Prices')
+      await this.getPricesForEachLeague()
+
+      this.setLoadingMessage('Start Tab Jobs')
       await this.setupTabsJobs()
 
       this.setLoadingMessage('Loading Portfolios')
@@ -254,10 +324,11 @@ class App extends React.Component {
         exception(`App.load`, err, 1)
         error(`[App] Fatal exception:`, err.message, err.stack)
       } else {
+        err = JSON.stringify(err)
         this.setState({ error: err })
         this.setLoadingMessage(`💩 Well shit. Something is wrong: ${err}`)
         exception(`App.load`, err, 1)
-        error(`[App] Fatal exception:`, err)
+        error(`[App] Fatal exception:`, new Error(err))
       }
     }
   }
@@ -476,7 +547,7 @@ class App extends React.Component {
         this.handleTabsList(league.id, tabs)
       } catch (e) {
         CC.ApiLog.error(`Failed to fetch ${league.id} tabs - ${e.message}`)
-        CC.exception(`App.getTabsForEachLeague`, error, 1)
+        CC.exception(`App.getTabsForEachLeague`, e, 1)
       }
     }
   }
@@ -522,7 +593,7 @@ class App extends React.Component {
 
     // Setup tab worker (fetches individual tabs)
     tab.evenlySpaced = true
-    tab.setRateLimitByString('39:60:60')
+    tab.setRateLimitByString('35:60:60')
     tab.setCacheExpiry(240)
     tab.start()
 
@@ -561,7 +632,7 @@ class App extends React.Component {
     let name = `${league}-${tab.value}`
 
     let tabs = this.state.tabs[league]
-    if (!tabs) {
+    if (!tabs || !tabs.length) {
       return false
     }
     
