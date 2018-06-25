@@ -3,7 +3,6 @@ import * as Constants from '../constants'
 import Logger from '../classes/logger'
 import ApiClient from '../classes/api'
 import DataFile from '../classes/datafile'
-import Ago from '../classes/ago'
 import pkg from '../../package.json'
 import Requester from '../classes/requester'
 import Portfolio from '../classes/portfolio'
@@ -45,7 +44,6 @@ class CC {
 
   static Constants = Constants
   static DataFile = DataFile
-  static Ago = Ago
   static Requester = Requester
 
   static Tabs = {}
