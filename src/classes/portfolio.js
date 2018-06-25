@@ -4,9 +4,9 @@ import {
   getPercentageChange
 } from '../helpers'
 
+import moment from 'moment-shortformat'
 import { Base64 } from 'js-base64'
 import Item from '../classes/item'
-import Ago from '../classes/ago'
 
 const HOUR = 1000 * 60 * 60
 
@@ -40,11 +40,37 @@ class Portfolio {
     this.isUpdating = false
     this.isOld = false
 
-    // Convert history elements to classes
-    this.history.forEach(record => {
-      record.items.forEach(entry => {
-        entry.item = Item.toItem(entry.item)
-      })
+    this.migrate()
+  }
+
+  migrate () {
+    this.history = this.history.map(record => {
+      let firstItem = record.items[0]
+
+      if (typeof firstItem === 'object' && !Array.isArray(firstItem)) {
+        record.items = record.items.map((v, index) => {
+          v.item = Item.toItem(v.item)
+          return this.convertReportItemObjectToArray(v)
+        })
+      }
+
+      if (!record.hash) {
+        record.hash = encode({
+          total: record.total,
+          items: record.items.map(v => [ v[1], v[5] ])
+        })
+      }
+
+      return record
+    })
+  }
+
+  // remove old tab item hashes
+  cleanup () {
+    let { tabs, tabItems } = this
+    Object.keys(tabItems).forEach(id => {
+      let tab = tabs.find(tab => tab.value === id)
+      if (!tab) delete tabItems[id]
     })
   }
 
@@ -71,24 +97,15 @@ class Portfolio {
   // ran only when a tab is updated
   update (tab, tabItems) {
     let tabItemsHash = encode(tabItems)
+
+    this.lastChecked = Date.now()
     this.isUpdating = this.shouldUpdateTabItems(tab.value, tabItemsHash)
     if (this.isUpdating) {
       this.tabItems[tab.value] = tabItemsHash
-      this.onUpdate()
-      return true
+      return this.onUpdate()
     }
 
     return false
-  }
-
-  // remove old tab item hashes
-  cleanup () {
-    let { tabs, tabItems } = this
-    Object.keys(tabItems).forEach(id => {
-      if (!tabs.find(tab => tab.value === id)) {
-        delete tabItems[id]
-      }
-    })
   }
 
   onUpdate () {
@@ -97,6 +114,7 @@ class Portfolio {
 
     // Update portfolio items
     let {tabItems, history, league} = this
+    let previous = this.latestReport()
     let prices = CC.Prices[league]
     let cluster = []
 
@@ -111,44 +129,86 @@ class Portfolio {
           return
         }
 
-        let clusterItem = cluster.find(entry => {
-          return entry.item.fullName === item.fullName
-        })
+        let clusterItemIndex = cluster.findIndex(v => 
+          v[1] === item.fullName && 
+          v[2] === item.variant && 
+          v[6] === item.links
+        )
 
-        if (!clusterItem || clusterItem.stackSize == null) {
-          clusterItem = {}
-          clusterItem.item = item
-          clusterItem.price = itemPrice
-          clusterItem.stackSize = item.stackSize
-          clusterItem.chaosValue = item.stackSize * itemPrice.chaosValue
-          clusterItem.children = []
-
-          return cluster.push(clusterItem)
+        if (clusterItemIndex < 0) {
+          return cluster.push(this.buildReportItem(item, itemPrice))
         }
 
-        if (clusterItem) {
-          clusterItem.stackSize += item.stackSize
-          clusterItem.chaosValue += item.stackSize * itemPrice.chaosValue
-          clusterItem.children.push(item)
-        }
+        let clusterItem = cluster[clusterItemIndex]
+        clusterItem[3] += item.stackSize
+        clusterItem[5] += item.stackSize * itemPrice.chaosValue
+        clusterItem[clusterItem.length - 1].push([
+          [item.stackSize, [item.source.inventoryId, item.source.w, item.source.x, item.source.y]]
+        ])
       })
     })
 
     let report = {
       createdAt: Date.now(),
-      total: cluster.reduce((p, c) => p + c.chaosValue, 0),
-      items: cluster.sort((a, b) => {
-        return b.chaosValue - a.chaosValue
-      })
+      total: cluster.reduce((p, c) => p + c[5], 0),
+      items: cluster.sort((a, b) =>  b[5] - a[5])
     }
 
-    this.history.push(report)
+    report.hash = encode({
+      total: report.total,
+      items: report.items.map(v => [ v[1], v[5] ])
+    })
 
-    while (this.history.length > 24) {
-      this.history.shift()
+    let pushReport = true
+
+    if (previous && previous.hash === report.hash) {
+      pushReport = false
+    }
+
+    if (pushReport) {
+      this.history.push(report)
+    }
+
+    if (previous) {
+      while (this.history.length > 24) {
+        this.history.shift()
+      }
     }
 
     this.isUpdating = false
+
+    return pushReport
+  }
+
+  buildReportItem (item, itemPrice) {
+    return [
+      itemPrice.icon || item.icon,
+      item.fullName,
+      item.variant,
+      item.stackSize,
+      itemPrice.chaosValue,
+      item.stackSize * itemPrice.chaosValue,
+      item.links,
+      itemPrice.gemQuality,
+      itemPrice.gemLevel,
+      [ this.buildReportItemChild(item) ]
+    ]
+  }
+
+  buildReportItemChild (item) {
+    return [item.stackSize, [item.source.inventoryId, item.source.w, item.source.x, item.source.y]]
+  }
+
+  convertReportItemObjectToArray (v) {
+    let reportItem = this.buildReportItem(v.item, v.price)
+
+    reportItem[3] = v.stackSize
+    reportItem[5] = v.chaosValue
+
+    let children = reportItem[reportItem.length - 1]
+    v.children.forEach(cv => children.push(this.buildReportItemChild(cv)))
+
+    return reportItem
   }
 
   latestReport () {
@@ -161,8 +221,15 @@ class Portfolio {
   }
 
   getLastUpdateTime () {
+    if (this.isUpdating) {
+      return 'updating...'
+    }
+
     let lastUpdatedAt = this.lastUpdatedAt()
-    return lastUpdatedAt ? Ago(lastUpdatedAt) : 'syncing'
+
+    return lastUpdatedAt 
+      ? moment(lastUpdatedAt).short() 
+      : 'building...'
   }
 
   getCurrencyRate (currency) {

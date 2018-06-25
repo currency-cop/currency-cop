@@ -97,7 +97,7 @@ class Item {
       }
 
       // Impresence's
-      if (this.name.indexOf('Impresence') > -1) {
+      if (this.fullName.indexOf('Impresence') > -1) {
         let variants = [
           // 0 = modifier, 1 = variant name
           ['physical damage', 'Physical'],

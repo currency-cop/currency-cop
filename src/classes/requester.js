@@ -227,10 +227,20 @@ class Requester {
     delete this.listeners[id]
   }
 
+  offByRequestName (name) {
+    Object.keys(this.listeners).forEach(id => {
+      if (name === this.listeners[id].name) {
+        this.off(id)
+      }
+    })
+  }
+
   fire (o) {
     let now = Date.now()
+
     Object.keys(this.listeners).forEach(id => {
       let listener = this.listeners[id]
+
       if (o.name === listener.name) {
         if (!listener.interval || !listener.lastCalled) {
           listener.callable(o.response)
@@ -254,6 +264,7 @@ class Requester {
   // Modifying
   remove (name) {
     delete this.requests[name]
+    this.offByRequestName(name)
   }
 
   add ({ name, method }) {

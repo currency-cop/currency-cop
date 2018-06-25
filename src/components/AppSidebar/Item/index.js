@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react'
 import styles from './index.css'
 
-class AppSidebarPortfolioListItem extends React.Component {
+class PortfolioItem extends React.Component {
   openPortfolio (portfolioId) {
     return (e) => {
       if (this.props.portfolio.latestReport()) {
@@ -75,4 +75,4 @@ class AppSidebarPortfolioListItem extends React.Component {
   }
 }
 
-export default AppSidebarPortfolioListItem
+export default PortfolioItem

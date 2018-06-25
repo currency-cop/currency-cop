@@ -81,12 +81,14 @@ class CC {
 
   // Analytics Helpers
   static screen = async (screenName) => {
+    if (CC.isOffline) return
     await CC.Analytics.send('screenview', {
       cd: screenName
     }, CC.cid)
   }
 
   static event = async (type, action, label, value) => {
+    if (CC.isOffline) return
     await CC.Analytics.send('event', {
       ec: type,
       ea: action,
@@ -96,6 +98,7 @@ class CC {
   }
 
   static exception = async (fname, e, fatal) => {
+    if (CC.isOffline) return
     await CC.event('exception', `${fname}: ${e.message}`, `${e.stack}`, fatal || 0)
   }
 
@@ -282,7 +285,7 @@ class App extends React.Component {
       await this.getPricesForEachLeague()
 
       this.setLoadingMessage('Start Tab Jobs')
-      await this.setupTabsJobs()
+      await this.setupTabsForEachLeagueJobs()
 
       this.setLoadingMessage('Loading Portfolios')
       let portfolios = await CC.Portfolios.load([])
@@ -307,16 +310,10 @@ class App extends React.Component {
       }, 500)
 
       // Check Application Version
-      let versionCheck = await DoVersionCheck()
-      if (versionCheck && versionCheck.data) {
-        let latestVersion = versionCheck.data[0]
-        if (latestVersion.name !== CC.AppVersion) {
-          this.setState({
-            upToDate: false,
-            newVersion: latestVersion
-          })
-        }
-      }
+      await this.doVersionCheck()
+
+      // Do version check every 45 minutes
+      setInterval(() => this.doVersionCheck(), 45 * (60 * 1000))
     } catch (err) {
       if (err.message) {
         this.setState({ error: err.message })
@@ -334,24 +331,9 @@ class App extends React.Component {
   }
 
 
-  /*
-   * MISC
+  /**
+   * AUTH
    */
-
-
-  clearConfig () {
-    CC.Config.save({})
-    this.setState({
-      isLoggedIn: false
-    })
-  }
-
-
-  setLoadingMessage (message) {
-    return this.setState({
-      isLoading: message
-    })
-  }
 
 
   async handleLogin (sessionId, skipReload) {
@@ -384,9 +366,84 @@ class App extends React.Component {
 
 
   /*
+   * MISC
+   */
+
+  
+  doOfflineCheck () {
+    if (CC.isOffline) {
+      return true
+    }
+
+    if (window.navigator.onLine) {
+      return false
+    }
+
+    let secondsLeft = 10
+    let interval = setInterval(() => {
+      this.setLoadingMessage(`No internet connection... trying again in ${secondsLeft} seconds.`)
+      secondsLeft -= 1
+    }, 1000)
+
+    CC.isOffline = setTimeout(() => {
+      console.log('setting timeout...')
+      clearInterval(interval)
+      window.location.reload()
+    }, secondsLeft * 1000)
+
+    return true
+  }
+
+  async doVersionCheck () {
+    if (CC.isOffline) {
+      return
+    }
+
+    let versionCheck = await DoVersionCheck()
+    if (versionCheck && versionCheck.data) {
+      let latestVersion = versionCheck.data[0]
+      if (latestVersion.name !== CC.AppVersion) {
+        this.setState({
+          upToDate: false,
+          newVersion: latestVersion
+        })
+      }
+    }
+  }
+
+
+  clearConfig () {
+    CC.Config.save({})
+    this.setState({
+      isLoggedIn: false
+    })
+  }
+
+
+  setLoadingMessage (message) {
+    return this.setState({
+      isLoading: message
+    })
+  }
+
+
+  /*
    * PORTFOLIOS
    *
    */
+
+
+  onTabJobCallback (tab, portfolio) {
+    return (items) => {
+      let {portfolios} = this.state
+      let index = portfolios.indexOf(portfolio)
+      let updated = portfolio.update(tab, items)
+      if (updated) {
+        portfolios[index] = portfolio
+        this.savePortfolios(this.state.portfolios)
+      }
+    }
+  }
 
 
   setupPortfolios () {
@@ -396,24 +453,21 @@ class App extends React.Component {
 
     let {portfolios} = this.state
     for (const portfolio of portfolios) {
-      this.setupPortfolioWorkerTasks(portfolio)
+      this.setupPortfolioTabListeners(portfolio)
     }
+
+    return this.savePortfolios(portfolios)
   }
 
 
-  setupPortfolioWorkerTasks (portfolio) {
+  setupPortfolioTabListeners (portfolio) {
     let {tabs} = portfolio
     let {league} = portfolio
     let {timeout} = portfolio
-    let {portfolios} = this.state
 
     for (const tab of tabs) {
-      let listenerId = this.setupTabJob(league, tab, items => {
-        let updated = portfolio.update(tab, items)
-        if (updated) {
-          this.updatePortfolios(portfolios)
-        }
-      }, timeout)
+      let callback = this.onTabJobCallback(tab, portfolio)
+      let listenerId = this.setupTabJob(league, tab, callback, timeout)
 
       if (listenerId !== false) {
         portfolio.listeners.push(['tab', listenerId])
@@ -426,7 +480,7 @@ class App extends React.Component {
   }
 
 
-  teardownPortfolioWorkerTasks (portfolio) {
+  removePortfolioTabListeners (portfolio) {
     let workers = this.state.workers
     let {listeners} = portfolio
 
@@ -450,72 +504,74 @@ class App extends React.Component {
   }
 
 
-  updatePortfolioById (portfolio) {
-    let {portfolios} = this.state
-
-    portfolios.forEach((p, i) => {
-      if (p.id === portfolio.id) {
-        portfolios[i] = portfolio
-      }
-    })
-
-    return this.updatePortfolios(portfolios)
-  }
-
-
   createPortfolio (settings) {
     let { portfolios } = this.state
     let portfolio = new Portfolio(settings)
+    this.setupPortfolioTabListeners(portfolio)
     portfolios.push(portfolio)
-    this.setupPortfolioWorkerTasks(portfolio)
-    return this.updatePortfolios(portfolios)
+    return this.savePortfolios(portfolios)
   }
 
 
   updatePortfolio (settings) {
-    this.state.portfolios.forEach(portfolio => {
-      if (portfolio.id === settings.id) {
-        this.teardownPortfolioWorkerTasks(portfolio)
-      }
-    })
-
+    let {portfolios} = this.state
+    let oldPortfolio = portfolios.find(p => p.id === settings.id)
+    let oldPortfolioIndex = portfolios.indexOf(oldPortfolio)
     let portfolio = new Portfolio(settings)
-    this.updatePortfolioById(portfolio)
-    this.setupPortfolioWorkerTasks(portfolio)
 
-    // Force clean-up and new report
-    portfolio.onUpdate()
+    this.removePortfolioTabListeners(oldPortfolio)
 
-    // Update cached tabs
-    let {tabs, league} = portfolio
-    tabs.forEach(tab => {
+    if (!portfolio.paused) {
+      this.setupPortfolioTabListeners(portfolio)
+    }
+
+    portfolios[oldPortfolioIndex] = portfolio
+
+    return this.savePortfolios(portfolios)
+      .then(() => this.manageTabJobs())
+      .then(() => portfolio.onUpdate())
+      .then(() => this.refreshPortfolioTabs(portfolio))
+  }
+
+  
+  refreshPortfolioTabs (portfolio) {
+    let { tabs, league } = portfolio
+    let { portfolios } = this.state
+    let index = portfolios.indexOf(portfolio)
+    let updated = false
+
+    tabs.forEach((tab) => {
       let name = `${league}-${tab.value}`
       let gtab = CC.Tabs[name]
       if (gtab) {
-        portfolio.update(tab, gtab)
+        updated = portfolio.update(tab, gtab)
       }
     })
+
+    if (updated) {
+      portfolios[index] = portfolio
+      this.savePortfolios(portfolios)
+    }
   }
 
 
   deletePortfolio (portfolio) {
-    let { portfolios } = this.state
+    let {portfolios} = this.state
+    let index = portfolios.indexOf(portfolio)
+
+    this.removePortfolioTabListeners(portfolio)
+    portfolios.splice(index, 1)
   
-    portfolios.forEach(function (item, index, object) {
-      if (item.id === portfolio.id) {
-        object.splice(index, 1);
-      }
-    })
-  
-    return this.updatePortfolios(portfolios)
+    return this.savePortfolios(portfolios)
+      .then(() => this.manageTabJobs())
   }
 
 
-  updatePortfolios (portfolios) {
+  savePortfolios (portfolios) {
     CC.Portfolios.save(portfolios)
-    return this.setState({
+    return new Promise(res => this.setState({
       portfolios
-    })
+    }, res))
   }
 
   /*
@@ -607,7 +663,27 @@ class App extends React.Component {
   }
 
 
-  setupTabsJobs () {
+  setupPriceJob (league, callable, timeout) {
+    let worker = this.state.workers.prices
+    let name = `${league}-prices`
+    if (!worker.has(name)) {
+      worker.add({
+        name,
+        method: () => {
+          return Promise.all(Object.keys(ItemRateTypes).map(type => {
+            return CC.Api.getItemRates(type, league)
+          }))
+        }
+      })
+
+      worker.on(name, prices => {
+        CC.Prices[league] = [].concat.apply([], prices)
+      }, 300)
+    }
+  }
+
+
+  setupTabsForEachLeagueJobs () {
     let worker = this.state.workers.tabs
 
     for (const league in this.state.tabs) {
@@ -630,15 +706,14 @@ class App extends React.Component {
   setupTabJob (league, tab, callable, timeout) {
     let worker = this.state.workers.tab
     let name = `${league}-${tab.value}`
-
     let tabs = this.state.tabs[league]
     if (!tabs || !tabs.length) {
       return false
     }
-    
-    // Find tab
-    tab = tabs.find(t => t.id === tab.value)
+
     if (!worker.has(name)) {
+      tab = tabs.find(t => t.id === tab.value)
+
       worker.add({
         name,
         method: () => {
@@ -660,23 +735,52 @@ class App extends React.Component {
   }
 
 
-  setupPriceJob (league, callable, timeout) {
-    let worker = this.state.workers.prices
-    let name = `${league}-prices`
-    if (!worker.has(name)) {
-      worker.add({
-        name,
-        method: () => {
-          return Promise.all(Object.keys(ItemRateTypes).map(type => {
-            return CC.Api.getItemRates(type, league)
-          }))
-        }
+  manageTabJobs () {
+    // Timer already running?
+    if (CC.manageTabJobTimer) return
+
+    // Tabs not fetched yet, move update to later time...
+    let {tabs} = this.state
+    if (!tabs) {
+      CC.manageTabJobTimer = true
+      return setTimeout(() => {
+        CC.manageTabJobTimer = false
+        this.manageTabJobs()
+      }, 5000)
+    }
+
+    let worker = this.state.workers.tab
+    let {portfolios, leagues} = this.state
+    let workerTabJobs = Object.keys(worker.requests)
+    let portfolioTabJobs = []
+
+    portfolios
+      .filter(p => !p.paused)
+      .forEach(portfolio => {
+        portfolio.tabs.forEach(({ value: id }) => {
+          portfolioTabJobs.push([`${portfolio.league}-${id}`, portfolio])
+        })
       })
 
-      worker.on(name, prices => {
-        CC.Prices[league] = [].concat.apply([], prices)
-      }, 300)
-    }
+    let jobList = portfolioTabJobs.map(job => job[0])
+    let uniqueJobList = [...new Set(jobList)]
+
+    workerTabJobs.forEach(job => {
+      let jobIndex = uniqueJobList.indexOf(job)
+      if (jobIndex < 0) {
+        worker.remove(job)
+      }
+    })
+
+    portfolioTabJobs.forEach(([job, portfolio]) => {
+      let workerJobIndex = workerTabJobs.indexOf(job)
+      if (workerJobIndex < 0) {
+        console.log('found missing tab job', job)
+        this.setupPortfolioTabListeners(portfolio)
+      }
+    })
+
+    return this.savePortfolios(portfolios)
   }
 
 
@@ -827,6 +931,10 @@ class App extends React.Component {
       }, 5000)
     })
 
+    // Is network available?
+    if (this.doOfflineCheck()) {
+      return
+    }
 
     // Begin fetching application data
     return this.load()
@@ -852,16 +960,17 @@ class App extends React.Component {
   render() {
     let {screen} = CC
 
-    if (!CC.Api.accountSessionId && !CC.Config.get(CC.Constants.CONFIG_COOKIE)) {
-      screen('/screen/login')
+    if (this.doOfflineCheck()) {
+      screen('/screen/offline')
       return (
         <div className="app-viewport">
           <AppHeader 
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate}
           />
-          <LoginScreen 
-            onLogin={this.handleLogin.bind(this)} 
+          <LoadingScreen 
+            message={this.state.isLoading}
+            error={this.state.error}
           />
         </div>
       )
@@ -878,6 +987,21 @@ class App extends React.Component {
           <LoadingScreen 
             message={this.state.isLoading}
             error={this.state.error}
+          />
+        </div>
+      )
+    }
+
+    if (!CC.Api.accountSessionId && !CC.Config.get(CC.Constants.CONFIG_COOKIE)) {
+      screen('/screen/login')
+      return (
+        <div className="app-viewport">
+          <AppHeader 
+            newVersion={this.state.newVersion}
+            upToDate={this.state.upToDate}
+          />
+          <LoginScreen 
+            onLogin={this.handleLogin.bind(this)} 
           />
         </div>
       )

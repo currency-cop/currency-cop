@@ -1,8 +1,8 @@
 import React, { PropTypes } from 'react'
-import AppSidebarPortfolioListItem from '../AppSidebarPortfolioListItem'
+import PortfolioItem from '../Item'
 import styles from './index.css'
 
-class AppSidebarPortfolioList extends React.Component {
+class PortfolioList extends React.Component {
   render () {
     return (
       <ul className="portfolio-list">
@@ -15,7 +15,7 @@ class AppSidebarPortfolioList extends React.Component {
     return this.props.portfolios.map((portfolio, index) => {
       return (
         <li key={ portfolio.name }>
-          <AppSidebarPortfolioListItem
+          <PortfolioItem
             index={index}
             viewing={this.props.portfolioId}
             portfolio={portfolio} />
@@ -25,4 +25,4 @@ class AppSidebarPortfolioList extends React.Component {
   }
 }
 
-export default AppSidebarPortfolioList
+export default PortfolioList

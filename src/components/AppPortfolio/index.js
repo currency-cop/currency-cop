@@ -13,6 +13,7 @@ class AppPortfolio extends React.Component {
           league={this.props.portfolio.league}
           name={this.props.portfolio.name}
           data={this.getHistory()}
+          lastChecked={this.props.portfolio.lastChecked}
           lastUpdated={this.props.portfolio.getLastUpdateTime()}
           holdings={this.props.portfolio.getHoldings()}
           change={this.props.portfolio.getChange()} />
@@ -31,7 +32,7 @@ class AppPortfolio extends React.Component {
       this.setState({ 
         time: Date.now() 
       })
-    }, 60000)
+    }, 1000)
   }
 
   componentWillUnmount () {

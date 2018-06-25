@@ -18,6 +18,7 @@ class PortfolioHeader extends React.Component {
         <HeaderMeta
           history={this.props.data}
           league={this.props.league}
+          lastChecked={this.props.lastChecked}
           lastUpdated={this.props.lastUpdated} />
 
         <HeaderLargeStats

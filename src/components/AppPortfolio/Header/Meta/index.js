@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react'
 import * as Helpers from '@/helpers'
-import Ago from '@/classes/ago'
+import moment from 'moment-shortformat'
 
 import './index.css'
 
@@ -11,7 +11,7 @@ class Dropdown extends React.Component {
     return (
       <div className={this.getContainerClassName()}>
         <div className={this.getDropdownClassName()} onClick={ this.show }>
-          {list[selected].displayContent}
+          { list[selected].displayContent }
           <i className="material-icons">&#xE5C5;</i>
         </div>
 
@@ -81,6 +81,8 @@ class HeaderMeta extends React.Component {
         <Dropdown
           list={this.getHistoryList()}
           selected={0} />
+
+        <div>Last checked { moment(this.props.lastChecked).short() }</div>
       </div>
     )
   }
@@ -97,21 +99,13 @@ class HeaderMeta extends React.Component {
         createdAt: item.createdAt,
 
         displayContent: (
-          <span>{ Ago(item.createdAt) }</span>
+          <span>Portfolio History</span>
         ),
 
         dropdownContent: (
           <div className="dropdown-item">
             <span className="total">{ Helpers.formatNumber(item.total) } C</span>
-            <span className="time"><br />{ 
-              (new Date(item.createdAt)).toLocaleString('en-US', {
-                month: '2-digit',
-                day: '2-digit',
-                year: '2-digit',
-                hour: 'numeric', 
-                minute: '2-digit'
-              })
-            }</span>
+            <span className="time"><br />{ moment(item.createdAt).format('MM/DD/YY hh:mm A') }</span>
           </div>
         )
       }

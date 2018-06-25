@@ -55,6 +55,8 @@
     "js-base64": "2.4.3",
     "jsoncomp": "1.6.1",
     "material-design-icons": "3.0.1",
+    "moment": "^2.22.2",
+    "moment-shortformat": "^2.1.0",
     "react-select": "1.1.0",
     "slug": "^0.9.1",
     "tiny-emitter": "2.0.2"

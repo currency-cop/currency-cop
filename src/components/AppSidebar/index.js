@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react'
-import AppSidebarPortfolioList from '../AppSidebarPortfolioList'
+import PortfolioList from './List'
 
 import styles from './index.css'
 
@@ -11,11 +11,25 @@ class AppSidebar extends React.Component {
           Add Portfolio
         </button>
 
-        <AppSidebarPortfolioList
+        <PortfolioList
           portfolioId={this.props.portfolioId}
           portfolios={this.props.portfolios} />
       </div>
     )
+  }
+
+  constructor (props) {
+    super(props)
+
+    this.interval = setInterval(() => {
+      this.setState({ 
+        time: Date.now() 
+      })
+    }, 1000)
+  }
+
+  componentWillUnmount () {
+    clearInterval(this.interval)
   }
 
   openPortfolioCreateScreen () {

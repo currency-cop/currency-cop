@@ -66,33 +66,39 @@ class PortfolioItemList extends React.Component {
 
   sortByQuantity () {
     this.sortBy('quantity', (a, b) => {
-      return a.stackSize - b.stackSize
+      return a[3] - b[3]
     }, (a, b) => {
-      return b.stackSize - a.stackSize
+      return b[3] - a[3]
     })
   }
 
   sortByPrice () {
     this.sortBy('price', (a, b) => {
-      return a.price.chaosValue - b.price.chaosValue
+      return a[4] - b[4]
     }, (a, b) => {
-      return b.price.chaosValue - a.price.chaosValue
+      return b[4] - a[4]
     })
   }
 
   sortByTotal () {
     this.sortBy('total', (a, b) => {
-      return a.chaosValue - b.chaosValue
+      return a[5] - b[5]
     }, (a, b) => {
-      return b.chaosValue - a.chaosValue
+      return b[5] - a[5]
     })
+  }
+
+  getItemName (item) {
+    let links = item[6] !== 0 ? `(${item[6]}-link)` : ''
+    let variant = item[2]
+    return `${item[1]} ${item[2]} ${links}`
   }
 
   sortByName () {
     this.sortBy('name', (a, b) => {
-      return a.item.fullName.localeCompare(b.item.fullName)
+      return this.getItemName(a).localeCompare(this.getItemName(b))
     }, (a, b) => {
-      return b.item.fullName.localeCompare(a.item.fullName)
+      return this.getItemName(b).localeCompare(this.getItemName(a))
     })
   }
 
@@ -106,7 +112,7 @@ class PortfolioItemList extends React.Component {
     return items.map((details, index) => {
       return (
         <Item 
-          key={`${this.props.id}-${index}-${details.item.fullName}`}
+          key={`${this.props.id}-${index}-${details[1]}`}
           details={details} />
       )
     })
