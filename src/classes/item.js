@@ -73,14 +73,14 @@ class Item {
         return this._variant = 'Atlas'
       }
 
-      // release maps
+      // The Awakening maps
       if (icon.indexOf('/Maps/act4maps/') > -1) {
-        return this._variant = 'Pre 2.0'
+        return this._variant = 'Pre 2.4'
       }
 
-      // awakening (square maps)
-      if (icon.indexOf('/Maps/') > -1) {
-        return this._variant = 'Pre 2.4'
+      // original maps
+      if (icon.indexOf('/Maps/Map') > -1) {
+        return this._variant = 'Pre 2.0'
       }
 
       return this._variant = null

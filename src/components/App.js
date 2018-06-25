@@ -384,7 +384,6 @@ class App extends React.Component {
     }, 1000)
 
     CC.isOffline = setTimeout(() => {
-      console.log('setting timeout...')
       clearInterval(interval)
       window.location.reload()
     }, secondsLeft * 1000)
@@ -555,7 +554,7 @@ class App extends React.Component {
 
   deletePortfolio (portfolio) {
     let {portfolios} = this.state
-    let index = portfolios.indexOf(portfolio)
+    let index = portfolios.findIndex(p => p.id === portfolio.id)
 
     this.removePortfolioTabListeners(portfolio)
     portfolios.splice(index, 1)
@@ -773,7 +772,6 @@ class App extends React.Component {
     portfolioTabJobs.forEach(([job, portfolio]) => {
       let workerJobIndex = workerTabJobs.indexOf(job)
       if (workerJobIndex < 0) {
-        console.log('found missing tab job', job)
         this.setupPortfolioTabListeners(portfolio)
       }
     })

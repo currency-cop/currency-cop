@@ -264,6 +264,7 @@ class Requester {
   // Modifying
   remove (name) {
     delete this.requests[name]
+    delete this.cache[name]
     this.offByRequestName(name)
   }
 
