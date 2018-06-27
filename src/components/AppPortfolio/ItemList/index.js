@@ -1,7 +1,10 @@
 import React, { PropTypes } from 'react'
 import './index.css'
 
-import Item from './Item'
+import ItemRow from './Item'
+import Item from '@/classes/item'
+
+const Timsort = require('timsort')
 
 class PortfolioItemList extends React.Component {
   constructor (props) {
@@ -89,9 +92,7 @@ class PortfolioItemList extends React.Component {
   }
 
   getItemName (item) {
-    let links = item[6] !== 0 ? `(${item[6]}-link)` : ''
-    let variant = item[2]
-    return `${item[1]} ${item[2]} ${links}`
+    return Item.getReportItemName(item)
   }
 
   sortByName () {
@@ -106,12 +107,12 @@ class PortfolioItemList extends React.Component {
     let items = this.props.items
 
     if (this.state.sort) {
-      items = items.sort(this.state.sort)
+      Timsort.sort(items, this.state.sort)
     }
 
     return items.map((details, index) => {
       return (
-        <Item 
+        <ItemRow 
           key={`${this.props.id}-${index}-${details[1]}`}
           details={details} />
       )

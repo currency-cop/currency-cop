@@ -229,7 +229,7 @@ class Portfolio {
 
     return lastUpdatedAt 
       ? moment(lastUpdatedAt).short() 
-      : 'building...'
+      : 'waiting for data...'
   }
 
   getCurrencyRate (currency) {
@@ -248,7 +248,6 @@ class Portfolio {
     return Portfolio.Shorthands[currency || 'Chaos Orb'] || 'C'
   }
 
-
   isItemPriceObject (item, priceItem) {
     if (priceItem.fullName !== item.fullName) {
       return false
@@ -265,19 +264,35 @@ class Portfolio {
     }
 
     if (priceItem.gemQuality || priceItem.gemLevel) {
-      // Todo: move gem logic to item processing
+      if (item.corrupted && !priceItem.corrupted) {
+        return false
+      }
+
       let levelTolerance = Math.max(0, Math.ceil(5 - Math.max(item.level, priceItem.gemLevel) * 0.25))
-      let qualityTolerance = Math.max(0, Math.ceil(4 - Math.max(item.quality, priceItem.gemQuality) * 0.2))
-      let isSpecialSupport = item.fullName.indexOf('Enhance Support') > -1 
-        || item.fullName.indexOf('Empower Support') > -1 
-        || item.fullName.indexOf('Enlighten Support') > -1
+      let qualityTolerance = 0
+
+      // 17 % and lower can be considered quality 0%
+      if (priceItem.gemQuality === 0) {
+        qualityTolerance = 17
+      }
+
+      // Two % below can be considered quality 20%
+      if (priceItem.gemQuality === 20) {
+        qualityTolerance = 2
+      }
+
+      // Handle Special Gems
+      let isSpecialSupport = item.fullName.indexOf('Enhance') > -1 
+        || item.fullName.indexOf('Empower') > -1 
+        || item.fullName.indexOf('Enlighten') > -1
 
       if (isSpecialSupport) {
-        levelTolerance = 0;
+        levelTolerance = 0
       }
 
       let levelsClose = Math.abs(priceItem.gemLevel - item.level) <= levelTolerance
       let qualityClose = Math.abs(priceItem.gemQuality - item.quality) <= qualityTolerance
+
       return levelsClose && qualityClose
     }
 

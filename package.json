@@ -59,6 +59,7 @@
     "moment-shortformat": "^2.1.0",
     "react-select": "1.1.0",
     "slug": "^0.9.1",
+    "timsort": "^0.3.0",
     "tiny-emitter": "2.0.2"
   },
   "build": {

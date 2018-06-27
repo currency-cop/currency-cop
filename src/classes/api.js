@@ -152,6 +152,7 @@ class ApiClient {
           exaltedValue: entry.exaltedValue,
           links: entry.links,
           variant: entry.variant,
+          corrupted: entry.corrupted,
           count: entry.count
         }
 

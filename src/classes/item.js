@@ -185,6 +185,10 @@ class Item {
     return this.source.stackSize || 1
   }
 
+  get corrupted () {
+    return this.source.corrupted
+  }
+
   get isRelic () {
     if (this._isRelic != undefined) {
       return this._isRelic
@@ -239,6 +243,32 @@ Item.toItem = function ({ source, tab }) {
     item: source,
     tab
   })
+}
+
+Item.getReportItemName = function (item) {
+  let name = item[1]
+  let variant = item[2]
+  let links = item[6]
+  let gemLevel = item[8]
+  let gemQuality = item[7]
+
+  if (variant) {
+    name += `, ${variant}`
+  }
+
+  if (links) {
+    name += ` (${links}-link)`
+  }
+
+  if (gemLevel) {
+    name += ` (LVL ${gemLevel})`
+  }
+
+  if (gemQuality) {
+    name += ` (${gemQuality}%)`
+  }
+
+  return name
 }
 
 module.exports = Item
