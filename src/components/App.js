@@ -252,6 +252,7 @@ class App extends React.Component {
 
       this.setLoadingMessage('Fetching Leagues')
       let leagues = await CC.Api.getLeagues()
+      leagues = this.filterNotStartedLeagues(leagues)
       await this.setState({ leagues })
 
       // Check rate-limiting
@@ -367,6 +368,14 @@ class App extends React.Component {
    * MISC
    */
 
+  filterNotStartedLeagues (leagues) {
+    let actualDate = new Date()
+    leagues = leagues.filter(function(league){
+      return(new Date(league.startAt) <= actualDate)
+    })
+
+    return leagues
+  }
   
   doOfflineCheck () {
     if (CC.isOffline) {
