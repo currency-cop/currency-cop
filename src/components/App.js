@@ -252,6 +252,7 @@ class App extends React.Component {
 
       this.setLoadingMessage('Fetching Leagues')
       let leagues = await CC.Api.getLeagues()
+      leagues = leagues.filter(league => (Date.now() > +(new Date(league.startAt))))
       await this.setState({ leagues })
 
       // Check rate-limiting

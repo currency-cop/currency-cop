@@ -16,15 +16,11 @@ export const POE_COOKIE_NAME                      = 'POESESSID'
 export const POE_COOKIE_REGEXP                    = /^[0-9A-Fa-f]{32}$/
 export const POE_ACCOUNT_NAME_REGEXP              = /\/account\/view-profile\/(.*?)\"/
 
-export const NINJA_MAP_OVERVIEW_URL               = 'http://poe.ninja/api/Data/GetMapOverview'
-export const NINJA_CURRENCY_OVERVIEW_URL          = 'http://poe.ninja/api/Data/GetCurrencyOverview'
-export const NINJA_FRAGMENT_OVERVIEW_URL          = 'http://poe.ninja/api/Data/GetFragmentOverview'
-export const NINJA_ESSENCE_OVERVIEW_URL           = 'http://poe.ninja/api/Data/GetEssenceOverview'
-export const NINJA_DIV_CARDS_OVERVIEW_URL         = 'http://poe.ninja/api/Data/GetDivinationCardsOverview'
-export const NINJA_SKILL_GEM_OVERVIEW_URL         = 'http://poe.ninja/api/Data/GetSkillGemOverview'
-export const NINJA_UNIQUE_MAP_OVERVIEW_URL        = 'http://poe.ninja/api/Data/GetUniqueMapOverview'
-export const NINJA_UNIQUE_JEWEL_OVERVIEW_URL      = 'http://poe.ninja/api/Data/GetUniqueJewelOverview'
-export const NINJA_UNIQUE_FLASK_OVERVIEW_URL      = 'http://poe.ninja/api/Data/GetUniqueFlaskOverview'
-export const NINJA_UNIQUE_WEAPON_OVERVIEW_URL     = 'http://poe.ninja/api/Data/GetUniqueWeaponOverview'
-export const NINJA_UNIQUE_ARMOUR_OVERVIEW_URL     = 'http://poe.ninja/api/Data/GetUniqueArmourOverview'
-export const NINJA_UNIQUE_ACCESSORY_OVERVIEW_URL  = 'http://poe.ninja/api/Data/GetUniqueAccessoryOverview'
+export const NINJA_CURRENCY_URL                   = 'https://poe.ninja/api/data/currencyoverview'
+export const NINJA_ITEM_URL                       = 'https://poe.ninja/api/data/itemoverview'
+
+export const NINJA_CURRENCY_OVERVIEWS             = [ 'Currency', 'Fragment' ]
+
+export const NINJA_ITEM_OVERVIEWS                 = [ 'Map', 'Essence', 'SkillGem', 
+                                                      'UniqueMap', 'UniqueJewel', 'UniqueFlask', 
+                                                      'UniqueArmour', 'UniqueWeapon', 'UniqueAccessory' ]

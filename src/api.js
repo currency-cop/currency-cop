@@ -46,6 +46,15 @@ function DoServerRequest (options) {
 }
 
 
+function DoVersionCheck () {
+  return DoServerRequest({
+    method: 'get',
+    url: `https://api.github.com/repos/currency-cop/currency-cop/releases`,
+    onSuccess: 'VERSION_CHECK_RESPONSE',
+    onError: 'VERSION_CHECK_ERROR'
+  })
+}
+
 function LoginWithCookie (cookie) {
   return DoServerRequest({
     method: 'get',
@@ -143,12 +152,13 @@ function GetLeagueStashTab (cookie, options) {
   })
 }
 
-function GetCurrencyOverview (league, date) {
+function GetNinjaCurrency (type, league, date) {
   return DoServerRequest({
     method: 'get',
-    url: Constants.NINJA_CURRENCY_OVERVIEW_URL,
+    url: Constants.NINJA_CURRENCY_URL,
     options: {
       params: {
+        type,
         league,
         date
       }
@@ -158,180 +168,33 @@ function GetCurrencyOverview (league, date) {
   })
 }
 
-function GetEssenceOverview (league, date) {
+function GetNinjaItem (type, league, date) {
   return DoServerRequest({
     method: 'get',
-    url: Constants.NINJA_ESSENCE_OVERVIEW_URL,
+    url: Constants.NINJA_ITEM_URL,
     options: {
       params: {
+        type,
         league,
         date
       }
     },
-    onSuccess: 'ESSENCE_RESPONSE',
-    onError: 'ESSENCE_ERROR'
+    onSuccess: `${type}_RESPONSE`,
+    onError: `${type}_ERROR`
   })
 }
 
-function GetFragmentOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_FRAGMENT_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'FRAGMENT_RESPONSE',
-    onError: 'FRAGMENT_ERROR'
-  })
-}
+// Generate Overviews
+Constants.NINJA_CURRENCY_OVERVIEWS.forEach(type => {
+  exports[`Get${type}Overview`] = (league, date) => GetNinjaCurrency(type, league, date)
+})
 
-function GetDivCardOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_DIV_CARDS_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'DIV_CARD_RESPONSE',
-    onError: 'DIV_CARD_ERROR'
-  })
-}
+Constants.NINJA_ITEM_OVERVIEWS.forEach(type => {
+  exports[`Get${type}Overview`] = (league, date) => GetNinjaItem(type, league, date)
+})
 
-function GetMapOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_MAP_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'MAP_RESPONSE',
-    onError: 'MAP_ERROR'
-  })
-}
-
-function GetUniqueMapOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_UNIQUE_MAP_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'UNIQUE_MAP_RESPONSE',
-    onError: 'UNIQUE_MAP_ERROR'
-  })
-}
-
-function GetUniqueJewelOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_UNIQUE_JEWEL_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'UNIQUE_JEWEL_RESPONSE',
-    onError: 'UNIQUE_JEWEL_ERROR'
-  })
-}
-
-function GetUniqueFlaskOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_UNIQUE_FLASK_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'UNIQUE_FLASK_RESPONSE',
-    onError: 'UNIQUE_FLASK_ERROR'
-  })
-}
-
-function GetUniqueArmourOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_UNIQUE_ARMOUR_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'UNIQUE_ARMOUR_RESPONSE',
-    onError: 'UNIQUE_ARMOUR_ERROR'
-  })
-}
-
-function GetUniqueWeaponOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_UNIQUE_WEAPON_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'UNIQUE_WEAPON_RESPONSE',
-    onError: 'UNIQUE_WEAPON_ERROR'
-  })
-}
-
-function GetUniqueAccessoryOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_UNIQUE_ACCESSORY_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'UNIQUE_ACCESSORY_RESPONSE',
-    onError: 'UNIQUE_ACCESSORY_ERROR'
-  })
-}
-
-function GetSkillGemOverview (league, date) {
-  return DoServerRequest({
-    method: 'get',
-    url: Constants.NINJA_SKILL_GEM_OVERVIEW_URL,
-    options: {
-      params: {
-        league,
-        date
-      }
-    },
-    onSuccess: 'SKILL_GEM_RESPONSE',
-    onError: 'SKILL_GEM_ERROR'
-  })
-}
-
-function DoVersionCheck () {
-  return DoServerRequest({
-    method: 'get',
-    url: `https://api.github.com/repos/currency-cop/currency-cop/releases`,
-    onSuccess: 'VERSION_CHECK_RESPONSE',
-    onError: 'VERSION_CHECK_ERROR'
-  })
-}
-
+// Custom Overviews
+exports.GetDivCardOverview = (league, date) => GetNinjaItem('DivinationCard', league, date)
 
 // Exports
 exports.DoServerRequest = DoServerRequest
@@ -341,30 +204,20 @@ exports.GetLeagues = GetLeagues
 exports.GetCharacters = GetCharacters
 exports.GetStashTabs = GetStashTabs
 exports.GetLeagueStashTab = GetLeagueStashTab
-exports.GetCurrencyOverview = GetCurrencyOverview
-exports.GetEssenceOverview = GetEssenceOverview
-exports.GetFragmentOverview = GetFragmentOverview
-exports.GetDivCardOverview = GetDivCardOverview
-exports.GetMapOverview = GetMapOverview
-exports.GetUniqueMapOverview = GetUniqueMapOverview
-exports.GetUniqueJewelOverview = GetUniqueJewelOverview
-exports.GetUniqueAccessoryOverview = GetUniqueJewelOverview
-exports.GetUniqueArmourOverview = GetUniqueArmourOverview
-exports.GetUniqueFlaskOverview = GetUniqueFlaskOverview
 exports.DoVersionCheck = DoVersionCheck
 
 // Enums
 exports.ItemRateTypes = {
-  currency: GetCurrencyOverview,
-  essence: GetEssenceOverview,
-  fragment: GetFragmentOverview,
-  card: GetDivCardOverview,
-  map: GetMapOverview,
-  gem: GetSkillGemOverview,
-  unique_map: GetUniqueMapOverview,
-  unique_jewel: GetUniqueJewelOverview,
-  unique_flask: GetUniqueFlaskOverview,
-  unique_armour: GetUniqueArmourOverview,
-  unique_weapon: GetUniqueWeaponOverview,
-  unique_accessory: GetUniqueAccessoryOverview
+  currency: exports.GetCurrencyOverview,
+  essence: exports.GetEssenceOverview,
+  fragment: exports.GetFragmentOverview,
+  card: exports.GetDivCardOverview,
+  map: exports.GetMapOverview,
+  gem: exports.GetSkillGemOverview,
+  unique_map: exports.GetUniqueMapOverview,
+  unique_jewel: exports.GetUniqueJewelOverview,
+  unique_flask: exports.GetUniqueFlaskOverview,
+  unique_armour: exports.GetUniqueArmourOverview,
+  unique_weapon: exports.GetUniqueWeaponOverview,
+  unique_accessory: exports.GetUniqueAccessoryOverview
 }
