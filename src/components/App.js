@@ -20,7 +20,7 @@ import Analytics from 'electron-google-analytics'
 import React from 'react'
 import Emitter from 'tiny-emitter'
 import path from 'path'
-import slug from 'slug'
+import slug from 'slugify'
 
 
 // Stylesheets
