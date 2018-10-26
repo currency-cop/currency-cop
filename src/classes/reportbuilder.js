@@ -14,7 +14,9 @@ import {
   GetFragmentOverview,
   GetDivCardOverview,
   GetMapOverview,
-  GetUniqueMapOverview
+  GetUniqueMapOverview,
+  GetFossilOverview,
+  GetResonatorOverview
 } from '../api'
 
 class ReportBuilder {
@@ -130,11 +132,11 @@ class ReportBuilder {
       let tab = this.data.stashTabs[i]
 
       // Ignore hideout tabs
-      if (tab.hidden) 
+      if (tab.hidden)
         continue
 
       // Ignore non-indexed tabs
-      if (this.settings.tabsToSearch.indexOf(i) < 0) 
+      if (this.settings.tabsToSearch.indexOf(i) < 0)
         continue
 
       // Ignore tab without data
@@ -200,6 +202,8 @@ class ReportBuilder {
       .then(() => this.fetchDivCardRates('card', GetDivCardOverview))
       .then(() => this.fetchMapRates('map', GetMapOverview))
       .then(() => this.fetchUniqueMapRates('map_unique', GetUniqueMapOverview))
+      .then(() => this.fetchFossilRates('fossil', GetFossilOverview))
+      .then(() => this.fetchResonatorRates('resonator', GetResonatorOverview))
   }
 
   fetchRate (type, apiFn, queue) {
@@ -280,11 +284,11 @@ class ReportBuilder {
     if (tabs && tabs.forEach) {
       tabs.forEach((tab, i) => {
         // Ignore hideout tabs
-        if (tab.hidden) 
+        if (tab.hidden)
           return
 
         // Ignore non-indexed tabs
-        if (this.settings.tabsToSearch.indexOf(i) < 0) 
+        if (this.settings.tabsToSearch.indexOf(i) < 0)
           return
 
         // Ignore tab without data
@@ -321,7 +325,7 @@ class ReportBuilder {
             }
 
             // if (
-            //    reportItem.type === 'card' 
+            //    reportItem.type === 'card'
             // && !!reportItem.maxStackSize
             // && reportItem.maxStackSize > 0
             // && !reportItem.stackSizeChaosValue) {
