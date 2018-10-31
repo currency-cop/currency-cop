@@ -27,12 +27,12 @@ function DoServerRequest (options) {
 
     ipcRenderer.once(options.onError, (event, error) => {
       if (error.response) {
-        // The request was made and the server responded with a status code 
+        // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         CC.ApiLog.warn(`${error.response.status} status response for [${options.url}]: ${JSON.stringify(error.response.data)}`)
       } else if (error.request) {
-        // The request was made but no response was received 
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of 
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
         CC.ApiLog.error(`Request sent to [${options.url}], no response received: ${error.message}`)
       } else {
@@ -116,7 +116,7 @@ function GetStashTabs (cookie, options) {
     if (response.status === 429)
       return response
 
-    if (response.status === 404) 
+    if (response.status === 404)
       return []
 
     if (response.status === 403)
@@ -219,5 +219,7 @@ exports.ItemRateTypes = {
   unique_flask: exports.GetUniqueFlaskOverview,
   unique_armour: exports.GetUniqueArmourOverview,
   unique_weapon: exports.GetUniqueWeaponOverview,
-  unique_accessory: exports.GetUniqueAccessoryOverview
+  unique_accessory: exports.GetUniqueAccessoryOverview,
+  fossil: exports.GetFossilOverview,
+  resonator: exports.GetResonatorOverview
 }
