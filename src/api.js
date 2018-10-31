@@ -221,5 +221,6 @@ exports.ItemRateTypes = {
   unique_weapon: exports.GetUniqueWeaponOverview,
   unique_accessory: exports.GetUniqueAccessoryOverview,
   fossil: exports.GetFossilOverview,
-  resonator: exports.GetResonatorOverview
+  resonator: exports.GetResonatorOverview,
+  prophecy: exports.GetProphecyOverview
 }
