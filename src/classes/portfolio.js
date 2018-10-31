@@ -129,10 +129,20 @@ class Portfolio {
           return
         }
 
-        let clusterItemIndex = cluster.findIndex(v => 
-          v[1] === item.fullName && 
-          v[2] === item.variant && 
-          v[6] === item.links
+
+        let clusterItemIndex = cluster.findIndex(
+          v => {
+            let isMatch = v[1] === item.fullName &&
+              v[2] === item.variant &&
+              v[6] === item.links
+
+            if ('gems' in item.source.category) {
+              isMatch = isMatch && v[7] === itemPrice.gemQuality &&
+                v[8] === itemPrice.gemLevel
+            }
+
+            return isMatch
+          }
         )
 
         if (clusterItemIndex < 0) {
@@ -227,8 +237,8 @@ class Portfolio {
 
     let lastUpdatedAt = this.lastUpdatedAt()
 
-    return lastUpdatedAt 
-      ? moment(lastUpdatedAt).short() 
+    return lastUpdatedAt
+      ? moment(lastUpdatedAt).short()
       : 'waiting for data...'
   }
 
@@ -282,8 +292,8 @@ class Portfolio {
       }
 
       // Handle Special Gems
-      let isSpecialSupport = item.fullName.indexOf('Enhance') > -1 
-        || item.fullName.indexOf('Empower') > -1 
+      let isSpecialSupport = item.fullName.indexOf('Enhance') > -1
+        || item.fullName.indexOf('Empower') > -1
         || item.fullName.indexOf('Enlighten') > -1
 
       if (isSpecialSupport) {
@@ -297,7 +307,7 @@ class Portfolio {
     }
 
     if (priceItem.quality && priceItem.level) {
-      return priceItem.quality === item.quality 
+      return priceItem.quality === item.quality
           && priceItem.level === item.level
     }
 
@@ -309,7 +319,7 @@ class Portfolio {
       return priceItem.level === item.level
     }
 
-    if (priceItem.variant && item.variant) { 
+    if (priceItem.variant && item.variant) {
       // to simplify the logic, we sometimes set a variant event if poe.ninja doesn't
       return priceItem.variant === item.variant
     }
