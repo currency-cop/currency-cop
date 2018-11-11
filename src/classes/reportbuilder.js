@@ -16,7 +16,8 @@ import {
   GetMapOverview,
   GetUniqueMapOverview,
   GetFossilOverview,
-  GetResonatorOverview
+  GetResonatorOverview,
+  GetProphecyOverview
 } from '../api'
 
 class ReportBuilder {
@@ -204,6 +205,7 @@ class ReportBuilder {
       .then(() => this.fetchUniqueMapRates('map_unique', GetUniqueMapOverview))
       .then(() => this.fetchFossilRates('fossil', GetFossilOverview))
       .then(() => this.fetchResonatorRates('resonator', GetResonatorOverview))
+      .then(() => this.fetchProphecyRates('prophecy', GetProphecyOverview))
   }
 
   fetchRate (type, apiFn, queue) {
