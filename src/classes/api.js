@@ -13,15 +13,6 @@ class ApiClient {
   }
 
   async authorize ({ sessionId }) {
-    let sessionResponse = await Api.LoginWithCookie(sessionId)
-    if (sessionResponse.status != 302) {
-      this.log.warn(`[AUTHORIZE]: Expired Session ID - ${sessionResponse.status}`)
-      throw ({
-        code: 400,
-        message: 'Session ID failed to authorize your account. Try refreshing your session id.'
-      })
-    }
-
     let accountResponse = await Api.GetAccountName(sessionId)
     if (!accountResponse || !accountResponse.data) {
       this.log.warn(`[AUTHORIZE]: Empty response from server on name check`)
