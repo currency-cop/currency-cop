@@ -14,7 +14,7 @@ class ApiClient {
 
   async authorize ({ sessionId }) {
     let sessionResponse = await Api.LoginWithCookie(sessionId)
-    if (sessionResponse.status != 302) {
+    if (sessionResponse.status != 200) {
       this.log.warn(`[AUTHORIZE]: Expired Session ID - ${sessionResponse.status}`)
       throw ({
         code: 400,

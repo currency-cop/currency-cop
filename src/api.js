@@ -58,7 +58,7 @@ function DoVersionCheck () {
 function LoginWithCookie (cookie) {
   return DoServerRequest({
     method: 'get',
-    url: Constants.POE_LOGIN_URL,
+    url: Constants.POE_MY_ACCOUNT_URL,
     options: {
       headers: {
         'Cookie': `${Constants.POE_COOKIE_NAME}=${cookie}`
