@@ -134,7 +134,8 @@ class Portfolio {
           v => {
             let isMatch = v[1] === item.fullName &&
               v[2] === item.variant &&
-              v[6] === item.links
+              v[6] === item.links &&
+              v[9] === item.isRelic
 
             if ('gems' in item.source.category) {
               isMatch = isMatch && v[7] === itemPrice.gemQuality &&
@@ -201,6 +202,7 @@ class Portfolio {
       item.links,
       itemPrice.gemQuality,
       itemPrice.gemLevel,
+      item.isRelic || false,
       [ this.buildReportItemChild(item) ]
     ]
   }
