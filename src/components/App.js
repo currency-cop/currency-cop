@@ -26,8 +26,8 @@ import slug from 'slugify'
 // Stylesheets
 import 'react-select/dist/react-select.css'
 import '../assets/css/grid.css'
-import '../assets/css/app.css'
-import '../assets/css/appnew.css'
+import '../assets/css/App.css'
+import '../assets/css/AppNew.css'
 
 
 // Application folder location
