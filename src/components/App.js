@@ -585,7 +585,17 @@ class App extends React.Component {
         return CC.Api.getItemRates(type, league)
       }))
 
-      CC.Prices[league] = [].concat.apply([], prices)
+      if (CC.Prices[league] === undefined) {
+        CC.Prices[league] = {}
+      }
+
+      for (let subPrices of prices) {
+        for (let key in subPrices) {
+          if (CC.Prices[league][subPrices[key].fullName] === undefined || CC.Prices[league][subPrices[key].fullName].chaosValue > subPrices[key].chaosValue) {
+            CC.Prices[league][subPrices[key].fullName] = subPrices[key]
+          }
+        }
+      }
 
       this.setupPriceJob(league)
     }
@@ -961,11 +971,11 @@ class App extends React.Component {
       screen('/screen/offline')
       return (
         <div className="app-viewport">
-          <AppHeader 
+          <AppHeader
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate}
           />
-          <LoadingScreen 
+          <LoadingScreen
             message={this.state.isLoading}
             error={this.state.error}
           />
@@ -977,11 +987,11 @@ class App extends React.Component {
       screen('/screen/loading')
       return (
         <div className="app-viewport">
-          <AppHeader 
+          <AppHeader
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate}
           />
-          <LoadingScreen 
+          <LoadingScreen
             message={this.state.isLoading}
             error={this.state.error}
           />
@@ -993,12 +1003,12 @@ class App extends React.Component {
       screen('/screen/login')
       return (
         <div className="app-viewport">
-          <AppHeader 
+          <AppHeader
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate}
           />
-          <LoginScreen 
-            onLogin={this.handleLogin.bind(this)} 
+          <LoginScreen
+            onLogin={this.handleLogin.bind(this)}
           />
         </div>
       )
@@ -1007,7 +1017,7 @@ class App extends React.Component {
     return (
       <div className="app-viewport">
         <div className="application">
-          <AppHeader 
+          <AppHeader
             newVersion={this.state.newVersion}
             upToDate={this.state.upToDate}
           />

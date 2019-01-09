@@ -123,7 +123,6 @@ class ApiClient {
       for (const entry of list.lines) {
         let name = entry.currencyTypeName || entry.name
         let fullName = name
-        
         if (name && entry.baseType && name.indexOf(entry.baseType) < 0) {
           fullName = `${name} ${entry.baseType}`
         }
@@ -167,13 +166,15 @@ class ApiClient {
           item.variant = entry.variant
         }
 
-        output.push(item)
+        if (output[item.fullName] === undefined || output[item.fullName].chaosValue > item.chaosValue) {
+          output[item.fullName] = item
+        }
       }
     }
 
     // Add in chaos orb manually...
     if (type === 'currency') {
-      output.push({
+      output['Chaos Orb'] = {
         orderId: 1,
         type: type,
         icon: 'http://web.poecdn.com/image/Art/2DItems/Currency/CurrencyRerollRare.png?scale=1&w=1&h=1',
@@ -185,12 +186,12 @@ class ApiClient {
         baseTypeLowercase: null,
         type: 'currency',
         chaosValue: 1,
-        exaltedValue: output.find(v => v.name === 'Exalted Orb').chaosValue,
+        exaltedValue: output['Exalted Orb'] ? output['Exalted Orb'].chaosValue : null,
         stackSize: 10,
         links: undefined,
         variant: undefined,
         count: 1000
-      })
+      }
     }
 
     if (fetched) {
@@ -212,7 +213,6 @@ class ApiClient {
         }))
       }
     }
-  
     return output
   }
 
@@ -233,7 +233,6 @@ class ApiClient {
       tabIndex: tab.index,
       tabs: 0
     })
-
     let items = []
 
     // Rate limited, let's do a backoff
@@ -243,7 +242,7 @@ class ApiClient {
     }
 
     // Not found
-    if (apiResult.status === 404) 
+    if (apiResult.status === 404)
       return items
 
     // Unauthorized
@@ -287,7 +286,7 @@ class ApiClient {
     }
 
     // Not found...
-    if (apiResult.status === 404) 
+    if (apiResult.status === 404)
       return {}
 
     // Unauthorized
