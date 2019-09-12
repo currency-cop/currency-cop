@@ -17,7 +17,10 @@ import {
   GetUniqueMapOverview,
   GetFossilOverview,
   GetResonatorOverview,
-  GetProphecyOverview
+  GetProphecyOverview,
+  GetIncubatorOverview,
+  GetScarabOverview,
+  GetOilOverview
 } from '../api'
 
 class ReportBuilder {
@@ -206,6 +209,9 @@ class ReportBuilder {
       .then(() => this.fetchFossilRates('fossil', GetFossilOverview))
       .then(() => this.fetchResonatorRates('resonator', GetResonatorOverview))
       .then(() => this.fetchProphecyRates('prophecy', GetProphecyOverview))
+      .then(() => this.fetchIncubatorRates('incubator', GetIncubatorOverview))
+      .then(() => this.fetchScarabRates('scarab', GetScarabOverview))
+      .then(() => this.fetchOilRates('oil', GetOilOverview))
   }
 
   fetchRate (type, apiFn, queue) {
