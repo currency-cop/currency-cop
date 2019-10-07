@@ -137,7 +137,10 @@ class Portfolio {
               v[6] === item.links &&
               v[9] === item.isRelic
 
-            if ('gems' in item.source.category) {
+            if (
+              item.source.descrText &&
+              item.source.descrText.indexOf("Gem") !== -1
+            ) {
               isMatch = isMatch && v[7] === itemPrice.gemQuality &&
                 v[8] === itemPrice.gemLevel
             }
