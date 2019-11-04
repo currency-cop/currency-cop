@@ -46,7 +46,7 @@
     "webpack-dev-server": "2.8.2"
   },
   "dependencies": {
-    "axios": "0.18.0",
+    "axios": "0.18.1",
     "babel-polyfill": "6.26.0",
     "classnames": "2.2.5",
     "electron-google-analytics": "^0.1.0",
