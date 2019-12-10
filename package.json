@@ -11,7 +11,7 @@
   },
   "scripts": {
     "prod": "webpack --config webpack.build.config.js && electron --noDevServer .",
-    "dev": "webpack-dev-server --hot --host 0.0.0.0 --config=./webpack.dev.config.js",
+    "dev": "webpack-dev-server --hot --host 0.0.0.0 --port 8888 --config=./webpack.dev.config.js",
     "build": "webpack --config webpack.build.config.js",
     "builder": "electron-builder --publish=never",
     "package:all": "cross-env NODE_ENV=production npm-run-all package:windows package:mac package:linux",
@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@babel/plugin-proposal-class-properties": "^7.7.4",
+    "@babel/plugin-transform-runtime": "^7.7.6",
     "@babel/polyfill": "7.7.0",
     "@babel/preset-react": "^7.7.4",
     "axios": "0.19.0",

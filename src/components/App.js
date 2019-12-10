@@ -926,7 +926,6 @@ class App extends React.Component {
     let { screen } = CC;
 
     if (this.doOfflineCheck()) {
-      screen('/screen/offline');
       return (
         <div className="app-viewport">
           <AppHeader
@@ -942,7 +941,6 @@ class App extends React.Component {
     }
 
     if (this.state.isLoading) {
-      screen('/screen/loading');
       return (
         <div className="app-viewport">
           <AppHeader
@@ -961,7 +959,6 @@ class App extends React.Component {
       !CC.Api.accountSessionId &&
       !CC.Config.get(CC.Constants.CONFIG_COOKIE)
     ) {
-      screen('/screen/login');
       return (
         <div className="app-viewport">
           <AppHeader

@@ -183,16 +183,21 @@ function GetNinjaItem(type, league, date) {
   });
 }
 
-// Generate Overviews
-Constants.NINJA_CURRENCY_OVERVIEWS.forEach(type => {
-  exports[`Get${type}Overview`] = (league, date) =>
-    GetNinjaCurrency(type, league, date);
-});
+const currencyOverviews = Object.fromEntries(
+  Constants.NINJA_CURRENCY_OVERVIEWS.map(type => {
+    const key = `Get${type}Overview`;
+    const getter = (league, date) => GetNinjaCurrency(type, league, date);
+    return [key, getter];
+  })
+);
 
-Constants.NINJA_ITEM_OVERVIEWS.forEach(type => {
-  exports[`Get${type}Overview`] = (league, date) =>
-    GetNinjaItem(type, league, date);
-});
+const itemOverviews = Object.fromEntries(
+  Constants.NINJA_ITEM_OVERVIEWS.map(type => {
+    const key = `Get${type}Overview`;
+    const getter = (league, date) => GetNinjaItem(type, league, date);
+    return [key, getter];
+  })
+);
 
 // Custom Overviews
 const GetDivCardOverview = (league, date) =>
@@ -209,9 +214,10 @@ const GetDivCardOverview = (league, date) =>
 
 // Enums
 const ItemRateTypes = {
+  /*
   currency: exports.GetCurrencyOverview,
-  essence: exports.GetEssenceOverview,
   fragment: exports.GetFragmentOverview,
+  essence: exports.GetEssenceOverview,
   card: exports.GetDivCardOverview,
   map: exports.GetMapOverview,
   gem: exports.GetSkillGemOverview,
@@ -227,9 +233,12 @@ const ItemRateTypes = {
   incubator: exports.GetIncubatorOverview,
   scarab: exports.GetScarabOverview,
   oil: exports.GetOilOverview
+  */
 };
 
 export {
+  currencyOverviews,
+  itemOverviews,
   GetDivCardOverview,
   ItemRateTypes,
   DoServerRequest,
