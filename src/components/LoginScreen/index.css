@@ -1,7 +1,4 @@
 .login-viewport {
-  background-size: cover;
-  background-image: url('../../assets/incursion-background.jpg');
-  background-position: center;
 }
 
 .login-viewport .error {
@@ -14,10 +11,10 @@
   text-align: center;
   font-size: 13px;
   line-height: 2.5;
-  overflow: hidden; 
+  overflow: hidden;
   -webkit-box-shadow: 0 5px 10px black;
-  -moz-box-shadow:    0 5px 10px black;
-  box-shadow:         0 5px 10px black;
+  -moz-box-shadow: 0 5px 10px black;
+  box-shadow: 0 5px 10px black;
 }
 
 .login-viewport .viewport {
@@ -46,15 +43,15 @@
   border-radius: 4px;
   padding: 8px;
   cursor: pointer;
-  transition: all .3s;
+  transition: all 0.3s;
   outline: none;
   margin-bottom: 8px;
   width: calc(100%);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .login-container .form-input + p {
-  font-size: .75rem;
+  font-size: 0.75rem;
   margin-top: 0;
   color: #888;
   text-align: center;

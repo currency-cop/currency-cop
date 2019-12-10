@@ -1,10 +1,10 @@
 'use strict';
 
 // Import parts of electron to use
-const {app, BrowserWindow, ipcMain, dialog} = require('electron')
-const path = require('path')
-const url = require('url')
-const axios = require('axios')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const path = require('path');
+const url = require('url');
+const axios = require('axios');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -12,11 +12,15 @@ let mainWindow;
 
 // Keep a reference for dev mode
 let dev = false;
-if ( process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) || /[\\/]electron[\\/]/.test(process.execPath) ) {
+if (
+  process.defaultApp ||
+  /[\\/]electron-prebuilt[\\/]/.test(process.execPath) ||
+  /[\\/]electron[\\/]/.test(process.execPath)
+) {
   dev = true;
 }
 
-function createWindow () {
+function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     title: 'Currency Cop',
@@ -30,10 +34,10 @@ function createWindow () {
 
   // and load the index.html of the app.
   let indexPath;
-  if ( dev && process.argv.indexOf('--noDevServer') === -1 ) {
+  if (dev && process.argv.indexOf('--noDevServer') === -1) {
     indexPath = url.format({
       protocol: 'http:',
-      host: 'localhost:8080',
+      host: 'localhost:8888',
       pathname: 'index.html',
       slashes: true
     });
@@ -44,13 +48,13 @@ function createWindow () {
       slashes: true
     });
   }
-  mainWindow.loadURL( indexPath );
+  mainWindow.loadURL(indexPath);
 
   // Don't show until we are ready and loaded
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     // Open the DevTools automatically if developing
-    if ( dev ) {
+    if (dev) {
       mainWindow.webContents.openDevTools();
     }
   });
@@ -68,21 +72,19 @@ function createWindow () {
     axios[arg.method](arg.url, arg.options)
       .then(response => {
         // console.log(arg.url, response.data)
-        event.sender.send(arg.onSuccess, response)
+        event.sender.send(arg.onSuccess, response);
       })
       .catch(error => {
         if (error.response && error.response.status < 500) {
-          return event.sender.send(arg.onSuccess, error.response)
+          return event.sender.send(arg.onSuccess, error.response);
         }
-        event.sender.send(arg.onError, error)
-      })
-  })
+        event.sender.send(arg.onError, error);
+      });
+  });
 }
 
 // Configure autoupdater
-let platform = process.platform === 'darwin'
-  ? 'osx'
-  : 'windows'
+let platform = process.platform === 'darwin' ? 'osx' : 'windows';
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -93,13 +95,13 @@ app.on('ready', createWindow);
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  app.quit()
-})
+  app.quit();
+});
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
-    createWindow()
+    createWindow();
   }
-})
+});

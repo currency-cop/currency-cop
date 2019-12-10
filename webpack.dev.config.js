@@ -11,7 +11,7 @@ const OUTPUT_DIR = path.resolve(__dirname, 'dist');
 const defaultInclude = [SRC_DIR];
 
 module.exports = {
-  entry: ['babel-polyfill', SRC_DIR + '/index.js'],
+  entry: [SRC_DIR + '/index.js'],
   output: {
     path: OUTPUT_DIR,
     publicPath: '/',
@@ -21,20 +21,28 @@ module.exports = {
     rules: [
       {
         test: /\.css$/,
-        use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
+        use: [{ loader: 'style-loader' }, { loader: 'css-loader' }]
       },
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
-        use: [{ loader: 'babel-loader' }],
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env', '@babel/preset-react'],
+              plugins: ['@babel/plugin-proposal-class-properties']
+            }
+          }
+        ]
       },
       {
         test: /\.(jpe?g|png|gif)$/,
-        use: [{ loader: 'file-loader?name=images/[name].[ext]' }],
+        use: [{ loader: 'file-loader?name=images/[name].[ext]' }]
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2)$/,
-        use: [{ loader: 'file-loader?name=fonts/[name].[ext]' }],
+        use: [{ loader: 'file-loader?name=fonts/[name].[ext]' }]
       }
     ]
   },
@@ -63,13 +71,13 @@ module.exports = {
       children: false
     },
     setup() {
-      spawn(
-        'electron',
-        ['.'],
-        { shell: true, env: process.env, stdio: 'inherit' }
-      )
-      .on('close', code => process.exit(0))
-      .on('error', spawnError => console.error(spawnError));
+      spawn('electron', ['.'], {
+        shell: true,
+        env: process.env,
+        stdio: 'inherit'
+      })
+        .on('close', code => process.exit(0))
+        .on('error', spawnError => console.error(spawnError));
     }
   }
 };

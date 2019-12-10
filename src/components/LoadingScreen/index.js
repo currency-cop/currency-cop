@@ -1,13 +1,11 @@
-import React, { PropTypes } from 'react'
+import React, { PropTypes } from 'react';
 
 class LoadingScreen extends React.Component {
-  render () {
-    let errorElement
+  render() {
+    let errorElement;
 
     if (this.props.error) {
-      errorElement = (
-        <p className="error">&nbsp;{this.props.error}</p>
-      )
+      errorElement = <p className="error">&nbsp;{this.props.error}</p>;
     }
 
     return (
@@ -17,8 +15,8 @@ class LoadingScreen extends React.Component {
           {errorElement}
         </div>
       </div>
-    )
+    );
   }
 }
 
-module.exports = LoadingScreen
+export default LoadingScreen;

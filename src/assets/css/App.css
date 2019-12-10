@@ -1,15 +1,9 @@
-@font-face {
-  font-family: 'SegoeMDL2';
-  src: url("../fonts/segmdl2-webfont.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-}
-
 * {
-  box-sizing: border-box
+  box-sizing: border-box;
 }
 
-body, html {
+body,
+html {
   background: hsl(0, 0%, 10%);
   color: white;
   margin: 0;
@@ -23,7 +17,10 @@ body, html {
 }
 
 /* Typography */
-html, body, input, button {
+html,
+body,
+input,
+button {
   font-family: 'Roboto';
   line-height: 1.6;
 }
@@ -89,12 +86,12 @@ h1 {
 }
 
 a {
-  color: rgba(83, 211, 154, 1.0);
+  color: rgba(83, 211, 154, 1);
   text-decoration: none;
 }
 
 a:hover {
-  color: #FFF
+  color: #fff;
 }
 
 /* Helpers */
@@ -116,8 +113,8 @@ a:hover {
 
 /* Buttons */
 .btn-border {
-  color: rgba(255,255,255,0.5) !important;
-  border: 1px solid rgba(255,255,255,0.05) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 .btn-border:hover {
@@ -127,25 +124,25 @@ a:hover {
 /* Header */
 .nav-bar,
 .draggable {
-  -webkit-app-region: drag
+  -webkit-app-region: drag;
 }
 
 a,
 button,
 input,
 select,
-[class*="Select"],
+[class*='Select'],
 .tab-selector,
 .app-control *,
 .account-actions *,
 .not-draggable,
 .not-draggable * {
-  -webkit-app-region: no-drag
+  -webkit-app-region: no-drag;
 }
 
 /* Main Viewport */
 .viewport {
-  height: 100vh
+  height: 100vh;
 }
 
 .main-viewport {
@@ -162,24 +159,23 @@ select,
   margin-bottom: 15px;
 }
 
-
 /* Scrollbars */
 
 ::-webkit-scrollbar-track {
-	background-color: #0a0a0b;
+  background-color: #0a0a0b;
 }
 
 ::-webkit-scrollbar {
-	width: 8px;
-  background-color: rgba(0,0,0,0.2);
+  width: 8px;
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.15);
-	box-shadow: 0 0 2px rgba(0,0,0,0.3);
-  transition: all .4s;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
