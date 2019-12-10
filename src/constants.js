@@ -24,5 +24,6 @@ export const NINJA_CURRENCY_OVERVIEWS             = [ 'Currency', 'Fragment' ]
 export const NINJA_ITEM_OVERVIEWS                 = [ 'Map', 'Essence', 'SkillGem',
                                                       'UniqueMap', 'UniqueJewel', 'UniqueFlask',
                                                       'UniqueArmour', 'UniqueWeapon', 'UniqueAccessory',
-                                                      'Fossil', 'Resonator', 'Prophecy'
+                                                      'Fossil', 'Resonator', 'Prophecy', 'Incubator', 
+                                                      'Scarab', 'Oil'
                                                     ]
