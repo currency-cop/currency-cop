@@ -43,7 +43,7 @@
     "style-loader": "0.17.0",
     "typeface-roboto": "0.0.35",
     "webpack": "2.7.0",
-    "webpack-dev-server": "2.8.2"
+    "webpack-dev-server": "3.1.11"
   },
   "dependencies": {
     "axios": "0.18.1",
