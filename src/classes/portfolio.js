@@ -124,7 +124,7 @@ class Portfolio {
       items.forEach(item => {
         item = Item.toItem(item)
 
-        let itemPrice = prices.find(pi => this.isItemPriceObject(item, pi))
+        let itemPrice = prices[item.fullName]
         if (!itemPrice) {
           return
         }
@@ -252,7 +252,7 @@ class Portfolio {
 
     let prices = CC.Prices[this.league]
     if (prices) {
-      let price = prices.find(v => v.fullName === currency)
+      let price = prices[currency]
       return price ? price.chaosValue : 1
     }
 
