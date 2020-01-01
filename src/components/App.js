@@ -400,7 +400,7 @@ class App extends React.Component {
     let versionCheck = await DoVersionCheck()
     if (versionCheck && versionCheck.data) {
       let latestVersion = versionCheck.data[0]
-      if (latestVersion.name !== CC.AppVersion) {
+      if (!(latestVersion.name.indexOf(CC.AppVersion) > -1)) {
         this.setState({
           upToDate: false,
           newVersion: latestVersion
