@@ -70,7 +70,13 @@ class ApiClient {
     let isEvent = league.indexOf(' Event') > -1
     let isSSF = league.indexOf('SSF ') > -1
     let isHC = league.match(/\s?HC\s?/)
+    let isQualifier = league.indexOf('Qualifier') > -1
 
+    // Qualifiers are not currently supported
+    if (isQualifier) {
+      return;
+    }
+    
     // Patch for leagues like:
     // SSF Flashback Event (BRE003) -> 001 (Standard)
     // HC SSF Flashback Event (BRE004) -> 002 (Hardcore)
