@@ -251,6 +251,7 @@ Item.getReportItemName = function (item) {
   let links = item[6]
   let gemLevel = item[8]
   let gemQuality = item[7]
+  let mapTier = item[9]
 
   if (variant) {
     name += `, ${variant}`
@@ -266,6 +267,10 @@ Item.getReportItemName = function (item) {
 
   if (gemQuality) {
     name += ` (${gemQuality}%)`
+  }
+
+  if (mapTier) {
+    name += ` (T${mapTier})`
   }
 
   return name

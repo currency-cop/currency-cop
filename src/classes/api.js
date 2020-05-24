@@ -167,6 +167,10 @@ class ApiClient {
           item.variant = entry.variant
         }
 
+        if (type === 'map') {
+          item.mapTier = entry.mapTier
+        }
+
         output.push(item)
       }
     }
