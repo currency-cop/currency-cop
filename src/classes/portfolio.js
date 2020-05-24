@@ -135,7 +135,7 @@ class Portfolio {
             let isMatch = v[1] === item.fullName &&
               v[2] === item.variant &&
               v[6] === item.links &&
-              v[9] === item.isRelic
+              v[10] === item.isRelic
 
             if (
               item.source.descrText &&
@@ -143,6 +143,11 @@ class Portfolio {
             ) {
               isMatch = isMatch && v[7] === itemPrice.gemQuality &&
                 v[8] === itemPrice.gemLevel
+            } else if (
+              item.source.typeLine &&
+              item.source.typeLine.indexOf("Map") !== -1
+            ) {
+              isMatch = isMatch && v[9] === itemPrice.mapTier
             }
 
             return isMatch
@@ -205,6 +210,7 @@ class Portfolio {
       item.links,
       itemPrice.gemQuality,
       itemPrice.gemLevel,
+      itemPrice.mapTier,
       item.isRelic || false,
       [ this.buildReportItemChild(item) ]
     ]
@@ -266,6 +272,10 @@ class Portfolio {
   isItemPriceObject (item, priceItem) {
     if (priceItem.fullName !== item.fullName) {
       return false
+    }
+
+    if (priceItem.mapTier) {
+      return parseInt(item.property("Map Tier").values[0][0]) === priceItem.mapTier;
     }
 
     // Low Confidence Filter
